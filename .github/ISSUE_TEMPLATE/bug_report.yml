@@ -1,0 +1,85 @@
+name: Bug report
+description: Report something that isn't working as expected.
+title: "bug: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug. Please do **not** include sensitive information
+        in screenshots or logs. For security vulnerabilities, follow SECURITY.md instead.
+  - type: dropdown
+    id: browser
+    attributes:
+      label: Browser
+      options:
+        - Chrome
+        - Edge
+        - Firefox
+        - Other (note in steps)
+    validations:
+      required: true
+  - type: dropdown
+    id: build
+    attributes:
+      label: Extension build mode
+      options:
+        - Development (pnpm dev)
+        - Packaged build
+        - Not sure
+    validations:
+      required: true
+  - type: input
+    id: page-type
+    attributes:
+      label: Page type
+      description: A public URL, "internal page", or one of the bundled demo pages.
+      placeholder: e.g. form-labels-page demo, or https://example.com
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open ...
+        2. Click "Scan current page"
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: dropdown
+    id: demo-repro
+    attributes:
+      label: Does it also happen on the bundled demo pages?
+      options:
+        - "Yes"
+        - "No"
+        - Not tested
+    validations:
+      required: true
+  - type: textarea
+    id: console
+    attributes:
+      label: Console errors (if any)
+      description: Paste any relevant console output. Remove anything sensitive.
+      render: shell
+    validations:
+      required: false
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots (only if safe to share)
+    validations:
+      required: false

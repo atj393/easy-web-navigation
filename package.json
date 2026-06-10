@@ -6,6 +6,14 @@
   "license": "MIT",
   "author": "atj393",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/atj393/easy-web-navigation.git"
+  },
+  "bugs": {
+    "url": "https://github.com/atj393/easy-web-navigation/issues"
+  },
+  "homepage": "https://github.com/atj393/easy-web-navigation#readme",
   "engines": {
     "node": ">=20"
   },

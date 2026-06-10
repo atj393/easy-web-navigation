@@ -1,0 +1,63 @@
+name: Feature request
+description: Suggest an idea or improvement.
+title: "feat: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the idea! Please keep in mind the project scope: Easy Web Navigation is a
+        read-only inspection tool — not an overlay, auto-fixer, or compliance certifier.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What problem are you trying to solve?
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+    validations:
+      required: true
+  - type: textarea
+    id: benefit
+    attributes:
+      label: User benefit
+      description: Who benefits and how?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+    validations:
+      required: false
+  - type: textarea
+    id: scope-risk
+    attributes:
+      label: Scope risk
+      description: Could this expand scope (complexity, maintenance, surprising behavior)?
+    validations:
+      required: false
+  - type: dropdown
+    id: permissions
+    attributes:
+      label: Does it require new browser permissions?
+      options:
+        - "No"
+        - "Yes (please explain above)"
+        - Not sure
+    validations:
+      required: true
+  - type: dropdown
+    id: overclaim-risk
+    attributes:
+      label: Could it create compliance-overclaiming risk?
+      description: e.g. implying a page is "compliant" or "certified".
+      options:
+        - "No"
+        - "Possibly (please explain above)"
+    validations:
+      required: true

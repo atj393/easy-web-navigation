@@ -1,0 +1,63 @@
+name: Accessibility rule proposal
+description: Propose a new or improved keyboard/navigation scanner rule.
+title: "rule: "
+labels: ["rule", "accessibility"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Rules must be **deterministic** and based only on what is observable in the DOM. They must
+        never imply legal compliance — a passing check is not proof of accessibility.
+  - type: input
+    id: wcag
+    attributes:
+      label: WCAG 2.2 criterion
+      placeholder: e.g. 2.4.7 Focus Visible (AA)
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Rule proposal
+      description: What should the rule detect, and what signal(s) does it use?
+    validations:
+      required: true
+  - type: textarea
+    id: failing
+    attributes:
+      label: Example failing HTML
+      render: html
+    validations:
+      required: true
+  - type: textarea
+    id: passing
+    attributes:
+      label: Example passing HTML
+      render: html
+    validations:
+      required: true
+  - type: textarea
+    id: false-positives
+    attributes:
+      label: False-positive risks
+      description: When might this rule fire incorrectly?
+    validations:
+      required: true
+  - type: textarea
+    id: manual-notes
+    attributes:
+      label: Manual testing notes
+      description: How should a human verify a real finding?
+    validations:
+      required: false
+  - type: dropdown
+    id: deterministic
+    attributes:
+      label: Is the rule deterministic?
+      description: Same DOM input always yields the same result, with no heuristics-by-guess.
+      options:
+        - "Yes"
+        - "Mostly (explain risks above)"
+        - "No"
+    validations:
+      required: true

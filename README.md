@@ -1,11 +1,28 @@
 # Easy Web Navigation
 
-A keyboard accessibility companion for the web — for Chrome, Edge, and Firefox.
+> A keyboard accessibility companion for the web.
 
-Easy Web Navigation is an open-source browser extension that helps users and developers inspect
-keyboard accessibility, focus visibility, tab order, navigation structure, and accessible names on
-web pages. It is an **inspection and assistive browsing tool** — not an overlay, not an automatic
-website fixer, and not a compliance certifier.
+[![CI](https://github.com/atj393/easy-web-navigation/actions/workflows/ci.yml/badge.svg)](https://github.com/atj393/easy-web-navigation/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6.svg)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-18-149eca.svg)](https://react.dev/)
+[![WXT](https://img.shields.io/badge/WXT-MV3-67d75b.svg)](https://wxt.dev/)
+[![WCAG 2.2](https://img.shields.io/badge/WCAG-2.2%20A%2FAA-005a9c.svg)](https://www.w3.org/TR/WCAG22/)
+
+**Repository:** https://github.com/atj393/easy-web-navigation
+
+Easy Web Navigation is an open-source browser extension for **Chrome, Edge, and Firefox** that helps
+users and developers inspect keyboard accessibility, focus visibility, tab order, navigation
+structure, and accessible names on web pages. It is an **inspection and assistive browsing tool** —
+not an overlay, not an automatic website fixer, and not a compliance certifier.
+
+## Who it's for
+
+- **Front-end developers** who want to spot keyboard issues while building, without leaving the page.
+- **QA and accessibility testers** who need a fast, read-only first pass and a shareable report.
+- **Keyboard-only users** who want to see where focus goes and how a page is structured.
+
+It complements — and never replaces — manual testing and testing with real assistive technologies.
 
 ## Why this exists
 
@@ -103,16 +120,58 @@ apps/
   extension/        WXT + React + MV3 extension (popup, options, background, content)
   demo-sites/       Static HTML pages for manual keyboard testing
 packages/
-  shared-types/     Framework-agnostic type contracts
-  wcag-rules/       WCAG criteria + rule metadata (placeholders)
-  dom-scanner/      Read-only DOM inspection (placeholders)
-  keyboard-engine/  Focus tracking + tab-path recording (skeletons)
-  focus-overlay/    Optional visual focus helper (skeleton)
+  shared-types/     Framework-agnostic type contracts and message types
+  wcag-rules/       WCAG criteria + rule metadata and deterministic rule evaluators
+  dom-scanner/      Read-only DOM inspection that produces a ScanResult
+  keyboard-engine/  Read-only tab-order computation (reuses dom-scanner detection)
+  focus-overlay/    Read-only visual overlay (focus helper, issue locator, tab markers)
   report-generator/ Markdown + JSON report output
 ```
 
 See [docs/architecture.md](docs/architecture.md) for messaging flow and the permissions/security
 approach.
+
+## Packages
+
+| Package                                                              | Responsibility                                                                |
+| -------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| [`@easy-web-navigation/shared-types`](packages/shared-types)         | Framework-agnostic type contracts and the typed message envelope.             |
+| [`@easy-web-navigation/wcag-rules`](packages/wcag-rules)             | WCAG 2.2 criteria + rule metadata and the deterministic rule evaluators.      |
+| [`@easy-web-navigation/dom-scanner`](packages/dom-scanner)           | Read-only DOM inspection, accessible-name and focusable detection.            |
+| [`@easy-web-navigation/keyboard-engine`](packages/keyboard-engine)   | Read-only keyboard tab-order computation.                                     |
+| [`@easy-web-navigation/focus-overlay`](packages/focus-overlay)       | Extension-owned, isolated visual overlay (focus helper, locate, tab markers). |
+| [`@easy-web-navigation/report-generator`](packages/report-generator) | Markdown and JSON report rendering.                                           |
+
+## Browser permissions
+
+Easy Web Navigation requests the **minimum** permissions needed and **no broad host permissions**:
+
+| Permission  | Why                                                                |
+| ----------- | ------------------------------------------------------------------ |
+| `activeTab` | Inspect the current tab only when you invoke the extension.        |
+| `scripting` | Inject the read-only content script into the active tab on demand. |
+| `storage`   | Persist your options (e.g. focus-helper preference) locally.       |
+
+`<all_urls>` and other broad host permissions are **not** requested. The content script is
+registered at runtime and injected only into the active tab when you act.
+
+## Privacy & security
+
+- **No data collection, no analytics, no telemetry.** Nothing is tracked.
+- **No remote API calls and no AI calls.** All analysis runs locally in your browser.
+- **No page content is uploaded** anywhere. Reports are generated locally and stay with you
+  (copied to your clipboard or downloaded as a file) until you choose to share them.
+- **No speech, no recording.**
+- **Read-only.** The extension never modifies inspected page nodes; the only DOM it creates is its
+  own isolated overlay container, fully removed when not in use.
+
+See [SECURITY.md](SECURITY.md) for the security policy and how to report a vulnerability.
+
+## Screenshots & demo
+
+> Screenshots and a short demo GIF will be added here. For now, load the extension in development
+> (`pnpm dev`), serve the [demo pages](#demo-pages), and follow [docs/demo-plan.md](docs/demo-plan.md)
+> for a 60-second walkthrough.
 
 ## Demo pages
 
@@ -125,21 +184,22 @@ keyboard experiences for testing:
 - `modal-focus-trap-page` — a dialog for testing keyboard traps.
 - `form-labels-page` — labeled vs. unlabeled inputs.
 
-## Compliance disclaimer
+## Accessibility & compliance disclaimer
 
-Easy Web Navigation helps inspect keyboard accessibility at runtime. **It does not certify legal compliance**
-with WCAG, BITV, EN 301 549, the European Accessibility Act (EAA), the ADA, or Section 508. Runtime
-inspection can surface issues and aid understanding, but it cannot guarantee conformance, and it is
-not a substitute for manual testing or expert review. See [docs/limitations.md](docs/limitations.md).
+Easy Web Navigation helps inspect keyboard accessibility at runtime. **It does not certify legal
+compliance** with WCAG, BITV, EN 301 549, the European Accessibility Act (EAA), the ADA, or
+Section 508. **A clean report is not a compliance pass.** Full accessibility requires source-level
+remediation, manual testing, and user testing with assistive technologies. See
+[docs/limitations.md](docs/limitations.md).
 
 ## Roadmap
 
-- **v0.1** — repository skeleton (this phase)
-- **v0.2** — DOM scanner
-- **v0.3** — focus helper
-- **v0.4** — tab-path visualization
-- **v0.5** — developer report export
-- **v1.0** — portfolio release
+- **v0.1** — repository skeleton ✅
+- **v0.2** — DOM scanner ✅
+- **v0.3** — focus helper ✅
+- **v0.4** — tab-path visualization ✅
+- **v0.5** — developer report export ✅
+- **v1.0** — portfolio release (in progress)
 
 See [docs/roadmap.md](docs/roadmap.md).
 
@@ -151,3 +211,28 @@ See [docs/roadmap.md](docs/roadmap.md).
 - Typed message passing between extension surfaces.
 - ESLint (flat config) + Prettier + Vitest + GitHub Actions CI.
 - Careful, honest positioning: an inspection/assistive tool, not an overlay or compliance product.
+
+## Contributing
+
+Contributions are welcome. Good first areas include scanner rules, test coverage, demo pages,
+documentation, and browser-compatibility fixes. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for
+setup, scope, workflow, and the pull-request checklist before opening a PR.
+
+## Code of Conduct
+
+This project follows a [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you agree to uphold
+it.
+
+## Security
+
+Please do **not** open public issues for exploitable vulnerabilities. See [SECURITY.md](SECURITY.md)
+for how to report privately and for the project's privacy posture.
+
+## Support
+
+For bugs and feature requests, see [SUPPORT.md](SUPPORT.md) and open a GitHub issue using the
+provided templates.
+
+## License
+
+Released under the [MIT License](LICENSE). Copyright (c) 2026 atj393.

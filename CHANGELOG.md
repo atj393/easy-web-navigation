@@ -6,6 +6,19 @@ All notable changes to Easy Web Navigation are documented here. The format is ba
 
 ## [Unreleased]
 
+### Added — Phase 0P: public open-source standardization
+
+- Standardized the repository for a public GitHub release as `atj393/easy-web-navigation`.
+- Added community health files: `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1),
+  `SECURITY.md` (private reporting + privacy posture), and `SUPPORT.md`.
+- Added GitHub issue templates (`bug_report`, `feature_request`, `accessibility_rule`, `config`) and
+  a pull-request template with a full quality/scope checklist.
+- Polished the README into a portfolio-ready document: badges, audience, browser-permissions table,
+  privacy & security notes, packages table, screenshots/demo placeholder, and community footer.
+- Added `repository`, `bugs`, and `homepage` metadata to the root `package.json`.
+- CI workflow now also runs the Firefox build and declares least-privilege `contents: read`.
+- No product behavior, scanner/overlay/report logic, or permissions changed.
+
 ### Added — Phase 0E: developer report export
 
 - Reworked the Markdown report (`@easy-web-navigation/report-generator`) into clean sections:

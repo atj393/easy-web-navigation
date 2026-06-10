@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability (private)
+    url: https://github.com/atj393/easy-web-navigation/security/advisories/new
+    about: Report exploitable vulnerabilities privately — do not open a public issue.
+  - name: Support & how to ask
+    url: https://github.com/atj393/easy-web-navigation/blob/main/SUPPORT.md
+    about: How to get help and what details to include.
+  - name: Contributing guide
+    url: https://github.com/atj393/easy-web-navigation/blob/main/CONTRIBUTING.md
+    about: Project scope, setup, and the pull-request checklist.

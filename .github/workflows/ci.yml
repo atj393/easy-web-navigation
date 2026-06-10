@@ -10,6 +10,8 @@ jobs:
   build:
     name: typecheck · lint · test · build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout
@@ -38,5 +40,8 @@ jobs:
       - name: Test
         run: pnpm test
 
-      - name: Build
+      - name: Build (Chromium / MV3)
         run: pnpm build
+
+      - name: Build (Firefox)
+        run: pnpm build:firefox

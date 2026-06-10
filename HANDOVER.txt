@@ -12,149 +12,106 @@ PROJECT NAME
   Tagline: A keyboard accessibility companion for the web.
 
 CURRENT PHASE
-  Phase 0E - developer report export + copy-to-clipboard. Strictly read-only.
+  Phase 0P - public open-source repository standardization + GitHub publish.
 
 CURRENT BRANCH
   main
 
 LATEST COMMIT HASH
-  (Run `git log -1 --pretty=fuller`. The Phase 0E commit message is:
-   "feat: improve developer report export".
-   Prior baselines after the 0N history rewrite:
-   0N rename = 7e7dd28, 0D = 54d3651, 0C = 8cd154d, 0B = 1890b49, 0A = 54dcba4.)
+  (Run `git log -1 --pretty=fuller`. The Phase 0P commit message is:
+   "docs: prepare public open-source repository".
+   Prior baselines: 0E = 17b9e02, 0N rename = 7e7dd28, 0D = 54d3651,
+   0C = 8cd154d, 0B = 1890b49, 0A = 54dcba4.)
 
 COMMIT AUTHOR
   atj393 <alexistoby393@gmail.com>  (local git identity set for this repo)
   No Co-Authored-By. No generated-by trailers. No assistant attribution.
 
 DATE/TIME OF UPDATE
-  2026-06-10 (Phase 0E).
+  2026-06-10 (Phase 0P).
 
 REPO PATH
   c:\Alexis\Test\browser\keyboard-extension\keywise-web
-  NOTE: the local root folder is still named "keywise-web" (not renamed; the
-  rename can be done manually later from the parent dir). Do not rename .git or
-  generated output folders.
+  NOTE: local root folder still named "keywise-web" (not renamed). Can be
+  renamed to easy-web-navigation later from the parent dir. Do not rename .git
+  or generated output folders.
+
+GITHUB REPOSITORY URL
+  https://github.com/atj393/easy-web-navigation
+
+GITHUB VISIBILITY
+  PUBLIC (created and pushed during Phase 0P).
+
+REMOTE STATUS
+  origin -> https://github.com/atj393/easy-web-navigation.git ; main pushed.
 
 SUMMARY OF WHAT CHANGED
-  - Reworked the Markdown report into clean sections (title, report type, Page,
-    Summary by severity + category, Issues with WCAG refs/rule/selector/preview/
-    runtime-observable note/why/recommendation, Disclaimer).
-  - Restructured the JSON report to a stable shape: productName, profile,
-    reportType, schemaVersion, disclaimer, generatedAt, page, summary, issues
-    (+ tabPathSummary only when provided).
-  - Strengthened the report disclaimer (developer aid; not a compliance pass;
-    requires source remediation + manual + AT testing).
-  - Added optional tab-path summary to the report, labeled "Runtime visual aid
-    only - not an audit metric". Added ReportOptions type in shared-types.
-  - Popup: split export into "Copy Markdown report" + "Download Markdown report"
-    with status messages; passes the latest tab-path summary to the report.
-  - Added apps/extension/lib/clipboard.ts (copyTextToClipboard): prefers
-    navigator.clipboard.writeText, falls back to a temporary off-screen textarea
-    + execCommand("copy") inside the popup document; dependencies injectable.
-  - Tests: report Markdown/JSON (incl. tab-path present/absent) + clipboard
-    helper. vitest include now also covers apps/**/lib/**/*.test.ts.
-  - Updated README, CHANGELOG, docs (architecture, roadmap, limitations), HANDOVER.
-
-REPORT GENERATOR (packages/report-generator/src/index.ts)
-  Exports: generateMarkdownReport(result, options?), generateJsonReport(result,
-  options?), DISCLAIMER, PRODUCT_NAME, REPORT_TYPE, SCHEMA_VERSION.
-  options: ReportOptions { tabPathSummary?: TabPathSummary }.
-  Pure / DOM-independent -> easy to unit test.
-
-CLIPBOARD HELPER (apps/extension/lib/clipboard.ts)
-  copyTextToClipboard(text, env?: { clipboard?, doc? }) -> Promise<boolean>.
-  Async API first, then textarea+execCommand fallback, else false. No auto-copy.
-
-POPUP (apps/extension/entrypoints/popup/App.tsx)
-  buildReport() -> generateMarkdownReport(result, { tabPathSummary }).
-  copyReport() uses copyTextToClipboard; downloadReport() Blob+anchor.
-  reportStatus messages: "Report copied to clipboard." / "Could not copy report.
-  Download is still available." / "Run a scan before exporting a report." /
-  "Report downloaded." Buttons disabled until a scan result exists.
+  - Standardized the repo for a public portfolio release (no product behavior
+    change).
+  - Added community files: CONTRIBUTING.md, CODE_OF_CONDUCT.md (Contributor
+    Covenant 2.1), SECURITY.md, SUPPORT.md.
+  - Added .github/ISSUE_TEMPLATE/{bug_report,feature_request,accessibility_rule,
+    config}.yml and .github/PULL_REQUEST_TEMPLATE.md.
+  - Polished README: badges (CI/license/TS/React/WXT/WCAG), repository link,
+    "Who it's for", Packages table, Browser permissions table, Privacy &
+    security, Screenshots/demo placeholder, strengthened compliance disclaimer,
+    roadmap status, community footer (Contributing/CoC/Security/Support/License).
+  - package.json: added repository, bugs, homepage (kept private:true, MIT).
+  - CI: added Firefox build step + least-privilege contents:read.
+  - Updated CHANGELOG (Phase 0P) and this HANDOVER.
 
 FILES AND FOLDERS CHANGED
-  packages/shared-types/src/index.ts            (+ReportOptions)
-  packages/report-generator/src/index.ts        (rewritten Markdown + JSON)
-  packages/report-generator/src/index.test.ts   (rewritten tests)
-  apps/extension/lib/clipboard.ts               (new helper)
-  apps/extension/lib/clipboard.test.ts          (new tests)
-  apps/extension/entrypoints/popup/App.tsx      (copy/download + status + tabsummary)
-  apps/extension/entrypoints/popup/style.css    (report status style)
-  vitest.config.ts                              (include apps/**/lib/**/*.test.ts)
-  README.md, CHANGELOG.md, docs/architecture.md, docs/roadmap.md,
-  docs/limitations.md, HANDOVER.txt
+  package.json, README.md, CHANGELOG.md, HANDOVER.txt
+  CONTRIBUTING.md, CODE_OF_CONDUCT.md, SECURITY.md, SUPPORT.md
+  .github/PULL_REQUEST_TEMPLATE.md
+  .github/ISSUE_TEMPLATE/bug_report.yml
+  .github/ISSUE_TEMPLATE/feature_request.yml
+  .github/ISSUE_TEMPLATE/accessibility_rule.yml
+  .github/ISSUE_TEMPLATE/config.yml
+  .github/workflows/ci.yml
 
 COMMANDS RUN
-  Inspect: git status/branch/log, node v24.13.0, pnpm 9.15.9
-  pnpm test           -> PASS (7 files, 76 tests)
-  pnpm typecheck      -> PASS
-  pnpm lint           -> PASS
-  pnpm build          -> PASS (chrome-mv3; permissions unchanged:
-                         activeTab/scripting/storage; no host_permissions)
-  pnpm build:firefox  -> PASS (firefox-mv2)
-  pnpm run ci         -> PASS (run as `pnpm run ci`, not `pnpm ci`)
+  Inspect: git status/branch/log, node v24.13.0, pnpm 9.15.9, gh 2.89.0
+  gh auth status -> logged in as atj393 (scopes incl. repo, workflow)
+  pnpm typecheck/lint/test/build/build:firefox/run ci -> PASS (see test results)
+  gh repo create atj393/easy-web-navigation --public --source . --remote origin
+    --push  (then gh repo edit + topics)
 
 TEST RESULTS
-  76 tests passing across 7 files. New/updated: report-generator (6) covering
-  product name, page URL/title, recommendations, disclaimer, tab-path summary
-  present/absent, JSON shape; clipboard (5) covering async API, fallback,
-  rejection-then-fallback, fallback-failure, neither-available. Existing
-  scanner/rules/overlay/tab-path/types tests still pass.
-
-OLD-NAME SEARCH
-  rg "KeyWise Web|KeyWise|Keywise|keywise-web|@keywise|KEYWISE" (excl
-  node_modules/.git/.output) -> only CHANGELOG.md (Phase 0N rename note) and
-  HANDOVER.txt (history + local folder path). No old names in code/config.
+  76 tests passing across 7 files (unchanged by this phase). Typecheck, lint,
+  Chromium + Firefox builds all pass.
 
 IMPORTANT DECISIONS
-  - Report generator stays a pure function; tab-path summary is passed in via
-    ReportOptions rather than plumbed through ScanResult, keeping the scan model
-    unchanged.
-  - "Runtime-observable only" is shown as a fixed per-issue line (all current
-    rules are DOM-observable); no new A11yIssue field was added.
-  - Clipboard helper lives in apps/extension/lib and is dependency-injected so it
-    is unit-testable without a real browser clipboard; vitest include broadened
-    to apps/**/lib/**/*.test.ts.
-  - JSON report omits tabPathSummary entirely when not provided (matches
-    "tabPathSummary if provided").
+  - Root package kept private:true (workspace-only; not published to npm) while
+    still declaring license/repository/bugs/homepage metadata.
+  - blank_issues_enabled:false (templates cover bug/feature/rule); a private
+    Security Advisory contact link is provided.
+  - CI also builds Firefox now (stable locally).
+  - Old-name references remain ONLY in CHANGELOG (rename note) and HANDOVER
+    (history + local folder path), which is allowed.
 
 KNOWN LIMITATIONS
-  - A report reflects one scan; a clean report is not a compliance pass.
-  - Clipboard API may be unavailable (older/insecure contexts) -> textarea
-    fallback -> if that fails, user is told download is still available.
-  - Tab-path summary in the report is a runtime visual aid, not an audit metric.
-  - Local root folder still named keywise-web; Firefox build is MV2; no icons.
-  - missing-visible-focus still deferred (unchanged by this phase).
+  - No extension icons yet (added in Phase 0F).
+  - No screenshots/GIFs yet (placeholders only).
+  - GitHub Discussions not enabled.
+  - Local folder still keywise-web; Firefox build is MV2; missing-visible-focus
+    still deferred.
 
 WHAT WAS INTENTIONALLY NOT IMPLEMENTED
-  - No new scanner rules, no overlay/tab-path logic changes (only report data
-    plumbing).
-  - No report preview UI, no advanced filters, no settings expansion.
-  - No inspected-node mutation, no focus change, no tab-order change, no ARIA
-    injection, no auto-fix.
-  - No AI, no speech, no permission changes, no remote, no publish, no PR.
-
-RECOMMENDED MANUAL BROWSER WALKTHROUGH
-  1. pnpm dev (loads chrome-mv3 dev build).
-  2. Serve demos: pnpm -C apps/demo-sites preview (http://localhost:4321).
-  3. Open form-labels-page.html or fake-buttons-page.html; "Scan current page".
-  4. "Copy Markdown report" -> paste into an editor; confirm clean sections +
-     disclaimer.
-  5. "Download Markdown report" -> open easy-web-navigation-report.md.
-  6. Toggle "Show tab path", then copy/download again; confirm the report's tab
-     path summary says "Runtime visual aid only - not an audit metric".
-  7. Open a chrome:// page; confirm friendly failure remains.
-  8. Confirm no compliance claim appears anywhere.
+  - No product/scanner/overlay/tab-path/report logic changes.
+  - No permission changes, no AI, no speech, no auto-fix, no compliance claims.
+  - No release automation, no deployment workflow, no FUNDING/CODEOWNERS/stale
+    bots, no store publishing.
 
 NEXT RECOMMENDED PHASE
-  Phase 0F - portfolio/store polish: extension icons, popup visual refinement,
-  options page polish, and a documented 60-second demo flow. Still read-only.
+  Phase 0F - portfolio/extension presentation polish (icons, popup/options
+  visual polish, severity legend, README demo placeholders, 60s demo script).
 
 NEXT RECOMMENDED PROMPT SUMMARY
-  "Phase 0F: Add extension icons (16/32/48/128) wired in wxt.config, polish the
-   popup and options visuals (spacing, severity legend, empty states), and write
-   a concrete 60-second portfolio demo script in docs/demo-plan.md tied to the
-   demo pages. Keep everything read-only; no new permissions, no AI, no speech,
-   no compliance claims. Keep commits authored by atj393 (no Co-Authored-By).
-   Update HANDOVER.txt and CHANGELOG.md."
+  "Phase 0F: Add original PNG icons (16/32/48/128) + icon-source.svg under
+   apps/extension/public, wired into the manifest; polish popup and options
+   visuals (severity legend, empty/error states); add a concrete 60-second demo
+   script to docs/demo-plan.md and a docs/assets placeholder; keep everything
+   read-only, no new permissions, no AI/speech/auto-fix/compliance claims.
+   Commits authored by atj393 (no Co-Authored-By). Update HANDOVER.txt and
+   CHANGELOG.md; push to origin."
