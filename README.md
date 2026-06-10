@@ -169,9 +169,12 @@ See [SECURITY.md](SECURITY.md) for the security policy and how to report a vulne
 
 ## Screenshots & demo
 
-> Screenshots and a short demo GIF will be added here. For now, load the extension in development
-> (`pnpm dev`), serve the [demo pages](#demo-pages), and follow [docs/demo-plan.md](docs/demo-plan.md)
-> for a 60-second walkthrough.
+> Screenshots and a short demo GIF will live in [docs/assets/](docs/assets/README.md) (none committed
+> yet). For now, load the extension in development (`pnpm dev`), serve the [demo pages](#demo-pages),
+> and follow the 60-second walkthrough in [docs/demo-plan.md](docs/demo-plan.md).
+
+The toolbar icon is original artwork generated from
+[`apps/extension/public/icon-source.svg`](apps/extension/public/icon-source.svg).
 
 ## Demo pages
 

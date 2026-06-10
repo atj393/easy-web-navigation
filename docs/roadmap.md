@@ -41,8 +41,13 @@ aggressive auto-fix) do not.
 - Popup **Copy Markdown report** (clipboard API + textarea fallback) and **Download Markdown
   report**; optional tab-path summary clearly labeled as a runtime visual aid.
 
-## v1.0 — Portfolio release
+## v1.0 — Portfolio release (in progress)
 
-- Polished popup/options UX, documented demo flow, and store-ready packaging for Chromium and
-  Firefox.
-- Clear, honest positioning as an inspection/assistive tool.
+- **Phase 0P (done):** public open-source standardization (community files, templates, security and
+  support policies) and publishing to `atj393/easy-web-navigation`.
+- **Phase 0F (done):** presentation polish — original extension icons wired into the manifest,
+  polished popup (severity legend, empty/error states) and options page, and a concrete 60-second
+  demo script.
+- **Remaining:** screenshots/GIFs, manual cross-browser testing, and store-ready packaging for
+  Chromium and Firefox.
+- Clear, honest positioning as an inspection/assistive tool throughout.

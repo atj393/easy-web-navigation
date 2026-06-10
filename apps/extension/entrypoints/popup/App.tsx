@@ -6,21 +6,29 @@ import {
   PRODUCT_NAME,
   PRODUCT_TAGLINE,
   type ExtensionMessage,
+  type IssueSeverity,
   type ScanResult,
   type TabPathSummary,
 } from "@easy-web-navigation/shared-types";
 
 /**
- * Popup UI (Phase 0E).
+ * Popup UI (Phase 0F).
  *
  * "Scan current page" runs a read-only scan of the active tab. "Show focus
  * helper" and "Show tab path" toggle read-only visual overlays. Each issue has
- * a "Locate" action. The Markdown report can be copied to the clipboard or
- * downloaded. Nothing here modifies the inspected page.
+ * a "Locate" action. The Markdown report can be copied or downloaded. Nothing
+ * here modifies the inspected page.
  */
 const DISCLAIMER =
-  "Easy Web Navigation helps inspect keyboard accessibility at runtime. It does not certify legal " +
-  "compliance with WCAG, BITV, EN 301 549, EAA, ADA, or Section 508.";
+  "Easy Web Navigation inspects keyboard accessibility at runtime. It does not certify legal " +
+  "compliance, and a clean report is not a compliance pass.";
+
+const SEVERITY_LEGEND: { key: IssueSeverity; label: string }[] = [
+  { key: "critical", label: "Critical" },
+  { key: "serious", label: "Serious" },
+  { key: "moderate", label: "Moderate" },
+  { key: "minor", label: "Minor" },
+];
 
 type Phase = "idle" | "scanning" | "done" | "error";
 
@@ -214,20 +222,25 @@ export function App() {
   const statusText =
     phase === "scanning"
       ? "Scanning the active page…"
-      : phase === "error"
-        ? (error ?? "Something went wrong.")
-        : phase === "done" && result
-          ? `${result.summary.total} issue(s) · ${result.focusableCount} focusable element(s)`
-          : "Ready. Click “Scan current page”.";
+      : phase === "done" && result
+        ? `${result.summary.total} issue(s) · ${result.focusableCount} focusable element(s)`
+        : "Ready — scan the current page to begin.";
 
   return (
     <main className="popup">
       <header className="popup__header">
-        <h1 className="popup__title">{PRODUCT_NAME}</h1>
-        <p className="popup__tagline">{PRODUCT_TAGLINE}</p>
-        <p className="popup__status" role="status">
-          {statusText}
-        </p>
+        <div className="brand">
+          <img className="brand__icon" src="/icon-48.png" alt="" width={32} height={32} />
+          <div>
+            <h1 className="popup__title">{PRODUCT_NAME}</h1>
+            <p className="popup__tagline">{PRODUCT_TAGLINE}</p>
+          </div>
+        </div>
+        {phase !== "error" && (
+          <p className="popup__status" role="status">
+            {statusText}
+          </p>
+        )}
         {result && (
           <p className="popup__page" title={result.url}>
             {result.title || result.url || "(untitled page)"}
@@ -244,23 +257,30 @@ export function App() {
         {phase === "scanning" ? "Scanning…" : "Scan current page"}
       </button>
 
-      <button
-        type="button"
-        className={`btn btn--toggle${focusHelperOn ? " btn--on" : ""}`}
-        onClick={toggleFocusHelper}
-        aria-pressed={focusHelperOn}
-      >
-        {focusHelperOn ? "Hide focus helper" : "Show focus helper"}
-      </button>
+      {phase === "error" && (
+        <p className="popup__error" role="alert">
+          {error ?? "Something went wrong."}
+        </p>
+      )}
 
-      <button
-        type="button"
-        className={`btn btn--toggle${tabPathOn ? " btn--on" : ""}`}
-        onClick={toggleTabPath}
-        aria-pressed={tabPathOn}
-      >
-        {tabPathOn ? "Hide tab path" : "Show tab path"}
-      </button>
+      <div className="popup__tools">
+        <button
+          type="button"
+          className={`btn btn--toggle${focusHelperOn ? " btn--on" : ""}`}
+          onClick={toggleFocusHelper}
+          aria-pressed={focusHelperOn}
+        >
+          {focusHelperOn ? "Hide focus helper" : "Show focus helper"}
+        </button>
+        <button
+          type="button"
+          className={`btn btn--toggle${tabPathOn ? " btn--on" : ""}`}
+          onClick={toggleTabPath}
+          aria-pressed={tabPathOn}
+        >
+          {tabPathOn ? "Hide tab path" : "Show tab path"}
+        </button>
+      </div>
 
       {tabPathOn && tabSummary && (
         <p className="popup__tabsummary" role="status">
@@ -284,8 +304,24 @@ export function App() {
       </section>
 
       <section aria-label="Issues" className="issues">
-        <h2 className="section__title">Issues</h2>
-        {!result && <p className="issues__empty">No scan run yet.</p>}
+        <div className="issues__head">
+          <h2 className="section__title">Issues</h2>
+          <ul className="legend" aria-label="Severity legend">
+            {SEVERITY_LEGEND.map(({ key, label }) => (
+              <li key={key} className="legend__item">
+                <span className={`legend__dot legend__dot--${key}`} aria-hidden="true" />
+                {label}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {!result && (
+          <p className="issues__empty">
+            No scan yet. Click <strong>Scan current page</strong> to inspect keyboard accessibility,
+            focus, tab order, and accessible names.
+          </p>
+        )}
         {result && result.issues.length === 0 && (
           <p className="issues__empty">
             No issues found by the implemented rules. This is not a guarantee of accessibility.

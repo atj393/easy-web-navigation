@@ -25,6 +25,14 @@ export default tseslint.config(
     },
   },
   {
+    // Node ESM scripts (e.g. icon generation).
+    files: ["**/*.mjs", "**/scripts/**/*.js"],
+    languageOptions: {
+      sourceType: "module",
+      globals: { ...globals.node },
+    },
+  },
+  {
     files: ["**/*.{ts,tsx}"],
     languageOptions: {
       ecmaVersion: 2022,
