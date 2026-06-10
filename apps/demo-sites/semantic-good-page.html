@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Semantic Good Page — KeyWise Web Demo</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        margin: 0;
+        line-height: 1.6;
+      }
+      .skip-link {
+        position: absolute;
+        left: -999px;
+      }
+      .skip-link:focus {
+        left: 8px;
+        top: 8px;
+        background: #fff;
+        padding: 8px;
+        border: 2px solid #2563eb;
+      }
+      main {
+        max-width: 680px;
+        margin: 24px auto;
+        padding: 0 16px;
+      }
+      :focus-visible {
+        outline: 3px solid #2563eb;
+        outline-offset: 2px;
+      }
+      nav a {
+        margin-right: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to main content</a>
+    <header>
+      <nav aria-label="Primary">
+        <a href="#section-1">Section 1</a>
+        <a href="#section-2">Section 2</a>
+      </nav>
+    </header>
+    <main id="main">
+      <h1>Semantic Good Page</h1>
+      <p>
+        This page demonstrates a clean keyboard experience: a skip link, a main landmark, properly
+        labeled controls, a logical heading order, and a visible focus indicator. It is the baseline
+        KeyWise Web should report as healthy.
+      </p>
+      <h2 id="section-1">Section 1</h2>
+      <p>Real, focusable controls:</p>
+      <button type="button">A real button</button>
+      <a href="#section-2">A real link</a>
+      <h2 id="section-2">Section 2</h2>
+      <form>
+        <label for="email">Email address</label>
+        <input id="email" type="email" name="email" />
+        <button type="submit">Submit</button>
+      </form>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fake Buttons Page — KeyWise Web Demo</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 680px;
+        margin: 24px auto;
+        padding: 0 16px;
+        line-height: 1.6;
+      }
+      .fake-button {
+        display: inline-block;
+        padding: 8px 14px;
+        background: #2563eb;
+        color: #fff;
+        border-radius: 6px;
+        cursor: pointer;
+        user-select: none;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Fake Buttons Page</h1>
+    <p>
+      These look and behave like buttons on click, but they are plain &lt;div&gt; elements with no
+      role and no keyboard support. A keyboard user cannot reach or activate them. This is a common,
+      serious accessibility failure.
+    </p>
+
+    <div class="fake-button" onclick="alert('clicked')">Save</div>
+    <div class="fake-button" onclick="alert('clicked')">Cancel</div>
+
+    <p>For comparison, this is the correct, focusable equivalent:</p>
+    <button type="button" onclick="alert('clicked')">Save (real button)</button>
+  </body>
+</html>

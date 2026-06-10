@@ -1,0 +1,36 @@
+{
+  "name": "keywise-web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "WCAG 2.2 keyboard accessibility companion browser extension (inspection / assistive browsing tool).",
+  "license": "MIT",
+  "author": "atj393",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@9.15.9",
+  "scripts": {
+    "dev": "pnpm -C apps/extension dev",
+    "dev:firefox": "pnpm -C apps/extension dev:firefox",
+    "build": "pnpm -C apps/extension build",
+    "build:firefox": "pnpm -C apps/extension build:firefox",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "ci": "pnpm typecheck && pnpm lint && pnpm test && pnpm build"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@types/node": "^22.10.5",
+    "@vitest/coverage-v8": "^2.1.8",
+    "eslint": "^9.17.0",
+    "globals": "^15.14.0",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.19.0",
+    "vitest": "^2.1.8"
+  }
+}

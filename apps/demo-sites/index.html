@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KeyWise Web — Demo Sites</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 720px;
+        margin: 40px auto;
+        padding: 0 16px;
+        line-height: 1.6;
+      }
+      a:focus-visible {
+        outline: 3px solid #2563eb;
+        outline-offset: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>KeyWise Web — Demo Sites</h1>
+    <p>
+      Static pages used to exercise keyboard accessibility inspection. Some pages contain deliberate
+      keyboard problems so the tool has something to find in later phases.
+    </p>
+    <ul>
+      <li><a href="./semantic-good-page.html">Semantic good page</a> — a clean baseline.</li>
+      <li>
+        <a href="./broken-keyboard-page.html">Broken keyboard page</a> — unreachable controls.
+      </li>
+      <li>
+        <a href="./fake-buttons-page.html">Fake buttons page</a> — divs pretending to be buttons.
+      </li>
+      <li><a href="./modal-focus-trap-page.html">Modal focus trap page</a> — a trapping dialog.</li>
+      <li>
+        <a href="./form-labels-page.html">Form labels page</a> — labeled vs. unlabeled inputs.
+      </li>
+    </ul>
+  </body>
+</html>

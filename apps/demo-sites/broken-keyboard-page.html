@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Broken Keyboard Page — KeyWise Web Demo</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 680px;
+        margin: 24px auto;
+        padding: 0 16px;
+        line-height: 1.6;
+      }
+      /* Deliberately removes the focus outline (bad practice). */
+      a,
+      button,
+      input {
+        outline: none;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Broken Keyboard Page</h1>
+    <p>
+      This page contains deliberate keyboard problems for testing: a removed focus outline, a
+      positive tabindex that distorts focus order, and a control that is only reachable with the
+      mouse. Do not copy these patterns.
+    </p>
+
+    <p>Positive tabindex distorts the natural order:</p>
+    <button type="button" tabindex="3">Third</button>
+    <button type="button" tabindex="1">First</button>
+    <button type="button" tabindex="2">Second</button>
+
+    <p>This control is removed from the tab order even though it looks interactive:</p>
+    <a href="#" tabindex="-1">Unreachable link</a>
+  </body>
+</html>

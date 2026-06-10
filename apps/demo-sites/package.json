@@ -1,0 +1,9 @@
+{
+  "name": "@keywise/demo-sites",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Static demo pages for exercising KeyWise Web keyboard inspection (no build step).",
+  "scripts": {
+    "preview": "npx --yes serve -l 4321 ."
+  }
+}

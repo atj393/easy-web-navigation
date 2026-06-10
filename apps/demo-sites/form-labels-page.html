@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Form Labels Page — KeyWise Web Demo</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 680px;
+        margin: 24px auto;
+        padding: 0 16px;
+        line-height: 1.6;
+      }
+      label,
+      input {
+        display: block;
+        margin: 6px 0;
+      }
+      :focus-visible {
+        outline: 3px solid #2563eb;
+        outline-offset: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Form Labels Page</h1>
+    <p>
+      This page mixes correctly labeled inputs with unlabeled ones, so the inspector has both
+      passing and failing form controls to report. Labels and instructions matter for "Labels or
+      Instructions" (3.3.2) and "Name, Role, Value" (4.1.2).
+    </p>
+
+    <form>
+      <h2>Labeled (good)</h2>
+      <label for="name">Full name</label>
+      <input id="name" type="text" name="name" />
+
+      <label for="phone">Phone number</label>
+      <input id="phone" type="tel" name="phone" />
+
+      <h2>Unlabeled (bad)</h2>
+      <!-- No associated label and no accessible name. -->
+      <input type="text" name="mystery" placeholder="What is this field?" />
+      <input type="text" name="mystery2" />
+
+      <button type="submit">Submit</button>
+    </form>
+  </body>
+</html>

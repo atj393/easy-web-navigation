@@ -1,0 +1,32 @@
+{
+  "name": "@keywise/extension",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wxt",
+    "dev:firefox": "wxt -b firefox",
+    "build": "wxt build",
+    "build:firefox": "wxt build -b firefox",
+    "zip": "wxt zip",
+    "typecheck": "wxt prepare && tsc --noEmit",
+    "postinstall": "wxt prepare"
+  },
+  "dependencies": {
+    "@keywise/dom-scanner": "workspace:*",
+    "@keywise/focus-overlay": "workspace:*",
+    "@keywise/keyboard-engine": "workspace:*",
+    "@keywise/report-generator": "workspace:*",
+    "@keywise/shared-types": "workspace:*",
+    "@keywise/wcag-rules": "workspace:*",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@wxt-dev/module-react": "1.1.4",
+    "typescript": "^5.7.2",
+    "wxt": "^0.20.0"
+  }
+}

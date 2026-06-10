@@ -1,0 +1,8 @@
+{
+  // Extends the WXT-generated tsconfig (created by `wxt prepare`), which in
+  // turn wires up auto-import types, `#imports`, and the DOM/React libs.
+  "extends": "./.wxt/tsconfig.json",
+  "compilerOptions": {
+    "jsx": "react-jsx"
+  }
+}
