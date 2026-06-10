@@ -12,137 +12,149 @@ PROJECT NAME
   Tagline: A keyboard accessibility companion for the web.
 
 CURRENT PHASE
-  Phase 0N - project rename (KeyWise Web -> Easy Web Navigation). Rename-only;
-  no feature/permission/logic changes beyond rename-driven imports/config.
+  Phase 0E - developer report export + copy-to-clipboard. Strictly read-only.
 
 CURRENT BRANCH
   main
 
 LATEST COMMIT HASH
-  (Run `git log -1 --pretty=fuller`. The Phase 0N commit message is:
-   "chore: rename project to Easy Web Navigation".
-   Prior baselines: 0D = 4894c5e, 0C = 2bab9ad, 0B = 6efbfb5, 0A = 5f66f62.)
+  (Run `git log -1 --pretty=fuller`. The Phase 0E commit message is:
+   "feat: improve developer report export".
+   Prior baselines after the 0N history rewrite:
+   0N rename = 7e7dd28, 0D = 54d3651, 0C = 8cd154d, 0B = 1890b49, 0A = 54dcba4.)
 
 COMMIT AUTHOR
   atj393 <alexistoby393@gmail.com>  (local git identity set for this repo)
   No Co-Authored-By. No generated-by trailers. No assistant attribution.
 
 DATE/TIME OF UPDATE
-  2026-06-10 (Phase 0N).
+  2026-06-10 (Phase 0E).
 
 REPO PATH
   c:\Alexis\Test\browser\keyboard-extension\keywise-web
-  NOTE: the local root folder is still named "keywise-web". It was NOT renamed
-  (cannot rename the folder while running inside it). It can be renamed to
-  "easy-web-navigation" manually later from the parent directory; .git and
-  generated output folders should not be renamed.
-
-NAMING (FINAL)
-  Product display name: Easy Web Navigation
-  Repository slug:      easy-web-navigation
-  Package scope:        @easy-web-navigation
-  Tagline:              A keyboard accessibility companion for the web.
+  NOTE: the local root folder is still named "keywise-web" (not renamed; the
+  rename can be done manually later from the parent dir). Do not rename .git or
+  generated output folders.
 
 SUMMARY OF WHAT CHANGED
-  - Replaced the product name everywhere: KeyWise Web -> Easy Web Navigation.
-  - Replaced package scope @keywise -> @easy-web-navigation across all package
-    names, internal dependencies, and imports.
-  - Replaced slug keywise-web -> easy-web-navigation.
-  - Renamed internal identifiers: __keywiseWebInitialized ->
-    __easyWebNavigationInitialized; data-keywise-overlay attribute ->
-    data-easy-web-navigation-overlay; export filename keywise-report.md ->
-    easy-web-navigation-report.md.
-  - Extension manifest name -> "Easy Web Navigation"; description ->
-    "A keyboard accessibility companion for inspecting focus, tab order, and
-    navigation issues on web pages."
-  - Popup shows product name + tagline; options shows product name.
-  - Added PRODUCT_NAME / PRODUCT_TAGLINE constants in shared-types; popup uses
-    them; added a shared-types test asserting them.
-  - Updated README, all docs, CHANGELOG (Phase 0N entry), HANDOVER.
-  - Ran pnpm install to refresh pnpm-lock.yaml and relink workspace scopes.
+  - Reworked the Markdown report into clean sections (title, report type, Page,
+    Summary by severity + category, Issues with WCAG refs/rule/selector/preview/
+    runtime-observable note/why/recommendation, Disclaimer).
+  - Restructured the JSON report to a stable shape: productName, profile,
+    reportType, schemaVersion, disclaimer, generatedAt, page, summary, issues
+    (+ tabPathSummary only when provided).
+  - Strengthened the report disclaimer (developer aid; not a compliance pass;
+    requires source remediation + manual + AT testing).
+  - Added optional tab-path summary to the report, labeled "Runtime visual aid
+    only - not an audit metric". Added ReportOptions type in shared-types.
+  - Popup: split export into "Copy Markdown report" + "Download Markdown report"
+    with status messages; passes the latest tab-path summary to the report.
+  - Added apps/extension/lib/clipboard.ts (copyTextToClipboard): prefers
+    navigator.clipboard.writeText, falls back to a temporary off-screen textarea
+    + execCommand("copy") inside the popup document; dependencies injectable.
+  - Tests: report Markdown/JSON (incl. tab-path present/absent) + clipboard
+    helper. vitest include now also covers apps/**/lib/**/*.test.ts.
+  - Updated README, CHANGELOG, docs (architecture, roadmap, limitations), HANDOVER.
 
-REPLACEMENT METHOD / DECISIONS
-  - Applied an ordered, mechanical rename via perl over `git ls-files`
-    (excluding HANDOVER.txt and pnpm-lock.yaml), order chosen to avoid breaking
-    identifiers: @keywise/ -> @easy-web-navigation/; __keywiseWebInitialized;
-    data-keywise-overlay; keywise-report; keywise-web; "KeyWise Web";
-    "KeyWise"; "Keywise".
-  - "keywise"/"KeyWise" was exclusively the brand token, so replacement was safe
-    and did NOT touch WCAG/keyboard/navigation/standards wording.
-  - No exported TS symbols contained "KeyWise", so none were renamed (only
-    string/comment/identifier-prefix occurrences).
-  - The only intentional old-name mentions remaining are in CHANGELOG (the
-    Phase 0N rename note) and HANDOVER (this rename history).
+REPORT GENERATOR (packages/report-generator/src/index.ts)
+  Exports: generateMarkdownReport(result, options?), generateJsonReport(result,
+  options?), DISCLAIMER, PRODUCT_NAME, REPORT_TYPE, SCHEMA_VERSION.
+  options: ReportOptions { tabPathSummary?: TabPathSummary }.
+  Pure / DOM-independent -> easy to unit test.
 
-FILES AND FOLDERS CHANGED (rename touched ~40 files)
-  Root: package.json (name easy-web-navigation), README.md, CHANGELOG.md,
-        HANDOVER.txt, eslint.config.js, pnpm-lock.yaml
-  Extension: apps/extension/package.json (@easy-web-navigation/extension + deps),
-        wxt.config.ts (name + description), entrypoints/background.ts,
-        entrypoints/content.ts (flag + comments + imports),
-        entrypoints/popup/{App.tsx,index.html,style.css},
-        entrypoints/options/{App.tsx,index.html}, lib/settings.ts
-  Demo: apps/demo-sites/package.json (@easy-web-navigation/demo-sites) + the
-        five demo HTML pages + index.html
-  Packages (name + deps + imports + comments):
-        shared-types (+PRODUCT_NAME/PRODUCT_TAGLINE +test), wcag-rules
-        (+criteria.ts), dom-scanner, keyboard-engine, focus-overlay
-        (data-* attribute + tests), report-generator (tool name + tests)
-  Docs: docs/{architecture,limitations,roadmap,demo-plan,wcag-keyboard-profile}.md
-  No source files/folders were named with "keywise"; none needed git mv.
+CLIPBOARD HELPER (apps/extension/lib/clipboard.ts)
+  copyTextToClipboard(text, env?: { clipboard?, doc? }) -> Promise<boolean>.
+  Async API first, then textarea+execCommand fallback, else false. No auto-copy.
+
+POPUP (apps/extension/entrypoints/popup/App.tsx)
+  buildReport() -> generateMarkdownReport(result, { tabPathSummary }).
+  copyReport() uses copyTextToClipboard; downloadReport() Blob+anchor.
+  reportStatus messages: "Report copied to clipboard." / "Could not copy report.
+  Download is still available." / "Run a scan before exporting a report." /
+  "Report downloaded." Buttons disabled until a scan result exists.
+
+FILES AND FOLDERS CHANGED
+  packages/shared-types/src/index.ts            (+ReportOptions)
+  packages/report-generator/src/index.ts        (rewritten Markdown + JSON)
+  packages/report-generator/src/index.test.ts   (rewritten tests)
+  apps/extension/lib/clipboard.ts               (new helper)
+  apps/extension/lib/clipboard.test.ts          (new tests)
+  apps/extension/entrypoints/popup/App.tsx      (copy/download + status + tabsummary)
+  apps/extension/entrypoints/popup/style.css    (report status style)
+  vitest.config.ts                              (include apps/**/lib/**/*.test.ts)
+  README.md, CHANGELOG.md, docs/architecture.md, docs/roadmap.md,
+  docs/limitations.md, HANDOVER.txt
 
 COMMANDS RUN
   Inspect: git status/branch/log, node v24.13.0, pnpm 9.15.9
-  rg searches for old/new names (see "OLD-NAME SEARCH" below)
-  pnpm install        -> OK (lock refreshed, scopes relinked)
+  pnpm test           -> PASS (7 files, 76 tests)
   pnpm typecheck      -> PASS
   pnpm lint           -> PASS
-  pnpm test           -> PASS (6 files, 68 tests)
   pnpm build          -> PASS (chrome-mv3; permissions unchanged:
                          activeTab/scripting/storage; no host_permissions)
   pnpm build:firefox  -> PASS (firefox-mv2)
-  pnpm run ci         -> PASS
+  pnpm run ci         -> PASS (run as `pnpm run ci`, not `pnpm ci`)
 
 TEST RESULTS
-  68 tests passing across 6 files (added 1 product-name constant test).
-  Existing scanner/rule/report/overlay/keyboard-engine tests pass with renamed
-  package specifiers and the data-easy-web-navigation-overlay attribute.
+  76 tests passing across 7 files. New/updated: report-generator (6) covering
+  product name, page URL/title, recommendations, disclaimer, tab-path summary
+  present/absent, JSON shape; clipboard (5) covering async API, fallback,
+  rejection-then-fallback, fallback-failure, neither-available. Existing
+  scanner/rules/overlay/tab-path/types tests still pass.
 
-OLD-NAME SEARCH (after edits)
-  rg "KeyWise|Keywise|keywise|@keywise|KEYWISE" (excl node_modules/.git/.output)
-  -> only CHANGELOG.md (Phase 0N rename note) and HANDOVER.txt (history).
-  rg "Easy Web Navigation|easy-web-navigation|@easy-web-navigation"
-  -> present in manifest/config, popup, options, docs, package metadata, tests.
+OLD-NAME SEARCH
+  rg "KeyWise Web|KeyWise|Keywise|keywise-web|@keywise|KEYWISE" (excl
+  node_modules/.git/.output) -> only CHANGELOG.md (Phase 0N rename note) and
+  HANDOVER.txt (history + local folder path). No old names in code/config.
+
+IMPORTANT DECISIONS
+  - Report generator stays a pure function; tab-path summary is passed in via
+    ReportOptions rather than plumbed through ScanResult, keeping the scan model
+    unchanged.
+  - "Runtime-observable only" is shown as a fixed per-issue line (all current
+    rules are DOM-observable); no new A11yIssue field was added.
+  - Clipboard helper lives in apps/extension/lib and is dependency-injected so it
+    is unit-testable without a real browser clipboard; vitest include broadened
+    to apps/**/lib/**/*.test.ts.
+  - JSON report omits tabPathSummary entirely when not provided (matches
+    "tabPathSummary if provided").
 
 KNOWN LIMITATIONS
-  - Local root folder still named keywise-web (rename manually later).
-  - GitHub remote (if/when created) should use the slug easy-web-navigation.
-  - Firefox build is MV2 (WXT default); Chrome/Edge MV3. No icons yet.
+  - A report reflects one scan; a clean report is not a compliance pass.
+  - Clipboard API may be unavailable (older/insecure contexts) -> textarea
+    fallback -> if that fails, user is told download is still available.
+  - Tab-path summary in the report is a runtime visual aid, not an audit metric.
+  - Local root folder still named keywise-web; Firefox build is MV2; no icons.
   - missing-visible-focus still deferred (unchanged by this phase).
 
 WHAT WAS INTENTIONALLY NOT IMPLEMENTED
-  - No new features, no scanner/overlay/tab-path logic changes (only rename
-    -driven imports/config).
-  - No permission changes. No AI, no speech, no auto-fix, no ARIA injection,
-    no legal compliance claims.
-  - No root-folder rename, no .git rename, no remote, no publish, no PR.
+  - No new scanner rules, no overlay/tab-path logic changes (only report data
+    plumbing).
+  - No report preview UI, no advanced filters, no settings expansion.
+  - No inspected-node mutation, no focus change, no tab-order change, no ARIA
+    injection, no auto-fix.
+  - No AI, no speech, no permission changes, no remote, no publish, no PR.
 
-MANUAL FOLLOW-UP
-  - Optionally rename the local folder from the parent dir:
-      (from c:\Alexis\Test\browser\keyboard-extension) move/rename
-      "keywise-web" -> "easy-web-navigation".
-  - If a GitHub remote is created, name it "easy-web-navigation".
+RECOMMENDED MANUAL BROWSER WALKTHROUGH
+  1. pnpm dev (loads chrome-mv3 dev build).
+  2. Serve demos: pnpm -C apps/demo-sites preview (http://localhost:4321).
+  3. Open form-labels-page.html or fake-buttons-page.html; "Scan current page".
+  4. "Copy Markdown report" -> paste into an editor; confirm clean sections +
+     disclaimer.
+  5. "Download Markdown report" -> open easy-web-navigation-report.md.
+  6. Toggle "Show tab path", then copy/download again; confirm the report's tab
+     path summary says "Runtime visual aid only - not an audit metric".
+  7. Open a chrome:// page; confirm friendly failure remains.
+  8. Confirm no compliance claim appears anywhere.
 
 NEXT RECOMMENDED PHASE
-  Phase 0E - developer report export polish (copy-to-clipboard; optional
-  tab-path summary in the report, clearly labeled as a runtime visual aid).
-  Still read-only, no compliance claims.
+  Phase 0F - portfolio/store polish: extension icons, popup visual refinement,
+  options page polish, and a documented 60-second demo flow. Still read-only.
 
 NEXT RECOMMENDED PROMPT SUMMARY
-  "Phase 0E: Improve developer report export in @easy-web-navigation/report-
-   generator. Add copy-to-clipboard in the popup and optionally include the
-   current tab-path summary (counts only, labeled as a runtime visual aid, not
-   an audit metric). Keep the non-compliance disclaimer prominent; keep
-   everything read-only; no broad host permissions, no AI, no speech. Add tests
-   for the new report content and clipboard fallback. Keep commits authored by
-   atj393 (no Co-Authored-By). Update HANDOVER.txt and CHANGELOG.md."
+  "Phase 0F: Add extension icons (16/32/48/128) wired in wxt.config, polish the
+   popup and options visuals (spacing, severity legend, empty states), and write
+   a concrete 60-second portfolio demo script in docs/demo-plan.md tied to the
+   demo pages. Keep everything read-only; no new permissions, no AI, no speech,
+   no compliance claims. Keep commits authored by atj393 (no Co-Authored-By).
+   Update HANDOVER.txt and CHANGELOG.md."

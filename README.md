@@ -33,10 +33,11 @@ Target success criteria:
 | 3.3.2     | Labels or Instructions       | A     |
 | 4.1.2     | Name, Role, Value            | A     |
 
-## v0 scope (through Phase 0D)
+## v0 scope (through Phase 0E)
 
 A pnpm + TypeScript monorepo with a working **read-only** keyboard accessibility scanner, a
-read-only visual focus helper / issue locator, and a read-only tab-path visualization.
+read-only visual focus helper / issue locator, a read-only tab-path visualization, and a
+developer-friendly report export.
 
 ### What v0 does
 
@@ -45,8 +46,11 @@ read-only visual focus helper / issue locator, and a read-only tab-path visualiz
   reports real issues for six deterministic WCAG keyboard-profile rules:
   `clickable-not-focusable`, `unlabeled-control`, `unlabeled-form-input`, `positive-tabindex`,
   `missing-main-landmark`, and `missing-skip-link`.
-- Displays a summary, an issue list (severity, WCAG references, selector, recommendation), and
-  exports a Markdown report.
+- Displays a summary and an issue list (severity, WCAG references, selector, recommendation).
+- Offers a **developer-friendly report**: **Copy Markdown report** (clipboard, with a textarea
+  fallback) and **Download Markdown report**, plus a stable JSON report shape. Reports carry a
+  prominent non-compliance disclaimer and can optionally include the tab-path summary, clearly
+  labeled as a runtime visual aid (not an audit metric).
 - Offers a **read-only focus helper**: toggle it on and a rectangle tracks the keyboard-focused
   element as you Tab. Each issue has a **"Locate on page"** action that temporarily highlights its
   element. The overlay is extension-owned, isolated, and never modifies the page.

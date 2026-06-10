@@ -6,6 +6,27 @@ All notable changes to Easy Web Navigation are documented here. The format is ba
 
 ## [Unreleased]
 
+### Added — Phase 0E: developer report export
+
+- Reworked the Markdown report (`@easy-web-navigation/report-generator`) into clean sections:
+  title, report type, Page (title/URL/scanned/focusable count), Summary (by severity + by
+  category), Issues (WCAG refs, rule, selector, element preview, runtime-observable note, why,
+  recommendation), and a prominent Disclaimer.
+- Restructured the JSON report to a stable shape: `productName`, `profile`, `reportType`,
+  `schemaVersion`, `disclaimer`, `generatedAt`, `page`, `summary`, `issues` (+ `tabPathSummary`
+  only when provided).
+- Strengthened the report disclaimer: "…does not certify legal compliance… A clean report is not a
+  compliance pass. Full accessibility requires source-level remediation, manual testing, and user
+  testing with assistive technologies."
+- Optional tab-path summary in the report, clearly labeled "Runtime visual aid only — not an audit
+  metric" (`shown` / `totalDetected` / `capped`). Added a `ReportOptions` type.
+- Popup: split export into **Copy Markdown report** (clipboard) and **Download Markdown report**,
+  with status messages. Added a read-only, injectable `copyTextToClipboard` helper that prefers
+  `navigator.clipboard.writeText` and falls back to a temporary off-screen textarea +
+  `document.execCommand("copy")` inside the popup document.
+- Tests: report Markdown/JSON content (incl. tab-path summary present/absent) and clipboard helper
+  (async API, fallback, rejection, failure). Vitest now also discovers `apps/**/lib/**/*.test.ts`.
+
 ### Changed — Phase 0N: project rename
 
 - Renamed the project from **KeyWise Web** to **Easy Web Navigation** (rename-only phase; no

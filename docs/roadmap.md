@@ -34,10 +34,12 @@ aggressive auto-fix) do not.
   default 100-item cap for large pages.
 - Still read-only: no tab-order changes, no focus stealing, no ARIA injection.
 
-## v0.5 — Developer report export
+## v0.5 — Developer report export (Phase 0E — done)
 
-- Flesh out `@easy-web-navigation/report-generator` output (Markdown + JSON) for sharing findings.
-- Useful, copy-pasteable reports for developers and QA, with the standing disclaimer.
+- Clean, sectioned Markdown report and a stable JSON report from
+  `@easy-web-navigation/report-generator`, with a prominent non-compliance disclaimer.
+- Popup **Copy Markdown report** (clipboard API + textarea fallback) and **Download Markdown
+  report**; optional tab-path summary clearly labeled as a runtime visual aid.
 
 ## v1.0 — Portfolio release
 

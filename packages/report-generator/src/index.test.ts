@@ -1,6 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { generateMarkdownReport, generateJsonReport, DISCLAIMER } from "./index";
-import type { A11yIssue, ScanResult } from "@easy-web-navigation/shared-types";
+import {
+  generateMarkdownReport,
+  generateJsonReport,
+  DISCLAIMER,
+  PRODUCT_NAME,
+  REPORT_TYPE,
+} from "./index";
+import type { A11yIssue, ScanResult, TabPathSummary } from "@easy-web-navigation/shared-types";
 
 const issue: A11yIssue = {
   id: "positive-tabindex-0",
@@ -31,26 +37,35 @@ const result: ScanResult = {
   focusableCount: 5,
 };
 
-describe("@easy-web-navigation/report-generator", () => {
-  it("renders a Markdown report with URL, title, profile, issue data, and disclaimer", () => {
+const tabPathSummary: TabPathSummary = { shown: 12, totalDetected: 130, capped: true };
+
+describe("@easy-web-navigation/report-generator — Markdown", () => {
+  it("includes the product name, report type, page URL/title, and disclaimer", () => {
     const md = generateMarkdownReport(result);
-    expect(md).toContain("# Easy Web Navigation");
+    expect(md).toContain(`# ${PRODUCT_NAME}`);
+    expect(md).toContain(REPORT_TYPE);
     expect(md).toContain("https://example.com");
     expect(md).toContain("Example");
-    expect(md).toContain("WCAG 2.2 Keyboard & Navigation Profile");
-    expect(md).toContain("positive-tabindex");
-    expect(md).toContain("2.4.3 Focus Order (A)");
-    expect(md).toContain("Remove the positive tabindex.");
     expect(md).toContain(DISCLAIMER);
   });
 
-  it("renders valid JSON carrying the real result and disclaimer", () => {
-    const json = generateJsonReport(result);
-    const parsed = JSON.parse(json);
-    expect(parsed.tool).toBe("Easy Web Navigation");
-    expect(parsed.disclaimer).toBe(DISCLAIMER);
-    expect(parsed.result.issues[0].ruleId).toBe("positive-tabindex");
-    expect(parsed.result.summary.total).toBe(1);
+  it("includes issue WCAG references and recommendations", () => {
+    const md = generateMarkdownReport(result);
+    expect(md).toContain("2.4.3 Focus Order (A)");
+    expect(md).toContain("`positive-tabindex`");
+    expect(md).toContain("Remove the positive tabindex.");
+    expect(md).toContain("runtime DOM inspection (observable only)");
+  });
+
+  it("includes the tab-path summary only when provided, clearly labeled", () => {
+    const without = generateMarkdownReport(result);
+    expect(without).not.toContain("Tab path visualization summary");
+
+    const withTab = generateMarkdownReport(result, { tabPathSummary });
+    expect(withTab).toContain("Tab path visualization summary");
+    expect(withTab).toContain("Runtime visual aid only — not an audit metric.");
+    expect(withTab).toContain("Total detected: 130");
+    expect(withTab).toContain("Capped: yes");
   });
 
   it("states clearly when no issues were found", () => {
@@ -58,5 +73,24 @@ describe("@easy-web-navigation/report-generator", () => {
     const md = generateMarkdownReport(clean);
     expect(md).toContain("No issues found");
     expect(md).toContain(DISCLAIMER);
+  });
+});
+
+describe("@easy-web-navigation/report-generator — JSON", () => {
+  it("is valid JSON with productName, profile, disclaimer, page, summary, issues", () => {
+    const parsed = JSON.parse(generateJsonReport(result));
+    expect(parsed.productName).toBe(PRODUCT_NAME);
+    expect(parsed.profile).toBe(result.profile);
+    expect(parsed.disclaimer).toBe(DISCLAIMER);
+    expect(parsed.page.url).toBe("https://example.com");
+    expect(parsed.page.title).toBe("Example");
+    expect(parsed.summary.total).toBe(1);
+    expect(parsed.issues[0].ruleId).toBe("positive-tabindex");
+  });
+
+  it("omits tabPathSummary unless provided", () => {
+    expect(JSON.parse(generateJsonReport(result)).tabPathSummary).toBeUndefined();
+    const withTab = JSON.parse(generateJsonReport(result, { tabPathSummary }));
+    expect(withTab.tabPathSummary).toEqual(tabPathSummary);
   });
 });

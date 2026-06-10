@@ -115,3 +115,17 @@ The tab-path visualization is a read-only approximation:
   perfect document order.
 - **Visual only.** The markers do not change the page's tab order or fix anything; they only make
   the detected order visible.
+
+## Report limitations (Phase 0E)
+
+The exported report is a developer aid, not an audit:
+
+- **Reflects one scan.** A report contains only what the implemented rules found at scan time. A
+  clean report is **not** a compliance pass and is not a substitute for source-level remediation,
+  manual testing, or testing with real assistive technologies.
+- **Tab-path summary is a visual aid.** When included, the tab-path summary (shown / total detected
+  / capped) is explicitly labeled as a runtime visual aid, not an audit metric.
+- **Clipboard copy can fail.** The async Clipboard API may be unavailable (older browsers, insecure
+  contexts); the popup falls back to a temporary textarea + `execCommand("copy")` and, if that also
+  fails, tells the user that download is still available. No automatic copying happens without a
+  user action.

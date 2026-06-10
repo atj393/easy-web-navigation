@@ -156,6 +156,15 @@ export interface TabPathResult {
   summary: TabPathSummary;
 }
 
+/** Options passed to the report generator. */
+export interface ReportOptions {
+  /**
+   * Latest tab-path visualization summary. When present it is included in the
+   * report as a clearly-labeled runtime visual aid — never as an audit metric.
+   */
+  tabPathSummary?: TabPathSummary;
+}
+
 /** User-configurable extension settings. */
 export interface ExtensionSettings {
   enableVisibleFocusHelper: boolean;

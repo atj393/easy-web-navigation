@@ -48,6 +48,24 @@ instantiated and owned by the content script:
 - It **never** touches inspected nodes — no attributes, classes, wrapping, moving, or listeners on
   them. `unmount()`/`destroy()` removes the container, all window listeners, and all timers.
 
+## Report export (Phase 0E)
+
+`@easy-web-navigation/report-generator` renders a `ScanResult` (plus an optional `ReportOptions`
+with the latest tab-path summary) into Markdown or a stable JSON shape. It is a pure,
+DOM-independent function — no page access — so it is trivially testable.
+
+The popup builds the Markdown report on demand and offers two actions, both confined to the
+extension popup document:
+
+- **Copy Markdown report** uses `copyTextToClipboard` (`apps/extension/lib/clipboard.ts`), which
+  prefers `navigator.clipboard.writeText` and falls back to a temporary, off-screen `<textarea>` +
+  `document.execCommand("copy")` created and removed inside the popup. The helper takes injectable
+  dependencies so it is unit-testable.
+- **Download Markdown report** creates an object URL from a `Blob` and triggers an anchor download.
+
+Every report includes a prominent disclaimer; a clean report is never presented as a compliance
+pass.
+
 ## Package responsibilities
 
 | Package                                 | Responsibility                                                        |

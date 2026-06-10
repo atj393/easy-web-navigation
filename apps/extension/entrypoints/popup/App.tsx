@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { browser } from "#imports";
 import { generateMarkdownReport } from "@easy-web-navigation/report-generator";
+import { copyTextToClipboard } from "../../lib/clipboard";
 import {
   PRODUCT_NAME,
   PRODUCT_TAGLINE,
@@ -10,12 +11,12 @@ import {
 } from "@easy-web-navigation/shared-types";
 
 /**
- * Popup UI (Phase 0C).
+ * Popup UI (Phase 0E).
  *
  * "Scan current page" runs a read-only scan of the active tab. "Show focus
- * helper" toggles a read-only visual overlay that rectangles the focused
- * element. Each issue has a "Locate" action that temporarily highlights its
- * element on the page. Nothing here modifies the inspected page.
+ * helper" and "Show tab path" toggle read-only visual overlays. Each issue has
+ * a "Locate" action. The Markdown report can be copied to the clipboard or
+ * downloaded. Nothing here modifies the inspected page.
  */
 const DISCLAIMER =
   "Easy Web Navigation helps inspect keyboard accessibility at runtime. It does not certify legal " +
@@ -75,6 +76,7 @@ export function App() {
   const [tabPathOn, setTabPathOn] = useState(false);
   const [tabSummary, setTabSummary] = useState<TabPathSummary | null>(null);
   const [locateStatus, setLocateStatus] = useState<string | null>(null);
+  const [reportStatus, setReportStatus] = useState<string | null>(null);
 
   // Best-effort sync of helper/tab-path state when the popup opens. Does not
   // inject: if the content script isn't present yet, the message rejects and
@@ -101,6 +103,7 @@ export function App() {
     setError(null);
     setResult(null);
     setLocateStatus(null);
+    setReportStatus(null);
     try {
       const tabId = await getActiveTabId();
       await ensureInjected(tabId);
@@ -171,16 +174,36 @@ export function App() {
     }
   }
 
-  function exportReport() {
-    if (!result) return;
-    const markdown = generateMarkdownReport(result);
-    const blob = new Blob([markdown], { type: "text/markdown" });
+  function buildReport(): string {
+    // Include the latest tab-path summary when we have one (clearly labeled in
+    // the report as a runtime visual aid, not an audit metric).
+    return generateMarkdownReport(result!, { tabPathSummary: tabSummary ?? undefined });
+  }
+
+  function downloadReport() {
+    if (!result) {
+      setReportStatus("Run a scan before exporting a report.");
+      return;
+    }
+    const blob = new Blob([buildReport()], { type: "text/markdown" });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
     anchor.download = "easy-web-navigation-report.md";
     anchor.click();
     URL.revokeObjectURL(url);
+    setReportStatus("Report downloaded.");
+  }
+
+  async function copyReport() {
+    if (!result) {
+      setReportStatus("Run a scan before exporting a report.");
+      return;
+    }
+    const ok = await copyTextToClipboard(buildReport());
+    setReportStatus(
+      ok ? "Report copied to clipboard." : "Could not copy report. Download is still available.",
+    );
   }
 
   const summary = result?.summary;
@@ -295,10 +318,19 @@ export function App() {
       </section>
 
       <div className="popup__actions">
-        <button type="button" className="btn" onClick={exportReport} disabled={!result}>
-          Export report
+        <button type="button" className="btn" onClick={copyReport} disabled={!result}>
+          Copy Markdown report
+        </button>
+        <button type="button" className="btn" onClick={downloadReport} disabled={!result}>
+          Download Markdown report
         </button>
       </div>
+
+      {reportStatus && (
+        <p className="popup__report-status" role="status">
+          {reportStatus}
+        </p>
+      )}
 
       <footer className="popup__disclaimer">
         <p>{DISCLAIMER}</p>
