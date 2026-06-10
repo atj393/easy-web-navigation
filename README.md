@@ -1,17 +1,18 @@
-# KeyWise Web
+# Easy Web Navigation
 
-A WCAG 2.2 keyboard accessibility companion browser extension for Chrome, Edge, and Firefox.
+A keyboard accessibility companion for the web — for Chrome, Edge, and Firefox.
 
-KeyWise Web helps users and developers **inspect** keyboard accessibility, focus visibility, tab
-order, navigation structure, and accessible names on web pages. It is an **inspection and assistive
-browsing tool** — not an overlay, not an automatic website fixer, and not a compliance certifier.
+Easy Web Navigation is an open-source browser extension that helps users and developers inspect
+keyboard accessibility, focus visibility, tab order, navigation structure, and accessible names on
+web pages. It is an **inspection and assistive browsing tool** — not an overlay, not an automatic
+website fixer, and not a compliance certifier.
 
 ## Why this exists
 
 Keyboard accessibility is one of the most common — and most fixable — barriers on the web. Yet most
 developers and many users have no quick way to _see_ how a page behaves for keyboard-only navigation:
 where focus goes, whether it is visible, whether controls have names, and whether the page can be
-navigated at all without a mouse. KeyWise Web aims to make that experience visible and inspectable,
+navigated at all without a mouse. Easy Web Navigation aims to make that experience visible and inspectable,
 directly in the browser.
 
 ## Primary standard
@@ -122,7 +123,7 @@ keyboard experiences for testing:
 
 ## Compliance disclaimer
 
-KeyWise Web helps inspect keyboard accessibility at runtime. **It does not certify legal compliance**
+Easy Web Navigation helps inspect keyboard accessibility at runtime. **It does not certify legal compliance**
 with WCAG, BITV, EN 301 549, the European Accessibility Act (EAA), the ADA, or Section 508. Runtime
 inspection can surface issues and aid understanding, but it cannot guarantee conformance, and it is
 not a substitute for manual testing or expert review. See [docs/limitations.md](docs/limitations.md).

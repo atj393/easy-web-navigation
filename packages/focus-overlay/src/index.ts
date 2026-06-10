@@ -1,5 +1,5 @@
 /**
- * @keywise/focus-overlay
+ * @easy-web-navigation/focus-overlay
  *
  * A user-initiated, READ-ONLY visual helper. It draws rectangles around
  * elements (the live keyboard-focused element, or a scanned issue element the
@@ -112,7 +112,7 @@ export class FocusOverlayController {
     if (this.container || !this.doc?.body) return;
 
     const container = this.doc.createElement("div");
-    container.setAttribute("data-keywise-overlay", "");
+    container.setAttribute("data-easy-web-navigation-overlay", "");
     container.setAttribute("aria-hidden", "true");
     container.style.cssText = CONTAINER_STYLE;
 

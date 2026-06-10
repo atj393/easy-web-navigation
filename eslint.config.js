@@ -1,4 +1,4 @@
-// Flat ESLint config (ESLint 9) for the KeyWise Web monorepo.
+// Flat ESLint config (ESLint 9) for the Easy Web Navigation monorepo.
 import js from "@eslint/js";
 import tseslint from "typescript-eslint";
 import globals from "globals";

@@ -8,12 +8,12 @@ function mockRect(el: Element, rect: Partial<DOMRect>): void {
 }
 
 function boxes(): NodeListOf<Element> {
-  const container = document.querySelector("[data-keywise-overlay]");
+  const container = document.querySelector("[data-easy-web-navigation-overlay]");
   return container!.shadowRoot!.querySelectorAll(".box");
 }
 
 function tabNums(): NodeListOf<Element> {
-  const container = document.querySelector("[data-keywise-overlay]");
+  const container = document.querySelector("[data-easy-web-navigation-overlay]");
   return container!.shadowRoot!.querySelectorAll(".tab-num");
 }
 
@@ -35,7 +35,7 @@ describe("FocusOverlayController mount/unmount", () => {
     controller.mount();
     expect(controller.isMounted()).toBe(true);
 
-    const container = document.querySelector("[data-keywise-overlay]") as HTMLElement;
+    const container = document.querySelector("[data-easy-web-navigation-overlay]") as HTMLElement;
     expect(container).not.toBeNull();
     expect(container.style.pointerEvents).toBe("none");
     expect(container.getAttribute("aria-hidden")).toBe("true");
@@ -45,14 +45,14 @@ describe("FocusOverlayController mount/unmount", () => {
   it("is idempotent on repeated mount", () => {
     controller.mount();
     controller.mount();
-    expect(document.querySelectorAll("[data-keywise-overlay]").length).toBe(1);
+    expect(document.querySelectorAll("[data-easy-web-navigation-overlay]").length).toBe(1);
   });
 
   it("removes the container on unmount", () => {
     controller.mount();
     controller.unmount();
     expect(controller.isMounted()).toBe(false);
-    expect(document.querySelector("[data-keywise-overlay]")).toBeNull();
+    expect(document.querySelector("[data-easy-web-navigation-overlay]")).toBeNull();
   });
 });
 
@@ -135,7 +135,7 @@ describe("destroy", () => {
 
     controller.destroy();
     expect(controller.isMounted()).toBe(false);
-    expect(document.querySelector("[data-keywise-overlay]")).toBeNull();
+    expect(document.querySelector("[data-easy-web-navigation-overlay]")).toBeNull();
   });
 });
 
@@ -159,7 +159,7 @@ describe("tab path markers", () => {
   it("positions the marker box from the element rect", () => {
     const els = makeButtons(1);
     controller.showTabPath(els);
-    const container = document.querySelector("[data-keywise-overlay]")!;
+    const container = document.querySelector("[data-easy-web-navigation-overlay]")!;
     const box = container.shadowRoot!.querySelector(".tab-box") as HTMLElement;
     expect(box.style.width).toBe("50px");
     expect(box.style.height).toBe("16px");
@@ -197,7 +197,7 @@ describe("tab path markers", () => {
     controller.showTabPath(makeButtons(2));
     controller.destroy();
     expect(controller.isMounted()).toBe(false);
-    expect(document.querySelector("[data-keywise-overlay]")).toBeNull();
+    expect(document.querySelector("[data-easy-web-navigation-overlay]")).toBeNull();
   });
 
   it("skips disconnected elements safely", () => {

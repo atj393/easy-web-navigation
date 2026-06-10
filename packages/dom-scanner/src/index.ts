@@ -1,5 +1,5 @@
 /**
- * @keywise/dom-scanner
+ * @easy-web-navigation/dom-scanner
  *
  * Real, READ-ONLY DOM inspection. Builds a RuleContext (DOM helpers + open
  * shadow-aware querying), runs the WCAG keyboard-profile rules, and returns a
@@ -19,8 +19,8 @@ import {
   type ScanOptions,
   type ScanResult,
   type ScanSummary,
-} from "@keywise/shared-types";
-import { RULES, evaluateRules, type RuleContext } from "@keywise/wcag-rules";
+} from "@easy-web-navigation/shared-types";
+import { RULES, evaluateRules, type RuleContext } from "@easy-web-navigation/wcag-rules";
 
 export const PROFILE = "WCAG 2.2 Keyboard & Navigation Profile (Level A/AA)";
 

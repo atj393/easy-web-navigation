@@ -43,22 +43,22 @@ importers:
 
   apps/extension:
     dependencies:
-      '@keywise/dom-scanner':
+      '@easy-web-navigation/dom-scanner':
         specifier: workspace:*
         version: link:../../packages/dom-scanner
-      '@keywise/focus-overlay':
+      '@easy-web-navigation/focus-overlay':
         specifier: workspace:*
         version: link:../../packages/focus-overlay
-      '@keywise/keyboard-engine':
+      '@easy-web-navigation/keyboard-engine':
         specifier: workspace:*
         version: link:../../packages/keyboard-engine
-      '@keywise/report-generator':
+      '@easy-web-navigation/report-generator':
         specifier: workspace:*
         version: link:../../packages/report-generator
-      '@keywise/shared-types':
+      '@easy-web-navigation/shared-types':
         specifier: workspace:*
         version: link:../../packages/shared-types
-      '@keywise/wcag-rules':
+      '@easy-web-navigation/wcag-rules':
         specifier: workspace:*
         version: link:../../packages/wcag-rules
       react:
@@ -86,10 +86,10 @@ importers:
 
   packages/dom-scanner:
     dependencies:
-      '@keywise/shared-types':
+      '@easy-web-navigation/shared-types':
         specifier: workspace:*
         version: link:../shared-types
-      '@keywise/wcag-rules':
+      '@easy-web-navigation/wcag-rules':
         specifier: workspace:*
         version: link:../wcag-rules
     devDependencies:
@@ -105,10 +105,10 @@ importers:
 
   packages/keyboard-engine:
     dependencies:
-      '@keywise/dom-scanner':
+      '@easy-web-navigation/dom-scanner':
         specifier: workspace:*
         version: link:../dom-scanner
-      '@keywise/shared-types':
+      '@easy-web-navigation/shared-types':
         specifier: workspace:*
         version: link:../shared-types
     devDependencies:
@@ -118,7 +118,7 @@ importers:
 
   packages/report-generator:
     dependencies:
-      '@keywise/shared-types':
+      '@easy-web-navigation/shared-types':
         specifier: workspace:*
         version: link:../shared-types
     devDependencies:
@@ -134,7 +134,7 @@ importers:
 
   packages/wcag-rules:
     dependencies:
-      '@keywise/shared-types':
+      '@easy-web-navigation/shared-types':
         specifier: workspace:*
         version: link:../shared-types
     devDependencies:

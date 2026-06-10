@@ -1,5 +1,5 @@
 {
-  "name": "@keywise/report-generator",
+  "name": "@easy-web-navigation/report-generator",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -13,7 +13,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@keywise/shared-types": "workspace:*"
+    "@easy-web-navigation/shared-types": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.2"

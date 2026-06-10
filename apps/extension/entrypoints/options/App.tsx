@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { DEFAULT_SETTINGS, type ExtensionSettings } from "@keywise/shared-types";
+import { DEFAULT_SETTINGS, type ExtensionSettings } from "@easy-web-navigation/shared-types";
 import { settingsItem } from "../../lib/settings";
 
 /**
@@ -34,7 +34,7 @@ export function App() {
 
   return (
     <main className="options">
-      <h1>KeyWise Web — Options</h1>
+      <h1>Easy Web Navigation — Options</h1>
       <p className="options__hint">
         {loaded ? "Settings are saved automatically." : "Loading settings…"}
       </p>
@@ -56,7 +56,7 @@ export function App() {
       <fieldset className="options__group">
         <legend>Disabled domains</legend>
         <label className="options__row options__row--block">
-          <span>One domain per line. KeyWise Web stays inactive on these.</span>
+          <span>One domain per line. Easy Web Navigation stays inactive on these.</span>
           <textarea
             rows={4}
             value={settings.disabledDomains.join("\n")}

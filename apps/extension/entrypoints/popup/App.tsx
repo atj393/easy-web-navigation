@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
 import { browser } from "#imports";
-import { generateMarkdownReport } from "@keywise/report-generator";
-import type { ExtensionMessage, ScanResult, TabPathSummary } from "@keywise/shared-types";
+import { generateMarkdownReport } from "@easy-web-navigation/report-generator";
+import {
+  PRODUCT_NAME,
+  PRODUCT_TAGLINE,
+  type ExtensionMessage,
+  type ScanResult,
+  type TabPathSummary,
+} from "@easy-web-navigation/shared-types";
 
 /**
  * Popup UI (Phase 0C).
@@ -12,7 +18,7 @@ import type { ExtensionMessage, ScanResult, TabPathSummary } from "@keywise/shar
  * element on the page. Nothing here modifies the inspected page.
  */
 const DISCLAIMER =
-  "KeyWise Web helps inspect keyboard accessibility at runtime. It does not certify legal " +
+  "Easy Web Navigation helps inspect keyboard accessibility at runtime. It does not certify legal " +
   "compliance with WCAG, BITV, EN 301 549, EAA, ADA, or Section 508.";
 
 type Phase = "idle" | "scanning" | "done" | "error";
@@ -35,7 +41,7 @@ const RESTRICTED = /cannot access|host permission|chrome:\/\/|edge:\/\/|about:|e
 
 function humanizeError(message: string): string {
   if (RESTRICTED.test(message)) {
-    return "KeyWise Web can't act on this page. Browser-internal and extension pages are restricted.";
+    return "Easy Web Navigation can't act on this page. Browser-internal and extension pages are restricted.";
   }
   return message;
 }
@@ -172,7 +178,7 @@ export function App() {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = "keywise-report.md";
+    anchor.download = "easy-web-navigation-report.md";
     anchor.click();
     URL.revokeObjectURL(url);
   }
@@ -194,7 +200,8 @@ export function App() {
   return (
     <main className="popup">
       <header className="popup__header">
-        <h1 className="popup__title">KeyWise Web</h1>
+        <h1 className="popup__title">{PRODUCT_NAME}</h1>
+        <p className="popup__tagline">{PRODUCT_TAGLINE}</p>
         <p className="popup__status" role="status">
           {statusText}
         </p>

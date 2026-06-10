@@ -1,5 +1,5 @@
 import { defineBackground, browser } from "#imports";
-import type { ExtensionMessage } from "@keywise/shared-types";
+import type { ExtensionMessage } from "@easy-web-navigation/shared-types";
 
 /**
  * Background service worker (MV3).

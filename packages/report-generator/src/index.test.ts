@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { generateMarkdownReport, generateJsonReport, DISCLAIMER } from "./index";
-import type { A11yIssue, ScanResult } from "@keywise/shared-types";
+import type { A11yIssue, ScanResult } from "@easy-web-navigation/shared-types";
 
 const issue: A11yIssue = {
   id: "positive-tabindex-0",
@@ -31,10 +31,10 @@ const result: ScanResult = {
   focusableCount: 5,
 };
 
-describe("@keywise/report-generator", () => {
+describe("@easy-web-navigation/report-generator", () => {
   it("renders a Markdown report with URL, title, profile, issue data, and disclaimer", () => {
     const md = generateMarkdownReport(result);
-    expect(md).toContain("# KeyWise Web");
+    expect(md).toContain("# Easy Web Navigation");
     expect(md).toContain("https://example.com");
     expect(md).toContain("Example");
     expect(md).toContain("WCAG 2.2 Keyboard & Navigation Profile");
@@ -47,7 +47,7 @@ describe("@keywise/report-generator", () => {
   it("renders valid JSON carrying the real result and disclaimer", () => {
     const json = generateJsonReport(result);
     const parsed = JSON.parse(json);
-    expect(parsed.tool).toBe("KeyWise Web");
+    expect(parsed.tool).toBe("Easy Web Navigation");
     expect(parsed.disclaimer).toBe(DISCLAIMER);
     expect(parsed.result.issues[0].ruleId).toBe("positive-tabindex");
     expect(parsed.result.summary.total).toBe(1);

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import type { ScanResult } from "@keywise/shared-types";
+import type { ScanResult } from "@easy-web-navigation/shared-types";
 import {
   scanDocument,
   getStableSelector,

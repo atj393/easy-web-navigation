@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { ALL_RULES, RULES, getRule } from "./index";
 
-describe("@keywise/wcag-rules metadata", () => {
+describe("@easy-web-navigation/wcag-rules metadata", () => {
   it("defines the seven keyboard-profile rules", () => {
     expect(ALL_RULES).toHaveLength(7);
   });

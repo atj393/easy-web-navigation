@@ -1,5 +1,5 @@
 {
-  "name": "@keywise/dom-scanner",
+  "name": "@easy-web-navigation/dom-scanner",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -13,8 +13,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@keywise/shared-types": "workspace:*",
-    "@keywise/wcag-rules": "workspace:*"
+    "@easy-web-navigation/shared-types": "workspace:*",
+    "@easy-web-navigation/wcag-rules": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.2"

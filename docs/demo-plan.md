@@ -1,20 +1,20 @@
 # Demo Plan
 
-A short, recruiter-friendly demonstration of what KeyWise Web is for. The product is in Phase 0A, so
+A short, recruiter-friendly demonstration of what Easy Web Navigation is for. The product is in Phase 0A, so
 this plan describes the _intended_ demo once scanning lands; today it doubles as a script for walking
 through the repository and demo pages.
 
 ## 60-second recruiter demo concept
 
 The goal: in about a minute, show that keyboard accessibility is invisible until you make it visible —
-and that KeyWise Web makes it visible without overclaiming.
+and that Easy Web Navigation makes it visible without overclaiming.
 
 1. **0:00–0:10 — Frame it.** "Keyboard-only users can't see where focus goes or whether controls are
-   reachable. KeyWise Web is an inspection tool that makes that visible. It does not claim legal
+   reachable. Easy Web Navigation is an inspection tool that makes that visible. It does not claim legal
    compliance."
 2. **0:10–0:25 — Show a broken page.** Open `broken-keyboard-page.html`. Tab through it: focus is
    invisible and the order is scrambled by positive `tabindex`.
-3. **0:25–0:40 — Run KeyWise Web.** Click the toolbar icon, then _Scan current page_. Point out the
+3. **0:25–0:40 — Run Easy Web Navigation.** Click the toolbar icon, then _Scan current page_. Point out the
    keyboard / focus / navigation summary cards and the issue list.
 4. **0:40–0:50 — Show the good page.** Open `semantic-good-page.html` and scan: a clean baseline with
    a skip link, landmarks, labels, and a visible focus indicator.

@@ -1,6 +1,6 @@
 import { defineConfig } from "wxt";
 
-// KeyWise Web — WXT configuration (Manifest V3).
+// Easy Web Navigation — WXT configuration (Manifest V3).
 // Phase 0A permissions are intentionally minimal: no broad host permissions.
 export default defineConfig({
   modules: ["@wxt-dev/module-react"],
@@ -14,9 +14,9 @@ export default defineConfig({
     },
   },
   manifest: {
-    name: "KeyWise Web",
+    name: "Easy Web Navigation",
     description:
-      "A WCAG 2.2 keyboard accessibility companion for inspecting focus, tab order, and navigation issues.",
+      "A keyboard accessibility companion for inspecting focus, tab order, and navigation issues on web pages.",
     // Phase 0A required permissions only.
     permissions: ["activeTab", "scripting", "storage"],
     // No host_permissions in Phase 0A. The content script is registered at

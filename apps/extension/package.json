@@ -1,5 +1,5 @@
 {
-  "name": "@keywise/extension",
+  "name": "@easy-web-navigation/extension",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -13,12 +13,12 @@
     "postinstall": "wxt prepare"
   },
   "dependencies": {
-    "@keywise/dom-scanner": "workspace:*",
-    "@keywise/focus-overlay": "workspace:*",
-    "@keywise/keyboard-engine": "workspace:*",
-    "@keywise/report-generator": "workspace:*",
-    "@keywise/shared-types": "workspace:*",
-    "@keywise/wcag-rules": "workspace:*",
+    "@easy-web-navigation/dom-scanner": "workspace:*",
+    "@easy-web-navigation/focus-overlay": "workspace:*",
+    "@easy-web-navigation/keyboard-engine": "workspace:*",
+    "@easy-web-navigation/report-generator": "workspace:*",
+    "@easy-web-navigation/shared-types": "workspace:*",
+    "@easy-web-navigation/wcag-rules": "workspace:*",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },

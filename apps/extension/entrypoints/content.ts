@@ -1,13 +1,13 @@
 import { defineContentScript, browser } from "#imports";
-import { scanDocument } from "@keywise/dom-scanner";
-import { computeTabPath } from "@keywise/keyboard-engine";
-import { FocusOverlayController } from "@keywise/focus-overlay";
-import type { ExtensionMessage, TabPathSummary } from "@keywise/shared-types";
+import { scanDocument } from "@easy-web-navigation/dom-scanner";
+import { computeTabPath } from "@easy-web-navigation/keyboard-engine";
+import { FocusOverlayController } from "@easy-web-navigation/focus-overlay";
+import type { ExtensionMessage, TabPathSummary } from "@easy-web-navigation/shared-types";
 
 /**
  * Content script.
  *
- * Registered at RUNTIME (not in the manifest) so KeyWise Web does not request
+ * Registered at RUNTIME (not in the manifest) so Easy Web Navigation does not request
  * broad <all_urls> host permissions. It is injected into the active tab on
  * demand via activeTab + scripting.
  *
@@ -28,7 +28,7 @@ export default defineContentScript({
   registration: "runtime",
   main() {
     // Safe initialization guard: never attach listeners twice.
-    const FLAG = "__keywiseWebInitialized";
+    const FLAG = "__easyWebNavigationInitialized";
     const w = window as unknown as Record<string, boolean>;
     if (w[FLAG]) return;
     w[FLAG] = true;

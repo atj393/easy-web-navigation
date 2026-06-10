@@ -1,11 +1,17 @@
 /**
- * @keywise/shared-types
+ * @easy-web-navigation/shared-types
  *
- * Shared, framework-agnostic type definitions used across the KeyWise Web
+ * Shared, framework-agnostic type definitions used across the Easy Web Navigation
  * monorepo (extension app + analysis packages).
  */
 
-/** WCAG conformance level. KeyWise Web targets A and AA. */
+/** Finalized product display name. */
+export const PRODUCT_NAME = "Easy Web Navigation";
+
+/** Product tagline for user-facing surfaces. */
+export const PRODUCT_TAGLINE = "A keyboard accessibility companion for the web.";
+
+/** WCAG conformance level. Easy Web Navigation targets A and AA. */
 export type WcagLevel = "A" | "AA" | "AAA";
 
 /** Relative severity of a detected accessibility issue. */
@@ -54,14 +60,14 @@ export interface A11yIssue {
   recommendation: string;
   /**
    * Whether a future, opt-in "safe enhancement" could assist at runtime.
-   * Always false in Phase 0B — KeyWise Web does not mutate the page.
+   * Always false in Phase 0B — Easy Web Navigation does not mutate the page.
    */
   canAutoEnhance: boolean;
 }
 
 /**
  * Static metadata describing an analysis rule. Detection logic is injected
- * elsewhere (see `@keywise/wcag-rules`); this is the catalog entry.
+ * elsewhere (see `@easy-web-navigation/wcag-rules`); this is the catalog entry.
  */
 export interface A11yRule {
   id: string;

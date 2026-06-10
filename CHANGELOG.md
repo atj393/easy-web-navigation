@@ -1,19 +1,31 @@
 # Changelog
 
-All notable changes to KeyWise Web are documented here. The format is based on
+All notable changes to Easy Web Navigation are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and the project aims to follow
 [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed — Phase 0N: project rename
+
+- Renamed the project from **KeyWise Web** to **Easy Web Navigation** (rename-only phase; no
+  feature, permission, or logic changes beyond rename-driven imports/config).
+- Repository slug is now `easy-web-navigation`; internal package scope is now
+  `@easy-web-navigation` (e.g. `@easy-web-navigation/shared-types`, `.../dom-scanner`,
+  `.../keyboard-engine`, `.../focus-overlay`, `.../report-generator`, `.../wcag-rules`).
+- Updated the extension display name, popup/options UI, README, docs, package metadata, internal
+  identifiers (`__easyWebNavigationInitialized`, `data-easy-web-navigation-overlay`), and the
+  exported report tool name to **Easy Web Navigation**.
+- Added `PRODUCT_NAME` / `PRODUCT_TAGLINE` constants to `@easy-web-navigation/shared-types`.
+
 ### Added — Phase 0D: read-only tab-path visualization
 
-- `@keywise/keyboard-engine`: `computeTabPath`, `sortFocusableElementsForTabOrder`,
-  `createTabPathSummary`, and `resolveTabIndex`. Reuses `@keywise/dom-scanner` focusable detection.
+- `@easy-web-navigation/keyboard-engine`: `computeTabPath`, `sortFocusableElementsForTabOrder`,
+  `createTabPathSummary`, and `resolveTabIndex`. Reuses `@easy-web-navigation/dom-scanner` focusable detection.
   Ordering: positive `tabindex` first (ascending, ties keep DOM order), then `tabindex=0` /
   natural in DOM order; negative `tabindex`, hidden, and disabled elements are excluded.
 - Large-page guard: results are capped (default 100 items) with `totalDetected` / `capped` reported.
-- `@keywise/focus-overlay`: `showTabPath`, `clearTabPath`, `getTabPathState`, and `hasContent`.
+- `@easy-web-navigation/focus-overlay`: `showTabPath`, `clearTabPath`, `getTabPathState`, and `hasContent`.
   Numbered markers + dashed outlines drawn in the existing extension-owned, shadow-isolated,
   `pointer-events:none` container; rAF-repositioned on scroll/resize; disconnected-safe.
 - New typed messages: `TOGGLE_TAB_PATH`, `GET_TAB_PATH_STATE`, `TAB_PATH_RESULT`; new types
@@ -30,7 +42,7 @@ All notable changes to KeyWise Web are documented here. The format is based on
 
 ### Added — Phase 0C: read-only focus helper and issue locator
 
-- Implemented `FocusOverlayController` in `@keywise/focus-overlay`: `mount`, `unmount`, `isMounted`,
+- Implemented `FocusOverlayController` in `@easy-web-navigation/focus-overlay`: `mount`, `unmount`, `isMounted`,
   `highlightElement`, `clearHighlight`, `clearAll`, `updateForElement`, and `destroy`.
 - The overlay uses one extension-owned, shadow-isolated, `pointer-events:none`, `aria-hidden`
   container; positions boxes from `getBoundingClientRect()`; repositions on scroll/resize
@@ -51,7 +63,7 @@ All notable changes to KeyWise Web are documented here. The format is based on
 
 ### Added — Phase 0B: read-only scanner and first rules
 
-- Real, read-only DOM scanner in `@keywise/dom-scanner`: `createScanContext`,
+- Real, read-only DOM scanner in `@easy-web-navigation/dom-scanner`: `createScanContext`,
   `collectFocusableElements`, `getStableSelector`, `getElementPreview`, accessible-name and
   visibility/focusability helpers, open shadow-root traversal, and a structured `scanDocument`.
 - Six deterministic WCAG keyboard-profile rules wired into the scan (all DOM-observable only):
@@ -76,9 +88,9 @@ All notable changes to KeyWise Web are documented here. The format is based on
 - WXT + React + Manifest V3 extension under `apps/extension` with `background`, `content`,
   `popup`, and `options` entrypoints.
 - Minimal Phase 0A permissions: `activeTab`, `scripting`, `storage` (no broad host permissions).
-- Six workspace packages with documented placeholders: `@keywise/shared-types`,
-  `@keywise/wcag-rules`, `@keywise/dom-scanner`, `@keywise/keyboard-engine`,
-  `@keywise/focus-overlay`, `@keywise/report-generator`.
+- Six workspace packages with documented placeholders: `@easy-web-navigation/shared-types`,
+  `@easy-web-navigation/wcag-rules`, `@easy-web-navigation/dom-scanner`, `@easy-web-navigation/keyboard-engine`,
+  `@easy-web-navigation/focus-overlay`, `@easy-web-navigation/report-generator`.
 - WCAG 2.2 keyboard-profile criteria and seven placeholder rules (all `not-implemented`).
 - Static demo pages under `apps/demo-sites`.
 - Documentation: README, architecture, WCAG keyboard profile, limitations, roadmap, demo plan.

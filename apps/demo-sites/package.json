@@ -1,8 +1,8 @@
 {
-  "name": "@keywise/demo-sites",
+  "name": "@easy-web-navigation/demo-sites",
   "version": "0.1.0",
   "private": true,
-  "description": "Static demo pages for exercising KeyWise Web keyboard inspection (no build step).",
+  "description": "Static demo pages for exercising Easy Web Navigation keyboard inspection (no build step).",
   "scripts": {
     "preview": "npx --yes serve -l 4321 ."
   }

@@ -1,7 +1,7 @@
 /**
- * @keywise/wcag-rules
+ * @easy-web-navigation/wcag-rules
  *
- * Rule METADATA plus deterministic, read-only rule evaluators for the KeyWise
+ * Rule METADATA plus deterministic, read-only rule evaluators for the Easy Web Navigation
  * Web "Keyboard and Navigation Profile" (WCAG 2.2 A/AA).
  *
  * The evaluators are DOM-agnostic: every DOM operation they need is provided
@@ -12,7 +12,7 @@
  * Nothing here mutates the page. Detection is conservative and based only on
  * what is observable in the DOM — never on hidden JavaScript behavior.
  */
-import type { A11yIssue, A11yRule } from "@keywise/shared-types";
+import type { A11yIssue, A11yRule } from "@easy-web-navigation/shared-types";
 import { CRITERIA } from "./criteria";
 
 export { CRITERIA, getCriterion } from "./criteria";

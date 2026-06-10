@@ -5,7 +5,7 @@
 
 ## Extension architecture
 
-KeyWise Web is a Manifest V3 WebExtension built with [WXT](https://wxt.dev) and React. It targets
+Easy Web Navigation is a Manifest V3 WebExtension built with [WXT](https://wxt.dev) and React. It targets
 Chromium (Chrome, Edge) and Firefox from a single codebase. There are four entrypoints:
 
 - **Background service worker** (`entrypoints/background.ts`) — orchestration only. Routes typed
@@ -17,7 +17,7 @@ Chromium (Chrome, Edge) and Firefox from a single codebase. There are four entry
 ## Popup ⇄ content ⇄ background messaging
 
 All cross-surface communication uses the typed `ExtensionMessage` union from
-`@keywise/shared-types`, so every message is discriminated on its `type` field.
+`@easy-web-navigation/shared-types`, so every message is discriminated on its `type` field.
 
 ```
 [ Popup ] --SCAN_REQUEST--------> [ Content script ] --SCAN_RESULT/SCAN_ERROR--> [ Popup ]
@@ -36,7 +36,7 @@ All cross-surface communication uses the typed `ExtensionMessage` union from
 
 ## Overlay architecture (Phase 0C)
 
-The focus helper and issue locator share one `FocusOverlayController` (`@keywise/focus-overlay`),
+The focus helper and issue locator share one `FocusOverlayController` (`@easy-web-navigation/focus-overlay`),
 instantiated and owned by the content script:
 
 - It appends **one** extension-owned `<div>` to `document.body` with an **open shadow root** for
@@ -50,14 +50,14 @@ instantiated and owned by the content script:
 
 ## Package responsibilities
 
-| Package                     | Responsibility                                                        |
-| --------------------------- | --------------------------------------------------------------------- |
-| `@keywise/shared-types`     | Framework-agnostic type contracts shared everywhere.                  |
-| `@keywise/wcag-rules`       | WCAG 2.2 criteria + rule metadata catalog (no detection logic yet).   |
-| `@keywise/dom-scanner`      | Read-only DOM inspection that produces a `ScanResult`.                |
-| `@keywise/keyboard-engine`  | Read-only tab-order computation (reuses dom-scanner focusable logic). |
-| `@keywise/focus-overlay`    | Read-only overlay: focus helper, issue locator, tab-path markers.     |
-| `@keywise/report-generator` | Renders a `ScanResult` to Markdown or JSON.                           |
+| Package                                 | Responsibility                                                        |
+| --------------------------------------- | --------------------------------------------------------------------- |
+| `@easy-web-navigation/shared-types`     | Framework-agnostic type contracts shared everywhere.                  |
+| `@easy-web-navigation/wcag-rules`       | WCAG 2.2 criteria + rule metadata catalog (no detection logic yet).   |
+| `@easy-web-navigation/dom-scanner`      | Read-only DOM inspection that produces a `ScanResult`.                |
+| `@easy-web-navigation/keyboard-engine`  | Read-only tab-order computation (reuses dom-scanner focusable logic). |
+| `@easy-web-navigation/focus-overlay`    | Read-only overlay: focus helper, issue locator, tab-path markers.     |
+| `@easy-web-navigation/report-generator` | Renders a `ScanResult` to Markdown or JSON.                           |
 
 Packages expose their TypeScript source directly via the `exports` field and are consumed through
 the pnpm workspace; the extension bundler (Vite, via WXT) compiles them. There is no separate build

@@ -1,12 +1,19 @@
 import { describe, it, expect, expectTypeOf } from "vitest";
 import {
   DEFAULT_SETTINGS,
+  PRODUCT_NAME,
+  PRODUCT_TAGLINE,
   type ExtensionMessage,
   type ExtensionSettings,
   type ScanResult,
 } from "./index";
 
-describe("@keywise/shared-types", () => {
+describe("@easy-web-navigation/shared-types", () => {
+  it("uses the finalized product name and tagline", () => {
+    expect(PRODUCT_NAME).toBe("Easy Web Navigation");
+    expect(PRODUCT_TAGLINE).toBe("A keyboard accessibility companion for the web.");
+  });
+
   it("exposes sane default settings", () => {
     expect(DEFAULT_SETTINGS.enableVisibleFocusHelper).toBe(true);
     expect(Array.isArray(DEFAULT_SETTINGS.disabledDomains)).toBe(true);

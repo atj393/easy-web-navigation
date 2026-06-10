@@ -1,11 +1,11 @@
 /**
- * @keywise/keyboard-engine
+ * @easy-web-navigation/keyboard-engine
  *
  * Read-only keyboard-order analysis. Computes the order in which keyboard
- * focus would move through a document, reusing `@keywise/dom-scanner`'s
+ * focus would move through a document, reusing `@easy-web-navigation/dom-scanner`'s
  * focusable detection so the two stay consistent.
  *
- * Design constraint: KeyWise Web does NOT override global keyboard behavior.
+ * Design constraint: Easy Web Navigation does NOT override global keyboard behavior.
  * It observes focus movement and computes tab order; it never hijacks Tab,
  * arrow keys, or shortcuts, and it never mutates inspected page nodes.
  */
@@ -15,8 +15,8 @@ import {
   getAccessibleName,
   getElementPreview,
   getStableSelector,
-} from "@keywise/dom-scanner";
-import type { TabPathItem, TabPathOptions, TabPathResult } from "@keywise/shared-types";
+} from "@easy-web-navigation/dom-scanner";
+import type { TabPathItem, TabPathOptions, TabPathResult } from "@easy-web-navigation/shared-types";
 
 /** Default cap on rendered/returned tab-path items (large-page guard). */
 export const DEFAULT_TAB_PATH_CAP = 100;

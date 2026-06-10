@@ -1,183 +1,148 @@
-KeyWise Web - HANDOVER
-======================
+Easy Web Navigation - HANDOVER
+==============================
 
 This file is plain-text memory for continuing in a fresh session. Keep it
 updated at the end of every prompt iteration.
 
 PROJECT NAME
-  KeyWise Web - WCAG 2.2 keyboard accessibility companion browser extension
-  (Chrome, Edge, Firefox). Inspection / assistive browsing tool. NOT an
-  overlay product, NOT an auto-fixer, NOT a legal compliance certifier.
+  Easy Web Navigation (formerly "KeyWise Web") - a keyboard accessibility
+  companion browser extension for Chrome, Edge, and Firefox. Inspection /
+  assistive browsing tool. NOT an overlay product, NOT an auto-fixer, NOT a
+  legal compliance certifier.
+  Tagline: A keyboard accessibility companion for the web.
 
 CURRENT PHASE
-  Phase 0D - read-only tab-path visualization.
+  Phase 0N - project rename (KeyWise Web -> Easy Web Navigation). Rename-only;
+  no feature/permission/logic changes beyond rename-driven imports/config.
 
 CURRENT BRANCH
   main
 
 LATEST COMMIT HASH
-  (Run `git log -1 --pretty=fuller`. The Phase 0D commit message is:
-   "feat: add read-only tab path visualization".
-   Prior baselines: 0C = 2bab9ad, 0B = 6efbfb5, 0A = 5f66f62.)
+  (Run `git log -1 --pretty=fuller`. The Phase 0N commit message is:
+   "chore: rename project to Easy Web Navigation".
+   Prior baselines: 0D = 4894c5e, 0C = 2bab9ad, 0B = 6efbfb5, 0A = 5f66f62.)
 
 COMMIT AUTHOR
   atj393 <alexistoby393@gmail.com>  (local git identity set for this repo)
   No Co-Authored-By. No generated-by trailers. No assistant attribution.
 
 DATE/TIME OF UPDATE
-  2026-06-10 (Phase 0D).
+  2026-06-10 (Phase 0N).
 
 REPO PATH
   c:\Alexis\Test\browser\keyboard-extension\keywise-web
+  NOTE: the local root folder is still named "keywise-web". It was NOT renamed
+  (cannot rename the folder while running inside it). It can be renamed to
+  "easy-web-navigation" manually later from the parent directory; .git and
+  generated output folders should not be renamed.
+
+NAMING (FINAL)
+  Product display name: Easy Web Navigation
+  Repository slug:      easy-web-navigation
+  Package scope:        @easy-web-navigation
+  Tagline:              A keyboard accessibility companion for the web.
 
 SUMMARY OF WHAT CHANGED
-  - Implemented read-only tab-order computation in @keywise/keyboard-engine.
-  - Extended @keywise/focus-overlay to draw numbered tab-path markers.
-  - Content script owns tab-path state and handles new messages.
-  - Popup gained a "Show/Hide tab path" toggle plus a summary line with a
-    capped warning.
-  - Added shared types + messages for tab path.
-  - Updated docs (architecture, README, roadmap, limitations), CHANGELOG,
-    HANDOVER.
+  - Replaced the product name everywhere: KeyWise Web -> Easy Web Navigation.
+  - Replaced package scope @keywise -> @easy-web-navigation across all package
+    names, internal dependencies, and imports.
+  - Replaced slug keywise-web -> easy-web-navigation.
+  - Renamed internal identifiers: __keywiseWebInitialized ->
+    __easyWebNavigationInitialized; data-keywise-overlay attribute ->
+    data-easy-web-navigation-overlay; export filename keywise-report.md ->
+    easy-web-navigation-report.md.
+  - Extension manifest name -> "Easy Web Navigation"; description ->
+    "A keyboard accessibility companion for inspecting focus, tab order, and
+    navigation issues on web pages."
+  - Popup shows product name + tagline; options shows product name.
+  - Added PRODUCT_NAME / PRODUCT_TAGLINE constants in shared-types; popup uses
+    them; added a shared-types test asserting them.
+  - Updated README, all docs, CHANGELOG (Phase 0N entry), HANDOVER.
+  - Ran pnpm install to refresh pnpm-lock.yaml and relink workspace scopes.
 
-TAB-ORDER ALGORITHM (packages/keyboard-engine/src/index.ts)
-  computeTabPath(doc, options) -> { items, summary, elements }
-    1. createScanContext + collectFocusableElements (reused from dom-scanner;
-       already excludes negative tabindex, hidden, disabled; open-shadow aware).
-    2. sortFocusableElementsForTabOrder: positive tabindex first (ascending,
-       ties keep DOM order via stable index), then tabindex 0 / natural in DOM
-       order. Negatives dropped.
-    3. Cap to options.maxItems ?? DEFAULT_TAB_PATH_CAP (100). summary =
-       { shown, totalDetected, capped }.
-    4. items: { index(1-based), selector, elementPreview, tagName,
-       accessibleName?, tabIndex, rect? }.
-  Also exports: sortFocusableElementsForTabOrder, createTabPathSummary,
-  resolveTabIndex, DEFAULT_TAB_PATH_CAP.
+REPLACEMENT METHOD / DECISIONS
+  - Applied an ordered, mechanical rename via perl over `git ls-files`
+    (excluding HANDOVER.txt and pnpm-lock.yaml), order chosen to avoid breaking
+    identifiers: @keywise/ -> @easy-web-navigation/; __keywiseWebInitialized;
+    data-keywise-overlay; keywise-report; keywise-web; "KeyWise Web";
+    "KeyWise"; "Keywise".
+  - "keywise"/"KeyWise" was exclusively the brand token, so replacement was safe
+    and did NOT touch WCAG/keyboard/navigation/standards wording.
+  - No exported TS symbols contained "KeyWise", so none were renamed (only
+    string/comment/identifier-prefix occurrences).
+  - The only intentional old-name mentions remaining are in CHANGELOG (the
+    Phase 0N rename note) and HANDOVER (this rename history).
 
-OVERLAY MARKER BEHAVIOR (packages/focus-overlay/src/index.ts)
-  New: showTabPath(elements), clearTabPath(), getTabPathState(), hasContent().
-  - Numbered badge (.tab-num) + dashed outline (.tab-box) per element, in the
-    same extension-owned shadow-isolated, pointer-events:none, fixed container.
-  - positionMarker uses getBoundingClientRect; reposition() handles both
-    highlights and tab markers on scroll/resize (rAF-throttled); disconnected
-    markers are dropped.
-  - clearTabPath keeps focus/locate highlights; unmount/destroy clears markers
-    + highlights + container.
-  - NEVER mutates inspected nodes.
-
-CONTENT SCRIPT (apps/extension/entrypoints/content.ts)
-  - tabPathEnabled + lastTabSummary state.
-  - TOGGLE_TAB_PATH: enable -> computeTabPath(document, options) +
-    overlay.showTabPath(elements); disable -> overlay.clearTabPath(); unmount
-    only if focus helper off AND overlay has no content.
-  - GET_TAB_PATH_STATE -> TAB_PATH_RESULT { enabled, summary }.
-  - disableFocusHelper now clears only the "focus" highlight and unmounts only
-    if tab path off and overlay empty (so helper + tab path coexist).
-
-POPUP (apps/extension/entrypoints/popup/App.tsx)
-  - "Show/Hide tab path" toggle (aria-pressed) -> TOGGLE_TAB_PATH.
-  - Summary line: "Tab path: N of M focusable item(s)" + capped warning.
-  - On open: best-effort GET_FOCUS_HELPER_STATE and GET_TAB_PATH_STATE (no
-    injection). Scan/focus-helper/locate/export unchanged.
-
-NEW MESSAGE/TYPES (packages/shared-types/src/index.ts)
-  Messages: TOGGLE_TAB_PATH {enabled, options?}, GET_TAB_PATH_STATE,
-  TAB_PATH_RESULT {enabled, summary|null}.
-  Types: TabPathOptions, TabPathItem, TabPathSummary, TabPathResult.
-
-FILES AND FOLDERS CHANGED
-  packages/shared-types/src/index.ts            (tab path types + messages)
-  packages/keyboard-engine/package.json         (+@keywise/dom-scanner dep)
-  packages/keyboard-engine/src/index.ts         (tab-order computation)
-  packages/keyboard-engine/src/index.test.ts    (new tests)
-  packages/focus-overlay/src/index.ts           (marker support)
-  packages/focus-overlay/src/index.test.ts      (marker tests)
-  apps/extension/entrypoints/content.ts         (tab path handlers)
-  apps/extension/entrypoints/popup/App.tsx      (tab path toggle + summary)
-  apps/extension/entrypoints/popup/style.css    (tab summary styles)
-  README.md, CHANGELOG.md, docs/architecture.md, docs/roadmap.md,
-  docs/limitations.md, HANDOVER.txt
+FILES AND FOLDERS CHANGED (rename touched ~40 files)
+  Root: package.json (name easy-web-navigation), README.md, CHANGELOG.md,
+        HANDOVER.txt, eslint.config.js, pnpm-lock.yaml
+  Extension: apps/extension/package.json (@easy-web-navigation/extension + deps),
+        wxt.config.ts (name + description), entrypoints/background.ts,
+        entrypoints/content.ts (flag + comments + imports),
+        entrypoints/popup/{App.tsx,index.html,style.css},
+        entrypoints/options/{App.tsx,index.html}, lib/settings.ts
+  Demo: apps/demo-sites/package.json (@easy-web-navigation/demo-sites) + the
+        five demo HTML pages + index.html
+  Packages (name + deps + imports + comments):
+        shared-types (+PRODUCT_NAME/PRODUCT_TAGLINE +test), wcag-rules
+        (+criteria.ts), dom-scanner, keyboard-engine, focus-overlay
+        (data-* attribute + tests), report-generator (tool name + tests)
+  Docs: docs/{architecture,limitations,roadmap,demo-plan,wcag-keyboard-profile}.md
+  No source files/folders were named with "keywise"; none needed git mv.
 
 COMMANDS RUN
   Inspect: git status/branch/log, node v24.13.0, pnpm 9.15.9
-  pnpm install        -> OK (linked keyboard-engine -> dom-scanner)
-  pnpm test           -> PASS (6 files, 67 tests)
+  rg searches for old/new names (see "OLD-NAME SEARCH" below)
+  pnpm install        -> OK (lock refreshed, scopes relinked)
   pnpm typecheck      -> PASS
   pnpm lint           -> PASS
-  pnpm build          -> PASS (chrome-mv3; activeTab/scripting/storage only,
-                         no host_permissions, content_scripts: [])
+  pnpm test           -> PASS (6 files, 68 tests)
+  pnpm build          -> PASS (chrome-mv3; permissions unchanged:
+                         activeTab/scripting/storage; no host_permissions)
   pnpm build:firefox  -> PASS (firefox-mv2)
-  pnpm run ci         -> PASS (run as `pnpm run ci`, not `pnpm ci`)
+  pnpm run ci         -> PASS
 
 TEST RESULTS
-  67 tests passing across 6 files. New: 12 keyboard-engine tests (resolveTabIndex,
-  sort ordering incl. positive-first + stable ties + negatives dropped,
-  computeTabPath DOM order / positive-first / exclusions / item fields /
-  summary / maxItems cap / default 100 cap) and 7 new focus-overlay marker
-  tests (render numbered in order, position from rect, NO target mutation,
-  clearTabPath keeps other highlights, re-show replaces, destroy cleanup,
-  disconnected-safe). Existing scanner/rule/report/types/overlay tests pass.
+  68 tests passing across 6 files (added 1 product-name constant test).
+  Existing scanner/rule/report/overlay/keyboard-engine tests pass with renamed
+  package specifiers and the data-easy-web-navigation-overlay attribute.
 
-IMPORTANT DECISIONS
-  - keyboard-engine reuses dom-scanner's focusable detection (one-directional
-    dep keyboard-engine -> dom-scanner -> wcag-rules -> shared-types; no cycle).
-  - computeTabPath returns `elements` (live refs) alongside serializable items
-    so the content script can drive the overlay without recomputing; only the
-    summary is sent to the popup.
-  - Default cap 100 (DEFAULT_TAB_PATH_CAP) to avoid rendering hundreds of
-    markers; popup shows shown/total + capped warning.
-  - Overlay stays mounted while focus helper OR tab path needs it; disabling
-    one does not tear down the other.
-  - getBoundingClientRect mocked in tests (jsdom has no layout).
-  - No MutationObserver: tab path is a snapshot; toggle off/on to recompute.
-  - missing-visible-focus still deferred (no reliable conservative heuristic).
+OLD-NAME SEARCH (after edits)
+  rg "KeyWise|Keywise|keywise|@keywise|KEYWISE" (excl node_modules/.git/.output)
+  -> only CHANGELOG.md (Phase 0N rename note) and HANDOVER.txt (history).
+  rg "Easy Web Navigation|easy-web-navigation|@easy-web-navigation"
+  -> present in manifest/config, popup, options, docs, package metadata, tests.
 
 KNOWN LIMITATIONS
-  - Tab path is computed (DOM order + tabindex), not observed by pressing Tab;
-    edge cases (inert, custom widgets, scroll containers) may differ from real
-    browser/AT behavior.
-  - Snapshot in time; large pages capped (default 100).
-  - Closed shadow DOM and cross-origin iframes excluded; open shadow order is
-    approximate.
-  - Markers are visual only and do not change tab order.
-  - Restricted pages (chrome:// etc.) -> friendly failure.
+  - Local root folder still named keywise-web (rename manually later).
+  - GitHub remote (if/when created) should use the slug easy-web-navigation.
   - Firefox build is MV2 (WXT default); Chrome/Edge MV3. No icons yet.
+  - missing-visible-focus still deferred (unchanged by this phase).
 
 WHAT WAS INTENTIONALLY NOT IMPLEMENTED
-  - No assist mode. No changing tab order, focus(), or keyboard behavior.
-  - No auto-fix, no inspected-node mutation, no ARIA injection, no added
-    tabindex/handlers/skip links.
-  - No auto-scroll (tab path does not scroll; locate still scrolls only on the
-    explicit user click).
-  - No MutationObserver / live re-render (manual re-toggle instead).
-  - No AI, no speech, no broad host permissions, no remote, no publish, no PR.
+  - No new features, no scanner/overlay/tab-path logic changes (only rename
+    -driven imports/config).
+  - No permission changes. No AI, no speech, no auto-fix, no ARIA injection,
+    no legal compliance claims.
+  - No root-folder rename, no .git rename, no remote, no publish, no PR.
 
-RECOMMENDED MANUAL BROWSER WALKTHROUGH
-  1. pnpm dev (loads chrome-mv3 dev build).
-  2. Serve demos: pnpm -C apps/demo-sites preview (http://localhost:4321).
-  3. Open semantic-good-page.html, click "Show tab path"; numbered markers
-     follow expected keyboard order.
-  4. Open broken-keyboard-page.html; positive-tabindex items (1,2,3) appear
-     first in the numbering.
-  5. Open fake-buttons-page.html; non-focusable fake buttons are NOT numbered.
-  6. Click "Hide tab path"; markers disappear.
-  7. Turn on focus helper and Tab through; focus rectangle still works
-     alongside / after tab path.
-  8. Run a scan and "Locate on page"; Phase 0B/0C still work.
-  9. Open a chrome:// page; friendly failure, no crash.
-  10. Export report; no compliance claim.
+MANUAL FOLLOW-UP
+  - Optionally rename the local folder from the parent dir:
+      (from c:\Alexis\Test\browser\keyboard-extension) move/rename
+      "keywise-web" -> "easy-web-navigation".
+  - If a GitHub remote is created, name it "easy-web-navigation".
 
 NEXT RECOMMENDED PHASE
-  Phase 0E - developer report export polish: include scan results + (optionally)
-  the tab-path summary in Markdown/JSON, copy-to-clipboard, and richer popup
-  presentation. Still read-only, no compliance claims.
+  Phase 0E - developer report export polish (copy-to-clipboard; optional
+  tab-path summary in the report, clearly labeled as a runtime visual aid).
+  Still read-only, no compliance claims.
 
 NEXT RECOMMENDED PROMPT SUMMARY
-  "Phase 0E: Improve developer report export. Add a copy-to-clipboard action
-   and optionally include the current tab-path summary (counts only, clearly
-   labeled as a runtime visual aid, not an audit metric) in the Markdown/JSON
-   report from @keywise/report-generator. Keep the non-compliance disclaimer
-   prominent, keep everything read-only, no broad host permissions, no AI, no
-   speech. Add tests for the new report content and clipboard fallback. Keep
-   commits authored by atj393 (no Co-Authored-By). Update HANDOVER.txt and
-   CHANGELOG.md."
+  "Phase 0E: Improve developer report export in @easy-web-navigation/report-
+   generator. Add copy-to-clipboard in the popup and optionally include the
+   current tab-path summary (counts only, labeled as a runtime visual aid, not
+   an audit metric). Keep the non-compliance disclaimer prominent; keep
+   everything read-only; no broad host permissions, no AI, no speech. Add tests
+   for the new report content and clipboard fallback. Keep commits authored by
+   atj393 (no Co-Authored-By). Update HANDOVER.txt and CHANGELOG.md."

@@ -1,7 +1,7 @@
-import type { WcagCriterion } from "@keywise/shared-types";
+import type { WcagCriterion } from "@easy-web-navigation/shared-types";
 
 /**
- * The WCAG 2.2 criteria that make up the KeyWise Web "Keyboard and
+ * The WCAG 2.2 criteria that make up the Easy Web Navigation "Keyboard and
  * Navigation Profile". This is reference metadata only.
  */
 export const CRITERIA = {

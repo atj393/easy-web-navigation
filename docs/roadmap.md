@@ -11,7 +11,7 @@ aggressive auto-fix) do not.
 
 ## v0.2 — Scanner (Phase 0B — done)
 
-- Implemented read-only DOM inspection in `@keywise/dom-scanner`.
+- Implemented read-only DOM inspection in `@easy-web-navigation/dom-scanner`.
 - Lit up the first six WCAG keyboard-profile rules: `clickable-not-focusable`,
   `unlabeled-control`, `unlabeled-form-input`, `positive-tabindex`, `missing-main-landmark`,
   `missing-skip-link`. `missing-visible-focus` remains deferred.
@@ -20,7 +20,7 @@ aggressive auto-fix) do not.
 
 ## v0.3 — Focus helper (Phase 0C — done)
 
-- Implemented the optional, read-only visual focus helper in `@keywise/focus-overlay`.
+- Implemented the optional, read-only visual focus helper in `@easy-web-navigation/focus-overlay`.
 - User-initiated and reversible; an extension-owned, shadow-isolated, non-interactive overlay that
   rectangles the focused element and can temporarily "locate" a scanned issue's element.
 - Never mutates inspected nodes; cleans up fully when toggled off.
@@ -28,7 +28,7 @@ aggressive auto-fix) do not.
 
 ## v0.4 — Tab-path visualization (Phase 0D — done)
 
-- Implemented tab-order computation in `@keywise/keyboard-engine` (reusing dom-scanner's focusable
+- Implemented tab-order computation in `@easy-web-navigation/keyboard-engine` (reusing dom-scanner's focusable
   detection): positive `tabindex` first, then DOM order; negatives/hidden/disabled excluded.
 - Numbered tab markers drawn in the read-only overlay, toggled from the popup, with a summary and a
   default 100-item cap for large pages.
@@ -36,7 +36,7 @@ aggressive auto-fix) do not.
 
 ## v0.5 — Developer report export
 
-- Flesh out `@keywise/report-generator` output (Markdown + JSON) for sharing findings.
+- Flesh out `@easy-web-navigation/report-generator` output (Markdown + JSON) for sharing findings.
 - Useful, copy-pasteable reports for developers and QA, with the standing disclaimer.
 
 ## v1.0 — Portfolio release

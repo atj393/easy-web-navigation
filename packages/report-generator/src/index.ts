@@ -1,13 +1,13 @@
 /**
- * @keywise/report-generator
+ * @easy-web-navigation/report-generator
  *
  * Turns a ScanResult into a Markdown or JSON report. Every report carries the
- * non-compliance disclaimer: KeyWise Web inspects, it does not certify.
+ * non-compliance disclaimer: Easy Web Navigation inspects, it does not certify.
  */
-import type { A11yIssue, ScanResult } from "@keywise/shared-types";
+import type { A11yIssue, ScanResult } from "@easy-web-navigation/shared-types";
 
 const DISCLAIMER =
-  "KeyWise Web helps inspect keyboard accessibility at runtime. " +
+  "Easy Web Navigation helps inspect keyboard accessibility at runtime. " +
   "It does not certify legal compliance with WCAG, BITV, EN 301 549, EAA, ADA, or Section 508. " +
   "It is not a substitute for manual testing or expert review.";
 
@@ -27,7 +27,7 @@ function wcagRefs(issue: A11yIssue): string {
 /** Render a ScanResult as a Markdown document string. */
 export function generateMarkdownReport(result: ScanResult): string {
   const lines: string[] = [];
-  lines.push("# KeyWise Web — Keyboard Accessibility Report");
+  lines.push("# Easy Web Navigation — Keyboard Accessibility Report");
   lines.push("");
   lines.push(`- Page: ${result.title || "(untitled)"}`);
   lines.push(`- URL: ${result.url || "(unknown)"}`);
@@ -76,7 +76,7 @@ export function generateMarkdownReport(result: ScanResult): string {
 export function generateJsonReport(result: ScanResult): string {
   return JSON.stringify(
     {
-      tool: "KeyWise Web",
+      tool: "Easy Web Navigation",
       schemaVersion: "0.2",
       disclaimer: DISCLAIMER,
       result,
