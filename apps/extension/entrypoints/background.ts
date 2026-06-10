@@ -16,7 +16,7 @@ export default defineBackground(() => {
         sendResponse(reply);
         break;
       }
-      // SCAN_REQUEST / SCAN_RESULT / FOCUS_HELPER_TOGGLE / SETTINGS_UPDATED
+      // SCAN_REQUEST / TOGGLE_FOCUS_HELPER / LOCATE_ISSUE / SETTINGS_UPDATED
       // will be orchestrated here in later phases. No handling in Phase 0A.
       default:
         break;

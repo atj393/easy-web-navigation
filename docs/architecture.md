@@ -20,16 +20,31 @@ All cross-surface communication uses the typed `ExtensionMessage` union from
 `@keywise/shared-types`, so every message is discriminated on its `type` field.
 
 ```
-[ Popup ] --SCAN_REQUEST--> [ Background ] --(inject + relay)--> [ Content script ]
-[ Popup ] <--SCAN_RESULT--- [ Background ] <--SCAN_RESULT------- [ Content script ]
+[ Popup ] --SCAN_REQUEST--------> [ Content script ] --SCAN_RESULT/SCAN_ERROR--> [ Popup ]
+[ Popup ] --TOGGLE_FOCUS_HELPER-> [ Content script ] --FOCUS_HELPER_STATE------> [ Popup ]
+[ Popup ] --LOCATE_ISSUE--------> [ Content script ] --LOCATE_RESULT-----------> [ Popup ]
+[ Popup ] --GET_FOCUS_HELPER_STATE-> [ Content script ] --FOCUS_HELPER_STATE---> [ Popup ]
 ```
 
-- The popup initiates actions (scan, toggle focus helper, export).
-- The background worker is the orchestrator: it injects the content script into the active tab
-  (using `activeTab` + `scripting`) and relays messages.
-- The content script performs read-only inspection and replies with a `ScanResult`.
+- The popup initiates every action (scan, toggle focus helper, locate an issue, export). It ensures
+  the content script is injected (`activeTab` + `scripting`) and messages the tab directly.
+- The content script performs read-only inspection, replies with a `ScanResult`, and owns the
+  visual overlay (focus helper / issue locator).
+- The background worker remains a minimal message router for future cross-surface orchestration.
 
-In Phase 0A the content script returns a placeholder `ScanResult` and performs no analysis.
+## Overlay architecture (Phase 0C)
+
+The focus helper and issue locator share one `FocusOverlayController` (`@keywise/focus-overlay`),
+instantiated and owned by the content script:
+
+- It appends **one** extension-owned `<div>` to `document.body` with an **open shadow root** for
+  style isolation. The container is `position:fixed`, `pointer-events:none`, max `z-index`, and
+  `aria-hidden="true"`, so it cannot steal focus, block input, or be seen by assistive technology.
+- Highlights are absolutely/fixed-positioned boxes computed from `getBoundingClientRect()`, keyed by
+  id (`focus` for the live focused element, `locate` for a temporary issue highlight).
+- Scroll and resize reposition the boxes (rAF-throttled); disconnected elements auto-clear.
+- It **never** touches inspected nodes — no attributes, classes, wrapping, moving, or listeners on
+  them. `unmount()`/`destroy()` removes the container, all window listeners, and all timers.
 
 ## Package responsibilities
 
@@ -39,7 +54,7 @@ In Phase 0A the content script returns a placeholder `ScanResult` and performs n
 | `@keywise/wcag-rules`       | WCAG 2.2 criteria + rule metadata catalog (no detection logic yet). |
 | `@keywise/dom-scanner`      | Read-only DOM inspection that produces a `ScanResult`.              |
 | `@keywise/keyboard-engine`  | Focus tracking and tab-path recording (observe, never override).    |
-| `@keywise/focus-overlay`    | Optional, passive visual focus helper.                              |
+| `@keywise/focus-overlay`    | Read-only visual overlay: focus helper + issue locator.             |
 | `@keywise/report-generator` | Renders a `ScanResult` to Markdown or JSON.                         |
 
 Packages expose their TypeScript source directly via the `exports` field and are consumed through

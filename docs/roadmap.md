@@ -18,10 +18,13 @@ aggressive auto-fix) do not.
 - Real `ScanResult` data flows into the popup summary cards, issue list, and Markdown export.
 - Still read-only: no DOM mutation, no auto-fix, no broad host permissions.
 
-## v0.3 — Focus helper
+## v0.3 — Focus helper (Phase 0C — done)
 
-- Implement the optional, passive visual focus helper in `@keywise/focus-overlay`.
-- User-initiated and reversible; restrained styling that does not fight the page.
+- Implemented the optional, read-only visual focus helper in `@keywise/focus-overlay`.
+- User-initiated and reversible; an extension-owned, shadow-isolated, non-interactive overlay that
+  rectangles the focused element and can temporarily "locate" a scanned issue's element.
+- Never mutates inspected nodes; cleans up fully when toggled off.
+- Still deferred: scoring native focus _visibility_ (`missing-visible-focus`).
 
 ## v0.4 — Tab-path visualization
 

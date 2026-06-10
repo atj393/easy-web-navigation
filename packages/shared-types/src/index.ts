@@ -129,7 +129,13 @@ export type ExtensionMessage =
   | { type: "SCAN_REQUEST"; payload?: ScanRequest }
   | { type: "SCAN_RESULT"; payload: ScanResult }
   | { type: "SCAN_ERROR"; payload: { message: string } }
-  | { type: "FOCUS_HELPER_TOGGLE"; payload: { enabled: boolean } }
+  // Focus helper (read-only visual overlay) controls.
+  | { type: "TOGGLE_FOCUS_HELPER"; payload: { enabled: boolean } }
+  | { type: "GET_FOCUS_HELPER_STATE" }
+  | { type: "FOCUS_HELPER_STATE"; payload: { enabled: boolean } }
+  // Temporarily highlight a scanned issue's element by selector.
+  | { type: "LOCATE_ISSUE"; payload: { selector: string } }
+  | { type: "LOCATE_RESULT"; payload: { found: boolean } }
   | { type: "SETTINGS_UPDATED"; payload: ExtensionSettings };
 
 /** Sensible defaults for first run. */

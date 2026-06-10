@@ -32,9 +32,10 @@ Target success criteria:
 | 3.3.2     | Labels or Instructions       | A     |
 | 4.1.2     | Name, Role, Value            | A     |
 
-## v0 scope (through Phase 0B)
+## v0 scope (through Phase 0C)
 
-A pnpm + TypeScript monorepo with a working **read-only** keyboard accessibility scanner.
+A pnpm + TypeScript monorepo with a working **read-only** keyboard accessibility scanner and a
+read-only visual focus helper / issue locator.
 
 ### What v0 does
 
@@ -45,16 +46,19 @@ A pnpm + TypeScript monorepo with a working **read-only** keyboard accessibility
   `missing-main-landmark`, and `missing-skip-link`.
 - Displays a summary, an issue list (severity, WCAG references, selector, recommendation), and
   exports a Markdown report.
-- Ships typed package boundaries for types, rule metadata, scanning, the keyboard engine, the
-  focus overlay (still placeholders), and report generation.
+- Offers a **read-only focus helper**: toggle it on and a rectangle tracks the keyboard-focused
+  element as you Tab. Each issue has a **"Locate on page"** action that temporarily highlights its
+  element. The overlay is extension-owned, isolated, and never modifies the page.
 - Includes static demo pages, documentation, tests (jsdom), and CI.
 
 ### What v0 does NOT do
 
-- No DOM mutation, no auto-fix, no ARIA injection (the scanner is strictly read-only).
-- No focus overlay, tab-path visualization, or assist mode yet.
-- No `missing-visible-focus` detection yet (kept as deferred metadata).
-- No AI. No speech. No overlays.
+- No DOM mutation of inspected nodes, no auto-fix, no ARIA injection (strictly read-only; the only
+  DOM it creates is its own isolated overlay container, fully removed when the helper is off).
+- No assist mode or tab-path visualization yet.
+- No `missing-visible-focus` detection yet (kept as deferred metadata): the focus helper shows where
+  focus goes, but does not score whether the page's own focus indicator is sufficient.
+- No AI. No speech. Not an accessibility overlay product.
 - No legal compliance claims of any kind. A clean scan is **not** a pass.
 - No broad host permissions (`<all_urls>` is **not** requested).
 

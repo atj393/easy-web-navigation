@@ -1,14 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { browser } from "#imports";
 import { generateMarkdownReport } from "@keywise/report-generator";
 import type { ExtensionMessage, ScanResult } from "@keywise/shared-types";
 
 /**
- * Popup UI (Phase 0B).
+ * Popup UI (Phase 0C).
  *
- * The "Scan current page" button injects the read-only content script into the
- * active tab (activeTab + scripting), requests a scan, and renders the result.
- * Nothing here modifies the inspected page.
+ * "Scan current page" runs a read-only scan of the active tab. "Show focus
+ * helper" toggles a read-only visual overlay that rectangles the focused
+ * element. Each issue has a "Locate" action that temporarily highlights its
+ * element on the page. Nothing here modifies the inspected page.
  */
 const DISCLAIMER =
   "KeyWise Web helps inspect keyboard accessibility at runtime. It does not certify legal " +
@@ -30,46 +31,110 @@ function SummaryCard({ label, count }: SummaryCardProps) {
   );
 }
 
+const RESTRICTED = /cannot access|host permission|chrome:\/\/|edge:\/\/|about:|extension|no tab/i;
+
 function humanizeError(message: string): string {
-  if (/cannot access|host permission|chrome:\/\/|edge:\/\/|about:|extension/i.test(message)) {
-    return "KeyWise Web can't scan this page. Browser-internal and extension pages are restricted.";
+  if (RESTRICTED.test(message)) {
+    return "KeyWise Web can't act on this page. Browser-internal and extension pages are restricted.";
   }
   return message;
+}
+
+async function getActiveTabId(): Promise<number> {
+  const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+  if (!tab?.id) throw new Error("No active tab.");
+  return tab.id;
+}
+
+async function ensureInjected(tabId: number): Promise<void> {
+  // Idempotent: the content script's init guard prevents double-setup.
+  await browser.scripting.executeScript({
+    target: { tabId },
+    files: ["/content-scripts/content.js"],
+  });
+}
+
+async function send(
+  tabId: number,
+  message: ExtensionMessage,
+): Promise<ExtensionMessage | undefined> {
+  return (await browser.tabs.sendMessage(tabId, message)) as ExtensionMessage | undefined;
 }
 
 export function App() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [result, setResult] = useState<ScanResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [focusHelperOn, setFocusHelperOn] = useState(false);
+  const [locateStatus, setLocateStatus] = useState<string | null>(null);
+
+  // Best-effort sync of the helper state when the popup opens. Does not inject:
+  // if the content script isn't present yet, the message rejects and we stay off.
+  useEffect(() => {
+    (async () => {
+      try {
+        const tabId = await getActiveTabId();
+        const response = await send(tabId, { type: "GET_FOCUS_HELPER_STATE" });
+        if (response?.type === "FOCUS_HELPER_STATE") setFocusHelperOn(response.payload.enabled);
+      } catch {
+        /* content script not injected yet — helper is off */
+      }
+    })();
+  }, []);
 
   async function runScan() {
     setPhase("scanning");
     setError(null);
     setResult(null);
+    setLocateStatus(null);
     try {
-      const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
-      if (!tab?.id) throw new Error("No active tab to scan.");
-
-      // Inject the runtime content script into the active tab (idempotent).
-      await browser.scripting.executeScript({
-        target: { tabId: tab.id },
-        files: ["/content-scripts/content.js"],
-      });
-
-      const request: ExtensionMessage = { type: "SCAN_REQUEST", payload: {} };
-      const response = (await browser.tabs.sendMessage(tab.id, request)) as
-        | ExtensionMessage
-        | undefined;
-
+      const tabId = await getActiveTabId();
+      await ensureInjected(tabId);
+      const response = await send(tabId, { type: "SCAN_REQUEST", payload: {} });
       if (!response) throw new Error("No response from the page.");
       if (response.type === "SCAN_ERROR") throw new Error(response.payload.message);
       if (response.type !== "SCAN_RESULT") throw new Error("Unexpected response from the page.");
-
       setResult(response.payload);
       setPhase("done");
     } catch (e) {
       setError(humanizeError(e instanceof Error ? e.message : String(e)));
       setPhase("error");
+    }
+  }
+
+  async function toggleFocusHelper() {
+    setLocateStatus(null);
+    try {
+      const tabId = await getActiveTabId();
+      await ensureInjected(tabId);
+      const next = !focusHelperOn;
+      const response = await send(tabId, {
+        type: "TOGGLE_FOCUS_HELPER",
+        payload: { enabled: next },
+      });
+      if (response?.type === "FOCUS_HELPER_STATE") setFocusHelperOn(response.payload.enabled);
+    } catch (e) {
+      setLocateStatus(humanizeError(e instanceof Error ? e.message : String(e)));
+    }
+  }
+
+  async function locate(selector: string) {
+    setLocateStatus("Locating…");
+    try {
+      const tabId = await getActiveTabId();
+      await ensureInjected(tabId);
+      const response = await send(tabId, { type: "LOCATE_ISSUE", payload: { selector } });
+      if (response?.type === "LOCATE_RESULT") {
+        setLocateStatus(
+          response.payload.found
+            ? "Highlighted the element on the page."
+            : "That element is no longer on the page.",
+        );
+      } else {
+        setLocateStatus("Could not locate the element.");
+      }
+    } catch (e) {
+      setLocateStatus(humanizeError(e instanceof Error ? e.message : String(e)));
     }
   }
 
@@ -122,6 +187,21 @@ export function App() {
         {phase === "scanning" ? "Scanning…" : "Scan current page"}
       </button>
 
+      <button
+        type="button"
+        className={`btn btn--toggle${focusHelperOn ? " btn--on" : ""}`}
+        onClick={toggleFocusHelper}
+        aria-pressed={focusHelperOn}
+      >
+        {focusHelperOn ? "Hide focus helper" : "Show focus helper"}
+      </button>
+
+      {locateStatus && (
+        <p className="popup__locate" role="status">
+          {locateStatus}
+        </p>
+      )}
+
       <section aria-label="Issue summary" className="cards">
         <SummaryCard label="Keyboard" count={keyboardIssues} />
         <SummaryCard label="Navigation" count={navigationIssues} />
@@ -149,6 +229,13 @@ export function App() {
                 </p>
                 <code className="issue__selector">{issue.selector}</code>
                 <p className="issue__rec">{issue.recommendation}</p>
+                <button
+                  type="button"
+                  className="btn btn--small"
+                  onClick={() => locate(issue.selector)}
+                >
+                  Locate on page
+                </button>
               </li>
             ))}
           </ul>

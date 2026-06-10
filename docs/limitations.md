@@ -77,3 +77,23 @@ rather than guesses:
   iframes are not inspected (see the shadow DOM and iframe sections above).
 - **A clean scan is not a pass.** Zero issues means only that the implemented rules found nothing —
   it is never a statement of accessibility or legal compliance.
+
+## Focus helper limitations (Phase 0C)
+
+The focus helper and issue locator are **visual aids only**:
+
+- **Visual-only, not a fix.** The overlay draws rectangles in an extension-owned layer. It does not
+  change the page, does not improve the page's own focus indicator, and does not remediate any
+  source-level accessibility problem.
+- **Not a compliance result.** Seeing a focus rectangle from KeyWise Web does **not** mean the page
+  satisfies "Focus Visible" (2.4.7). KeyWise Web supplies its own indicator for inspection; it does
+  not score whether the site's native focus styling is sufficient (`missing-visible-focus` is still
+  deferred).
+- **Restricted pages.** Browser-internal pages (`chrome://`, `edge://`, `about:`), the extension
+  gallery, and other privileged origins cannot be scripted, so the helper and locate will report a
+  friendly failure there.
+- **Closed shadow DOM / cross-origin iframes.** The focus helper cannot observe focus inside closed
+  shadow roots or cross-origin iframes, and "locate" resolves selectors in the main document and
+  open shadow roots only.
+- **Locate is best-effort.** If the page changed since the scan and the selector no longer matches,
+  locate reports that the element is no longer present rather than guessing.

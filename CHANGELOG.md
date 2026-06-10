@@ -6,6 +6,27 @@ All notable changes to KeyWise Web are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added — Phase 0C: read-only focus helper and issue locator
+
+- Implemented `FocusOverlayController` in `@keywise/focus-overlay`: `mount`, `unmount`, `isMounted`,
+  `highlightElement`, `clearHighlight`, `clearAll`, `updateForElement`, and `destroy`.
+- The overlay uses one extension-owned, shadow-isolated, `pointer-events:none`, `aria-hidden`
+  container; positions boxes from `getBoundingClientRect()`; repositions on scroll/resize
+  (rAF-throttled); and cleans up fully on unmount/destroy. It never mutates inspected nodes.
+- Content script owns the controller, tracks keyboard focus read-only (capture-phase `focusin`),
+  and resolves a "locate" selector (best-effort, with a one-level open shadow-DOM fallback).
+- New typed messages: `TOGGLE_FOCUS_HELPER`, `GET_FOCUS_HELPER_STATE`, `FOCUS_HELPER_STATE`,
+  `LOCATE_ISSUE`, `LOCATE_RESULT` (replacing the unused `FOCUS_HELPER_TOGGLE`).
+- Popup: "Show/Hide focus helper" toggle (with state sync on open), a per-issue "Locate on page"
+  action that temporarily highlights the element (~2s) and scrolls it into view on click, and a
+  small locate status line.
+
+### Notes
+
+- The overlay is visual-only: it does not fix source accessibility and is not a compliance result.
+- `missing-visible-focus` remains deferred — Phase 0C provides a focus helper but does not score
+  native focus visibility.
+
 ### Added — Phase 0B: read-only scanner and first rules
 
 - Real, read-only DOM scanner in `@keywise/dom-scanner`: `createScanContext`,
