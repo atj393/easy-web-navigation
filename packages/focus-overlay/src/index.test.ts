@@ -12,6 +12,11 @@ function boxes(): NodeListOf<Element> {
   return container!.shadowRoot!.querySelectorAll(".box");
 }
 
+function tabNums(): NodeListOf<Element> {
+  const container = document.querySelector("[data-keywise-overlay]");
+  return container!.shadowRoot!.querySelectorAll(".tab-num");
+}
+
 let controller: FocusOverlayController;
 
 beforeEach(() => {
@@ -131,5 +136,73 @@ describe("destroy", () => {
     controller.destroy();
     expect(controller.isMounted()).toBe(false);
     expect(document.querySelector("[data-keywise-overlay]")).toBeNull();
+  });
+});
+
+describe("tab path markers", () => {
+  function makeButtons(n: number): Element[] {
+    document.body.innerHTML = Array.from({ length: n }, (_, i) => `<button>${i}</button>`).join("");
+    const els = Array.from(document.querySelectorAll("button"));
+    els.forEach((el, i) => mockRect(el, { left: i * 10, top: i * 20, width: 50, height: 16 }));
+    return els;
+  }
+
+  it("renders one numbered marker per element, in order", () => {
+    const els = makeButtons(3);
+    controller.showTabPath(els);
+    const nums = tabNums();
+    expect(nums.length).toBe(3);
+    expect(Array.from(nums).map((n) => n.textContent)).toEqual(["1", "2", "3"]);
+    expect(controller.getTabPathState()).toBe(true);
+  });
+
+  it("positions the marker box from the element rect", () => {
+    const els = makeButtons(1);
+    controller.showTabPath(els);
+    const container = document.querySelector("[data-keywise-overlay]")!;
+    const box = container.shadowRoot!.querySelector(".tab-box") as HTMLElement;
+    expect(box.style.width).toBe("50px");
+    expect(box.style.height).toBe("16px");
+  });
+
+  it("does not mutate the inspected elements", () => {
+    const els = makeButtons(2);
+    const before = els.map((e) => e.outerHTML);
+    controller.showTabPath(els);
+    expect(els.map((e) => e.outerHTML)).toEqual(before);
+  });
+
+  it("clearTabPath removes markers but keeps other highlights", () => {
+    const els = makeButtons(2);
+    mockRect(els[0], { width: 10, height: 10 });
+    controller.highlightElement(els[0], { id: "focus", type: "focus" });
+    controller.showTabPath(els);
+    expect(tabNums().length).toBe(2);
+
+    controller.clearTabPath();
+    expect(tabNums().length).toBe(0);
+    expect(controller.getTabPathState()).toBe(false);
+    expect(controller.hasContent()).toBe(true); // the focus highlight remains
+  });
+
+  it("re-showing replaces the previous tab path", () => {
+    const els = makeButtons(3);
+    controller.showTabPath(els);
+    expect(tabNums().length).toBe(3);
+    controller.showTabPath(els.slice(0, 2)); // no DOM reset, just fewer elements
+    expect(tabNums().length).toBe(2);
+  });
+
+  it("destroy removes tab markers and the container", () => {
+    controller.showTabPath(makeButtons(2));
+    controller.destroy();
+    expect(controller.isMounted()).toBe(false);
+    expect(document.querySelector("[data-keywise-overlay]")).toBeNull();
+  });
+
+  it("skips disconnected elements safely", () => {
+    const orphan = document.createElement("button");
+    controller.showTabPath([orphan]);
+    expect(tabNums().length).toBe(0);
   });
 });

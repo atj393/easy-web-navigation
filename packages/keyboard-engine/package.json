@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@keywise/dom-scanner": "workspace:*",
     "@keywise/shared-types": "workspace:*"
   },
   "devDependencies": {

@@ -32,10 +32,10 @@ Target success criteria:
 | 3.3.2     | Labels or Instructions       | A     |
 | 4.1.2     | Name, Role, Value            | A     |
 
-## v0 scope (through Phase 0C)
+## v0 scope (through Phase 0D)
 
-A pnpm + TypeScript monorepo with a working **read-only** keyboard accessibility scanner and a
-read-only visual focus helper / issue locator.
+A pnpm + TypeScript monorepo with a working **read-only** keyboard accessibility scanner, a
+read-only visual focus helper / issue locator, and a read-only tab-path visualization.
 
 ### What v0 does
 
@@ -49,13 +49,16 @@ read-only visual focus helper / issue locator.
 - Offers a **read-only focus helper**: toggle it on and a rectangle tracks the keyboard-focused
   element as you Tab. Each issue has a **"Locate on page"** action that temporarily highlights its
   element. The overlay is extension-owned, isolated, and never modifies the page.
+- Offers a **read-only tab-path visualization**: toggle "Show tab path" to draw numbered markers in
+  the computed keyboard tab order (positive `tabindex` first, then DOM order), with a summary and a
+  performance cap (default 100 items).
 - Includes static demo pages, documentation, tests (jsdom), and CI.
 
 ### What v0 does NOT do
 
 - No DOM mutation of inspected nodes, no auto-fix, no ARIA injection (strictly read-only; the only
-  DOM it creates is its own isolated overlay container, fully removed when the helper is off).
-- No assist mode or tab-path visualization yet.
+  DOM it creates is its own isolated overlay container, fully removed when nothing needs it).
+- No assist mode yet (no changing tab order, focus, or keyboard behavior).
 - No `missing-visible-focus` detection yet (kept as deferred metadata): the focus helper shows where
   focus goes, but does not score whether the page's own focus indicator is sufficient.
 - No AI. No speech. Not an accessibility overlay product.

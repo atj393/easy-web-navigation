@@ -110,6 +110,46 @@ export interface ScanResult {
   focusableCount: number;
 }
 
+/** Options controlling tab-path computation. */
+export interface TabPathOptions {
+  /** Maximum number of items to return/render. Default 100. */
+  maxItems?: number;
+  /** Include elements that are not visible. Default false. */
+  includeHidden?: boolean;
+  /** Traverse open shadow roots. Default true. */
+  traverseShadow?: boolean;
+}
+
+/** A single stop along the computed keyboard tab order. */
+export interface TabPathItem {
+  /** 1-based position in the computed tab order. */
+  index: number;
+  selector: string;
+  elementPreview: string;
+  tagName: string;
+  accessibleName?: string;
+  /** Resolved tabindex (0 for naturally focusable elements). */
+  tabIndex: number;
+  /** Snapshot of the element's bounding box at compute time, if available. */
+  rect?: { x: number; y: number; width: number; height: number };
+}
+
+/** Summary of a tab-path computation. */
+export interface TabPathSummary {
+  /** Number of items returned/rendered (after any cap). */
+  shown: number;
+  /** Total focusable items detected before the cap. */
+  totalDetected: number;
+  /** True when `totalDetected` exceeded the cap and the list was truncated. */
+  capped: boolean;
+}
+
+/** Serializable result of a tab-path computation. */
+export interface TabPathResult {
+  items: TabPathItem[];
+  summary: TabPathSummary;
+}
+
 /** User-configurable extension settings. */
 export interface ExtensionSettings {
   enableVisibleFocusHelper: boolean;
@@ -136,6 +176,10 @@ export type ExtensionMessage =
   // Temporarily highlight a scanned issue's element by selector.
   | { type: "LOCATE_ISSUE"; payload: { selector: string } }
   | { type: "LOCATE_RESULT"; payload: { found: boolean } }
+  // Tab-path visualization (read-only numbered markers).
+  | { type: "TOGGLE_TAB_PATH"; payload: { enabled: boolean; options?: TabPathOptions } }
+  | { type: "GET_TAB_PATH_STATE" }
+  | { type: "TAB_PATH_RESULT"; payload: { enabled: boolean; summary: TabPathSummary | null } }
   | { type: "SETTINGS_UPDATED"; payload: ExtensionSettings };
 
 /** Sensible defaults for first run. */

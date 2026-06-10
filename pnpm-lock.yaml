@@ -105,6 +105,9 @@ importers:
 
   packages/keyboard-engine:
     dependencies:
+      '@keywise/dom-scanner':
+        specifier: workspace:*
+        version: link:../dom-scanner
       '@keywise/shared-types':
         specifier: workspace:*
         version: link:../shared-types

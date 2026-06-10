@@ -24,6 +24,8 @@ All cross-surface communication uses the typed `ExtensionMessage` union from
 [ Popup ] --TOGGLE_FOCUS_HELPER-> [ Content script ] --FOCUS_HELPER_STATE------> [ Popup ]
 [ Popup ] --LOCATE_ISSUE--------> [ Content script ] --LOCATE_RESULT-----------> [ Popup ]
 [ Popup ] --GET_FOCUS_HELPER_STATE-> [ Content script ] --FOCUS_HELPER_STATE---> [ Popup ]
+[ Popup ] --TOGGLE_TAB_PATH-----> [ Content script ] --TAB_PATH_RESULT---------> [ Popup ]
+[ Popup ] --GET_TAB_PATH_STATE--> [ Content script ] --TAB_PATH_RESULT---------> [ Popup ]
 ```
 
 - The popup initiates every action (scan, toggle focus helper, locate an issue, export). It ensures
@@ -48,14 +50,14 @@ instantiated and owned by the content script:
 
 ## Package responsibilities
 
-| Package                     | Responsibility                                                      |
-| --------------------------- | ------------------------------------------------------------------- |
-| `@keywise/shared-types`     | Framework-agnostic type contracts shared everywhere.                |
-| `@keywise/wcag-rules`       | WCAG 2.2 criteria + rule metadata catalog (no detection logic yet). |
-| `@keywise/dom-scanner`      | Read-only DOM inspection that produces a `ScanResult`.              |
-| `@keywise/keyboard-engine`  | Focus tracking and tab-path recording (observe, never override).    |
-| `@keywise/focus-overlay`    | Read-only visual overlay: focus helper + issue locator.             |
-| `@keywise/report-generator` | Renders a `ScanResult` to Markdown or JSON.                         |
+| Package                     | Responsibility                                                        |
+| --------------------------- | --------------------------------------------------------------------- |
+| `@keywise/shared-types`     | Framework-agnostic type contracts shared everywhere.                  |
+| `@keywise/wcag-rules`       | WCAG 2.2 criteria + rule metadata catalog (no detection logic yet).   |
+| `@keywise/dom-scanner`      | Read-only DOM inspection that produces a `ScanResult`.                |
+| `@keywise/keyboard-engine`  | Read-only tab-order computation (reuses dom-scanner focusable logic). |
+| `@keywise/focus-overlay`    | Read-only overlay: focus helper, issue locator, tab-path markers.     |
+| `@keywise/report-generator` | Renders a `ScanResult` to Markdown or JSON.                           |
 
 Packages expose their TypeScript source directly via the `exports` field and are consumed through
 the pnpm workspace; the extension bundler (Vite, via WXT) compiles them. There is no separate build

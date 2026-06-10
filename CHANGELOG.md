@@ -6,6 +6,28 @@ All notable changes to KeyWise Web are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added — Phase 0D: read-only tab-path visualization
+
+- `@keywise/keyboard-engine`: `computeTabPath`, `sortFocusableElementsForTabOrder`,
+  `createTabPathSummary`, and `resolveTabIndex`. Reuses `@keywise/dom-scanner` focusable detection.
+  Ordering: positive `tabindex` first (ascending, ties keep DOM order), then `tabindex=0` /
+  natural in DOM order; negative `tabindex`, hidden, and disabled elements are excluded.
+- Large-page guard: results are capped (default 100 items) with `totalDetected` / `capped` reported.
+- `@keywise/focus-overlay`: `showTabPath`, `clearTabPath`, `getTabPathState`, and `hasContent`.
+  Numbered markers + dashed outlines drawn in the existing extension-owned, shadow-isolated,
+  `pointer-events:none` container; rAF-repositioned on scroll/resize; disconnected-safe.
+- New typed messages: `TOGGLE_TAB_PATH`, `GET_TAB_PATH_STATE`, `TAB_PATH_RESULT`; new types
+  `TabPathItem`, `TabPathSummary`, `TabPathOptions`, `TabPathResult`.
+- Content script owns tab-path state; the overlay stays mounted while the focus helper or tab path
+  needs it and unmounts only when nothing remains.
+- Popup: "Show/Hide tab path" toggle with a summary line (shown / total detected) and a capped
+  warning; focus helper, scan, locate, and export behavior unchanged.
+
+### Notes
+
+- Tab path is a read-only visual aid computed from currently detectable focusable elements; it does
+  not change tab order and is not a guarantee of exact browser/AT behavior in every edge case.
+
 ### Added — Phase 0C: read-only focus helper and issue locator
 
 - Implemented `FocusOverlayController` in `@keywise/focus-overlay`: `mount`, `unmount`, `isMounted`,

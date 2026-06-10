@@ -10,88 +10,99 @@ PROJECT NAME
   overlay product, NOT an auto-fixer, NOT a legal compliance certifier.
 
 CURRENT PHASE
-  Phase 0C - read-only focus helper overlay and per-issue locate.
+  Phase 0D - read-only tab-path visualization.
 
 CURRENT BRANCH
   main
 
 LATEST COMMIT HASH
-  (Run `git log -1 --pretty=fuller`. The Phase 0C commit message is:
-   "feat: add read-only focus helper overlay".
-   Prior baselines: 0B = 6efbfb5, 0A = 5f66f62.)
+  (Run `git log -1 --pretty=fuller`. The Phase 0D commit message is:
+   "feat: add read-only tab path visualization".
+   Prior baselines: 0C = 2bab9ad, 0B = 6efbfb5, 0A = 5f66f62.)
 
 COMMIT AUTHOR
   atj393 <alexistoby393@gmail.com>  (local git identity set for this repo)
   No Co-Authored-By. No generated-by trailers. No assistant attribution.
 
 DATE/TIME OF UPDATE
-  2026-06-10 (Phase 0C).
+  2026-06-10 (Phase 0D).
 
 REPO PATH
   c:\Alexis\Test\browser\keyboard-extension\keywise-web
 
 SUMMARY OF WHAT CHANGED
-  - Implemented FocusOverlayController (real) in @keywise/focus-overlay.
-  - Content script now owns the overlay: read-only focus tracking + locate.
-  - Popup gained a "Show/Hide focus helper" toggle and a per-issue
-    "Locate on page" action with a small status line.
-  - Added typed messages for focus helper + locate; removed unused
-    FOCUS_HELPER_TOGGLE.
-  - Updated docs (architecture overlay section, README scope, roadmap v0.3,
-    limitations focus-helper section), CHANGELOG, HANDOVER.
+  - Implemented read-only tab-order computation in @keywise/keyboard-engine.
+  - Extended @keywise/focus-overlay to draw numbered tab-path markers.
+  - Content script owns tab-path state and handles new messages.
+  - Popup gained a "Show/Hide tab path" toggle plus a summary line with a
+    capped warning.
+  - Added shared types + messages for tab path.
+  - Updated docs (architecture, README, roadmap, limitations), CHANGELOG,
+    HANDOVER.
 
-OVERLAY BEHAVIOR (packages/focus-overlay/src/index.ts)
-  FocusOverlayController API: mount, unmount, isMounted, highlightElement,
-  clearHighlight, clearAll, updateForElement, destroy.
-  - One extension-owned <div> appended to document.body, open shadow root for
-    style isolation, position:fixed, pointer-events:none, z-index max,
-    aria-hidden=true.
-  - Highlight boxes positioned from getBoundingClientRect, keyed by id
-    ("focus" live, "locate" temporary with durationMs auto-clear).
-  - Repositions on scroll/resize (rAF-throttled). Disconnected elements auto
-    -clear. Null/disconnected inputs are safe (return false).
-  - NEVER mutates inspected nodes. unmount/destroy removes container + all
-    window listeners + timers.
+TAB-ORDER ALGORITHM (packages/keyboard-engine/src/index.ts)
+  computeTabPath(doc, options) -> { items, summary, elements }
+    1. createScanContext + collectFocusableElements (reused from dom-scanner;
+       already excludes negative tabindex, hidden, disabled; open-shadow aware).
+    2. sortFocusableElementsForTabOrder: positive tabindex first (ascending,
+       ties keep DOM order via stable index), then tabindex 0 / natural in DOM
+       order. Negatives dropped.
+    3. Cap to options.maxItems ?? DEFAULT_TAB_PATH_CAP (100). summary =
+       { shown, totalDetected, capped }.
+    4. items: { index(1-based), selector, elementPreview, tagName,
+       accessibleName?, tabIndex, rect? }.
+  Also exports: sortFocusableElementsForTabOrder, createTabPathSummary,
+  resolveTabIndex, DEFAULT_TAB_PATH_CAP.
 
-FOCUS HELPER BEHAVIOR (content script)
-  - TOGGLE_FOCUS_HELPER enabled -> overlay.mount() + capture-phase focusin
-    listener -> overlay.updateForElement(target); also reflects current
-    activeElement. Disabled -> remove listener + overlay.unmount().
-  - Never calls focus()/preventDefault(); does not change tab order or ARIA.
+OVERLAY MARKER BEHAVIOR (packages/focus-overlay/src/index.ts)
+  New: showTabPath(elements), clearTabPath(), getTabPathState(), hasContent().
+  - Numbered badge (.tab-num) + dashed outline (.tab-box) per element, in the
+    same extension-owned shadow-isolated, pointer-events:none, fixed container.
+  - positionMarker uses getBoundingClientRect; reposition() handles both
+    highlights and tab markers on scroll/resize (rAF-throttled); disconnected
+    markers are dropped.
+  - clearTabPath keeps focus/locate highlights; unmount/destroy clears markers
+    + highlights + container.
+  - NEVER mutates inspected nodes.
 
-ISSUE LOCATE BEHAVIOR (content script)
-  - LOCATE_ISSUE { selector } -> findBySelector (document.querySelector, then
-    one-level open shadow-root fallback). If found: scrollIntoView (only on
-    this user action) + highlightElement id "locate" for ~2000 ms. Returns
-    LOCATE_RESULT { found }.
+CONTENT SCRIPT (apps/extension/entrypoints/content.ts)
+  - tabPathEnabled + lastTabSummary state.
+  - TOGGLE_TAB_PATH: enable -> computeTabPath(document, options) +
+    overlay.showTabPath(elements); disable -> overlay.clearTabPath(); unmount
+    only if focus helper off AND overlay has no content.
+  - GET_TAB_PATH_STATE -> TAB_PATH_RESULT { enabled, summary }.
+  - disableFocusHelper now clears only the "focus" highlight and unmounts only
+    if tab path off and overlay empty (so helper + tab path coexist).
 
-POPUP CHANGES (apps/extension/entrypoints/popup/App.tsx)
-  - getActiveTabId/ensureInjected/send helpers.
-  - Focus helper toggle (aria-pressed), best-effort state sync on open via
-    GET_FOCUS_HELPER_STATE (does NOT inject; tolerates "not injected").
-  - Per-issue "Locate on page" button -> locate(selector) + status line.
-  - Scan + export behavior unchanged.
+POPUP (apps/extension/entrypoints/popup/App.tsx)
+  - "Show/Hide tab path" toggle (aria-pressed) -> TOGGLE_TAB_PATH.
+  - Summary line: "Tab path: N of M focusable item(s)" + capped warning.
+  - On open: best-effort GET_FOCUS_HELPER_STATE and GET_TAB_PATH_STATE (no
+    injection). Scan/focus-helper/locate/export unchanged.
 
-NEW/CHANGED MESSAGE TYPES (packages/shared-types)
-  TOGGLE_FOCUS_HELPER {enabled}, GET_FOCUS_HELPER_STATE,
-  FOCUS_HELPER_STATE {enabled}, LOCATE_ISSUE {selector},
-  LOCATE_RESULT {found}. Removed FOCUS_HELPER_TOGGLE.
+NEW MESSAGE/TYPES (packages/shared-types/src/index.ts)
+  Messages: TOGGLE_TAB_PATH {enabled, options?}, GET_TAB_PATH_STATE,
+  TAB_PATH_RESULT {enabled, summary|null}.
+  Types: TabPathOptions, TabPathItem, TabPathSummary, TabPathResult.
 
 FILES AND FOLDERS CHANGED
-  packages/shared-types/src/index.ts            (focus/locate messages)
-  packages/focus-overlay/src/index.ts           (real controller)
-  packages/focus-overlay/src/index.test.ts      (new tests)
-  apps/extension/entrypoints/content.ts         (overlay owner + handlers)
-  apps/extension/entrypoints/background.ts       (comment only)
-  apps/extension/entrypoints/popup/App.tsx      (toggle + locate)
-  apps/extension/entrypoints/popup/style.css    (toggle/locate/badge styles)
+  packages/shared-types/src/index.ts            (tab path types + messages)
+  packages/keyboard-engine/package.json         (+@keywise/dom-scanner dep)
+  packages/keyboard-engine/src/index.ts         (tab-order computation)
+  packages/keyboard-engine/src/index.test.ts    (new tests)
+  packages/focus-overlay/src/index.ts           (marker support)
+  packages/focus-overlay/src/index.test.ts      (marker tests)
+  apps/extension/entrypoints/content.ts         (tab path handlers)
+  apps/extension/entrypoints/popup/App.tsx      (tab path toggle + summary)
+  apps/extension/entrypoints/popup/style.css    (tab summary styles)
   README.md, CHANGELOG.md, docs/architecture.md, docs/roadmap.md,
   docs/limitations.md, HANDOVER.txt
 
 COMMANDS RUN
   Inspect: git status/branch/log, node v24.13.0, pnpm 9.15.9
-  pnpm test           -> PASS (5 files, 48 tests)
-  pnpm typecheck      -> PASS (fixed unused test param)
+  pnpm install        -> OK (linked keyboard-engine -> dom-scanner)
+  pnpm test           -> PASS (6 files, 67 tests)
+  pnpm typecheck      -> PASS
   pnpm lint           -> PASS
   pnpm build          -> PASS (chrome-mv3; activeTab/scripting/storage only,
                          no host_permissions, content_scripts: [])
@@ -99,64 +110,74 @@ COMMANDS RUN
   pnpm run ci         -> PASS (run as `pnpm run ci`, not `pnpm ci`)
 
 TEST RESULTS
-  48 tests passing across 5 files. New: 9 FocusOverlayController tests
-  (mount/idempotent/unmount, box positioning from rect, NO target mutation,
-  one-box-per-id + clear, durationMs auto-clear with fake timers, null/
-  disconnected safety, destroy cleanup). Existing scanner/rule/report/types
-  tests still pass.
+  67 tests passing across 6 files. New: 12 keyboard-engine tests (resolveTabIndex,
+  sort ordering incl. positive-first + stable ties + negatives dropped,
+  computeTabPath DOM order / positive-first / exclusions / item fields /
+  summary / maxItems cap / default 100 cap) and 7 new focus-overlay marker
+  tests (render numbered in order, position from rect, NO target mutation,
+  clearTabPath keeps other highlights, re-show replaces, destroy cleanup,
+  disconnected-safe). Existing scanner/rule/report/types/overlay tests pass.
 
 IMPORTANT DECISIONS
-  - Overlay lives in the content script's owned controller; popup only sends
-    messages. Focus tracking (focusin) is in the content script; repositioning
-    on scroll/resize is in the controller (it tracks elements).
-  - Shadow root used for style isolation; box-sizing border-box; focus = solid
-    blue, locate = dashed orange.
+  - keyboard-engine reuses dom-scanner's focusable detection (one-directional
+    dep keyboard-engine -> dom-scanner -> wcag-rules -> shared-types; no cycle).
+  - computeTabPath returns `elements` (live refs) alongside serializable items
+    so the content script can drive the overlay without recomputing; only the
+    summary is sent to the popup.
+  - Default cap 100 (DEFAULT_TAB_PATH_CAP) to avoid rendering hundreds of
+    markers; popup shows shown/total + capped warning.
+  - Overlay stays mounted while focus helper OR tab path needs it; disabling
+    one does not tear down the other.
   - getBoundingClientRect mocked in tests (jsdom has no layout).
-  - GET_FOCUS_HELPER_STATE on popup open is best-effort and must NOT inject, to
-    honor "prefer user-triggered actions".
-  - missing-visible-focus stays deferred: no reliable conservative heuristic.
-    Phase 0C provides a focus helper but does not score native focus visibility.
+  - No MutationObserver: tab path is a snapshot; toggle off/on to recompute.
+  - missing-visible-focus still deferred (no reliable conservative heuristic).
 
 KNOWN LIMITATIONS
-  - Overlay is visual-only; not a fix and not a compliance result.
-  - Restricted pages (chrome://, etc.) -> friendly failure.
-  - Closed shadow DOM / cross-origin iframes not observed; locate resolves in
-    main document + open shadow roots only.
-  - Locate is best-effort if the page changed since the scan.
+  - Tab path is computed (DOM order + tabindex), not observed by pressing Tab;
+    edge cases (inert, custom widgets, scroll containers) may differ from real
+    browser/AT behavior.
+  - Snapshot in time; large pages capped (default 100).
+  - Closed shadow DOM and cross-origin iframes excluded; open shadow order is
+    approximate.
+  - Markers are visual only and do not change tab order.
+  - Restricted pages (chrome:// etc.) -> friendly failure.
   - Firefox build is MV2 (WXT default); Chrome/Edge MV3. No icons yet.
 
 WHAT WAS INTENTIONALLY NOT IMPLEMENTED
-  - No assist mode, no tab-path visualization.
+  - No assist mode. No changing tab order, focus(), or keyboard behavior.
   - No auto-fix, no inspected-node mutation, no ARIA injection, no added
-    tabindex/keyboard handlers/skip links, no focus stealing, no tab-order
-    changes.
-  - No auto-scroll except on the explicit user-triggered locate.
+    tabindex/handlers/skip links.
+  - No auto-scroll (tab path does not scroll; locate still scrolls only on the
+    explicit user click).
+  - No MutationObserver / live re-render (manual re-toggle instead).
   - No AI, no speech, no broad host permissions, no remote, no publish, no PR.
 
 RECOMMENDED MANUAL BROWSER WALKTHROUGH
   1. pnpm dev (loads chrome-mv3 dev build).
   2. Serve demos: pnpm -C apps/demo-sites preview (http://localhost:4321).
-  3. Open fake-buttons-page.html, "Scan current page".
-  4. Click "Locate on page" on an issue -> a temporary orange highlight appears
-     and the element scrolls into view.
-  5. Click "Show focus helper"; Tab / Shift+Tab -> blue rectangle tracks focus.
-  6. Click "Hide focus helper" -> overlay removed.
-  7. Refresh the page -> no stale overlay remains.
-  8. Open a chrome:// page -> friendly failure, no crash.
-  9. Export report -> keywise-report.md, no compliance claim.
+  3. Open semantic-good-page.html, click "Show tab path"; numbered markers
+     follow expected keyboard order.
+  4. Open broken-keyboard-page.html; positive-tabindex items (1,2,3) appear
+     first in the numbering.
+  5. Open fake-buttons-page.html; non-focusable fake buttons are NOT numbered.
+  6. Click "Hide tab path"; markers disappear.
+  7. Turn on focus helper and Tab through; focus rectangle still works
+     alongside / after tab path.
+  8. Run a scan and "Locate on page"; Phase 0B/0C still work.
+  9. Open a chrome:// page; friendly failure, no crash.
+  10. Export report; no compliance claim.
 
 NEXT RECOMMENDED PHASE
-  Phase 0D - tab-path visualization (number the keyboard tab order over the
-  page using the read-only overlay) via @keywise/keyboard-engine +
-  @keywise/focus-overlay, still read-only.
+  Phase 0E - developer report export polish: include scan results + (optionally)
+  the tab-path summary in Markdown/JSON, copy-to-clipboard, and richer popup
+  presentation. Still read-only, no compliance claims.
 
 NEXT RECOMMENDED PROMPT SUMMARY
-  "Phase 0D: Implement read-only tab-path visualization. Use
-   @keywise/keyboard-engine to compute the keyboard tab order (DOM order +
-   tabindex, reusing dom-scanner's focusable detection) and the focus-overlay
-   to draw numbered markers along that order, toggled from the popup. Keep it
-   strictly read-only (extension-owned overlay only), no tab-order changes, no
-   focus stealing, no ARIA injection, no broad host permissions, no compliance
-   claims. Handle large pages with a sane cap and document it. Add tests for
-   the ordering logic and overlay markers. Keep commits authored by atj393
-   (no Co-Authored-By). Update HANDOVER.txt and CHANGELOG.md."
+  "Phase 0E: Improve developer report export. Add a copy-to-clipboard action
+   and optionally include the current tab-path summary (counts only, clearly
+   labeled as a runtime visual aid, not an audit metric) in the Markdown/JSON
+   report from @keywise/report-generator. Keep the non-compliance disclaimer
+   prominent, keep everything read-only, no broad host permissions, no AI, no
+   speech. Add tests for the new report content and clipboard fallback. Keep
+   commits authored by atj393 (no Co-Authored-By). Update HANDOVER.txt and
+   CHANGELOG.md."

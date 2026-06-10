@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { browser } from "#imports";
 import { generateMarkdownReport } from "@keywise/report-generator";
-import type { ExtensionMessage, ScanResult } from "@keywise/shared-types";
+import type { ExtensionMessage, ScanResult, TabPathSummary } from "@keywise/shared-types";
 
 /**
  * Popup UI (Phase 0C).
@@ -66,18 +66,26 @@ export function App() {
   const [result, setResult] = useState<ScanResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [focusHelperOn, setFocusHelperOn] = useState(false);
+  const [tabPathOn, setTabPathOn] = useState(false);
+  const [tabSummary, setTabSummary] = useState<TabPathSummary | null>(null);
   const [locateStatus, setLocateStatus] = useState<string | null>(null);
 
-  // Best-effort sync of the helper state when the popup opens. Does not inject:
-  // if the content script isn't present yet, the message rejects and we stay off.
+  // Best-effort sync of helper/tab-path state when the popup opens. Does not
+  // inject: if the content script isn't present yet, the message rejects and
+  // we stay in the default (off) state.
   useEffect(() => {
     (async () => {
       try {
         const tabId = await getActiveTabId();
-        const response = await send(tabId, { type: "GET_FOCUS_HELPER_STATE" });
-        if (response?.type === "FOCUS_HELPER_STATE") setFocusHelperOn(response.payload.enabled);
+        const focus = await send(tabId, { type: "GET_FOCUS_HELPER_STATE" });
+        if (focus?.type === "FOCUS_HELPER_STATE") setFocusHelperOn(focus.payload.enabled);
+        const tab = await send(tabId, { type: "GET_TAB_PATH_STATE" });
+        if (tab?.type === "TAB_PATH_RESULT") {
+          setTabPathOn(tab.payload.enabled);
+          setTabSummary(tab.payload.summary);
+        }
       } catch {
-        /* content script not injected yet — helper is off */
+        /* content script not injected yet — everything is off */
       }
     })();
   }, []);
@@ -113,6 +121,25 @@ export function App() {
         payload: { enabled: next },
       });
       if (response?.type === "FOCUS_HELPER_STATE") setFocusHelperOn(response.payload.enabled);
+    } catch (e) {
+      setLocateStatus(humanizeError(e instanceof Error ? e.message : String(e)));
+    }
+  }
+
+  async function toggleTabPath() {
+    setLocateStatus(null);
+    try {
+      const tabId = await getActiveTabId();
+      await ensureInjected(tabId);
+      const next = !tabPathOn;
+      const response = await send(tabId, {
+        type: "TOGGLE_TAB_PATH",
+        payload: { enabled: next },
+      });
+      if (response?.type === "TAB_PATH_RESULT") {
+        setTabPathOn(response.payload.enabled);
+        setTabSummary(response.payload.summary);
+      }
     } catch (e) {
       setLocateStatus(humanizeError(e instanceof Error ? e.message : String(e)));
     }
@@ -195,6 +222,24 @@ export function App() {
       >
         {focusHelperOn ? "Hide focus helper" : "Show focus helper"}
       </button>
+
+      <button
+        type="button"
+        className={`btn btn--toggle${tabPathOn ? " btn--on" : ""}`}
+        onClick={toggleTabPath}
+        aria-pressed={tabPathOn}
+      >
+        {tabPathOn ? "Hide tab path" : "Show tab path"}
+      </button>
+
+      {tabPathOn && tabSummary && (
+        <p className="popup__tabsummary" role="status">
+          Tab path: {tabSummary.shown} of {tabSummary.totalDetected} focusable item(s)
+          {tabSummary.capped && (
+            <span className="popup__warn"> · capped at {tabSummary.shown} for performance</span>
+          )}
+        </p>
+      )}
 
       {locateStatus && (
         <p className="popup__locate" role="status">

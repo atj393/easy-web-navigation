@@ -26,10 +26,13 @@ aggressive auto-fix) do not.
 - Never mutates inspected nodes; cleans up fully when toggled off.
 - Still deferred: scoring native focus _visibility_ (`missing-visible-focus`).
 
-## v0.4 — Tab-path visualization
+## v0.4 — Tab-path visualization (Phase 0D — done)
 
-- Implement focus tracking and tab-path recording in `@keywise/keyboard-engine`.
-- Visualize the keyboard tab order over the page to make focus-order issues obvious.
+- Implemented tab-order computation in `@keywise/keyboard-engine` (reusing dom-scanner's focusable
+  detection): positive `tabindex` first, then DOM order; negatives/hidden/disabled excluded.
+- Numbered tab markers drawn in the read-only overlay, toggled from the popup, with a summary and a
+  default 100-item cap for large pages.
+- Still read-only: no tab-order changes, no focus stealing, no ARIA injection.
 
 ## v0.5 — Developer report export
 

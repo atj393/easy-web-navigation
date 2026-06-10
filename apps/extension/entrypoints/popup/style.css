@@ -220,3 +220,14 @@ body {
   font-size: 11px;
   opacity: 0.85;
 }
+
+.popup__tabsummary {
+  margin: 0;
+  font-size: 11px;
+  opacity: 0.85;
+}
+
+.popup__warn {
+  color: #d97706;
+  font-weight: 600;
+}

@@ -1,7 +1,8 @@
 import { defineContentScript, browser } from "#imports";
 import { scanDocument } from "@keywise/dom-scanner";
+import { computeTabPath } from "@keywise/keyboard-engine";
 import { FocusOverlayController } from "@keywise/focus-overlay";
-import type { ExtensionMessage } from "@keywise/shared-types";
+import type { ExtensionMessage, TabPathSummary } from "@keywise/shared-types";
 
 /**
  * Content script.
@@ -10,10 +11,10 @@ import type { ExtensionMessage } from "@keywise/shared-types";
  * broad <all_urls> host permissions. It is injected into the active tab on
  * demand via activeTab + scripting.
  *
- * Phase 0C: in addition to the read-only scan, this script owns a single
- * extension-owned visual overlay (the focus helper / issue locator). It still
- * does NOT modify any inspected page node — the only DOM it creates is its own
- * isolated overlay container, which is fully removed when the helper is off.
+ * Phase 0C/0D: in addition to the read-only scan, this script owns a single
+ * extension-owned visual overlay (focus helper, issue locator, and tab-path
+ * markers). It still does NOT modify any inspected page node — the only DOM it
+ * creates is its own isolated overlay container, fully removed when unused.
  *
  * IMPORTANT — inspection vs. compliance: runtime inspection helps users
  * UNDERSTAND keyboard accessibility; it cannot GUARANTEE legal compliance with
@@ -34,6 +35,8 @@ export default defineContentScript({
 
     const overlay = new FocusOverlayController({ doc: document });
     let focusHelperEnabled = false;
+    let tabPathEnabled = false;
+    let lastTabSummary: TabPathSummary | null = null;
 
     // Read-only focus tracking. Capture phase so it still fires for targets
     // that stop propagation. We never call focus() or preventDefault().
@@ -56,7 +59,24 @@ export default defineContentScript({
       if (!focusHelperEnabled) return;
       focusHelperEnabled = false;
       document.removeEventListener("focusin", onFocusIn, true);
-      overlay.unmount();
+      overlay.clearHighlight("focus");
+      // Keep the overlay mounted if the tab path (or anything else) still needs it.
+      if (!tabPathEnabled && !overlay.hasContent()) overlay.unmount();
+    }
+
+    function enableTabPath(options?: { maxItems?: number }): TabPathSummary {
+      const { summary, elements } = computeTabPath(document, options);
+      overlay.showTabPath(elements);
+      tabPathEnabled = true;
+      lastTabSummary = summary;
+      return summary;
+    }
+
+    function disableTabPath(): void {
+      tabPathEnabled = false;
+      lastTabSummary = null;
+      overlay.clearTabPath();
+      if (!focusHelperEnabled && !overlay.hasContent()) overlay.unmount();
     }
 
     /** Best-effort selector resolution (light shadow-DOM fallback). */
@@ -130,6 +150,28 @@ export default defineContentScript({
         case "LOCATE_ISSUE": {
           const found = locateIssue(message.payload.selector);
           sendResponse({ type: "LOCATE_RESULT", payload: { found } } satisfies ExtensionMessage);
+          return false;
+        }
+        case "TOGGLE_TAB_PATH": {
+          let summary: TabPathSummary | null = null;
+          try {
+            if (message.payload.enabled) summary = enableTabPath(message.payload.options);
+            else disableTabPath();
+          } catch {
+            // Defensive: never let a computation error break the page.
+            disableTabPath();
+          }
+          sendResponse({
+            type: "TAB_PATH_RESULT",
+            payload: { enabled: tabPathEnabled, summary },
+          } satisfies ExtensionMessage);
+          return false;
+        }
+        case "GET_TAB_PATH_STATE": {
+          sendResponse({
+            type: "TAB_PATH_RESULT",
+            payload: { enabled: tabPathEnabled, summary: lastTabSummary },
+          } satisfies ExtensionMessage);
           return false;
         }
         default:

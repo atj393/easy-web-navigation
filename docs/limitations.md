@@ -97,3 +97,21 @@ The focus helper and issue locator are **visual aids only**:
   open shadow roots only.
 - **Locate is best-effort.** If the page changed since the scan and the selector no longer matches,
   locate reports that the element is no longer present rather than guessing.
+
+## Tab-path limitations (Phase 0D)
+
+The tab-path visualization is a read-only approximation:
+
+- **Computed, not observed.** The order is computed from currently detectable focusable elements
+  (DOM order + `tabindex`), not by actually pressing Tab. It does not guarantee exact browser or
+  assistive-technology behavior in every edge case (e.g. complex `inert`, `contenteditable`,
+  scroll-container, or custom-widget focus management).
+- **Snapshot in time.** Markers reflect the page when you toggled the tab path on. If the page
+  changes afterward, toggle it off and on again to recompute (no `MutationObserver` in this phase).
+- **Capped for performance.** Large pages are capped (default 100 items); the popup shows how many
+  of the total detected items are displayed. The cap avoids rendering hundreds of markers.
+- **Open shadow DOM / cross-origin iframes.** Elements inside closed shadow roots or cross-origin
+  iframes are not included; open shadow roots are traversed best-effort and may not interleave in
+  perfect document order.
+- **Visual only.** The markers do not change the page's tab order or fix anything; they only make
+  the detected order visible.
