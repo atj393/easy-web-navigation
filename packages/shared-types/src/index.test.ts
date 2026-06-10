@@ -19,14 +19,23 @@ describe("@keywise/shared-types", () => {
 
   it("models scan messages as a discriminated union", () => {
     const result: ScanResult = {
-      requestId: "test",
       url: "https://example.com",
-      timestamp: 0,
+      title: "Example",
+      scannedAt: 0,
+      profile: "WCAG 2.2 Keyboard & Navigation Profile (Level A/AA)",
       issues: [],
-      stats: { focusableElements: 0, issues: 0, durationMs: 0 },
-      placeholder: true,
+      summary: {
+        total: 0,
+        bySeverity: { critical: 0, serious: 0, moderate: 0, minor: 0, info: 0 },
+        byCategory: { keyboard: 0, focus: 0, navigation: 0, forms: 0, naming: 0 },
+        byRule: {},
+      },
+      focusableCount: 0,
     };
     const message: ExtensionMessage = { type: "SCAN_RESULT", payload: result };
     expect(message.type).toBe("SCAN_RESULT");
+
+    const error: ExtensionMessage = { type: "SCAN_ERROR", payload: { message: "nope" } };
+    expect(error.type).toBe("SCAN_ERROR");
   });
 });

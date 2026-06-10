@@ -9,12 +9,14 @@ aggressive auto-fix) do not.
 - Monorepo, extension entrypoints, package boundaries, docs, tests, and CI.
 - No real analysis. Everything is a documented placeholder.
 
-## v0.2 — Scanner
+## v0.2 — Scanner (Phase 0B — done)
 
-- Implement read-only DOM inspection in `@keywise/dom-scanner`.
-- Light up the first WCAG keyboard-profile rules (e.g. fake buttons, unlabeled inputs,
-  positive `tabindex`, missing main landmark / skip link).
-- Real `ScanResult` data flowing into the popup summary and issue list.
+- Implemented read-only DOM inspection in `@keywise/dom-scanner`.
+- Lit up the first six WCAG keyboard-profile rules: `clickable-not-focusable`,
+  `unlabeled-control`, `unlabeled-form-input`, `positive-tabindex`, `missing-main-landmark`,
+  `missing-skip-link`. `missing-visible-focus` remains deferred.
+- Real `ScanResult` data flows into the popup summary cards, issue list, and Markdown export.
+- Still read-only: no DOM mutation, no auto-fix, no broad host permissions.
 
 ## v0.3 — Focus helper
 

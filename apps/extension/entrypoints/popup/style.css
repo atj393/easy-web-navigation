@@ -105,3 +105,96 @@ body {
 .popup__disclaimer p {
   margin: 0;
 }
+
+.popup__page {
+  margin: 4px 0 0;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.btn[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.issues {
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.issue-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.issue {
+  border: 1px solid rgba(128, 128, 128, 0.35);
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.issue__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.issue__title {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.issue__wcag {
+  margin: 4px 0 0;
+  font-size: 10px;
+  opacity: 0.8;
+}
+
+.issue__selector {
+  display: block;
+  margin-top: 4px;
+  font-size: 10px;
+  word-break: break-all;
+  opacity: 0.9;
+}
+
+.issue__rec {
+  margin: 4px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.badge {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  padding: 2px 6px;
+  border-radius: 999px;
+  color: #fff;
+  background: #6b7280;
+}
+
+.badge--critical,
+.badge--serious {
+  background: #dc2626;
+}
+
+.badge--moderate {
+  background: #d97706;
+}
+
+.badge--minor {
+  background: #2563eb;
+}
+
+.badge--info {
+  background: #6b7280;
+}

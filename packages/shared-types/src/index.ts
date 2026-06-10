@@ -3,8 +3,6 @@
  *
  * Shared, framework-agnostic type definitions used across the KeyWise Web
  * monorepo (extension app + analysis packages).
- *
- * Phase 0A: type contracts only. No runtime logic lives here.
  */
 
 /** WCAG conformance level. KeyWise Web targets A and AA. */
@@ -15,6 +13,9 @@ export type IssueSeverity = "info" | "minor" | "moderate" | "serious" | "critica
 
 /** Lifecycle status of a rule implementation. */
 export type RuleStatus = "not-implemented" | "experimental" | "stable";
+
+/** Broad grouping used for summaries and the popup cards. */
+export type RuleCategory = "keyboard" | "focus" | "navigation" | "forms" | "naming";
 
 /**
  * A reference to a single WCAG 2.2 success criterion.
@@ -30,66 +31,83 @@ export interface WcagCriterion {
 
 /**
  * A single accessibility finding produced by a scan.
- * In Phase 0A these are only ever placeholder values.
  */
 export interface A11yIssue {
+  /** Stable-ish id for this finding within a scan (e.g. "positive-tabindex-0"). */
   id: string;
   /** Identifier of the rule that produced this issue. */
   ruleId: string;
-  severity: IssueSeverity;
-  message: string;
-  /** Best-effort CSS selector for the offending element. */
-  selector?: string;
-  /** Short human-readable preview of the element (e.g. tag + text). */
-  elementPreview?: string;
+  /** Short human title (mirrors the rule title). */
+  title: string;
+  /** What is wrong and why it matters for keyboard users. */
+  description: string;
   /** WCAG criteria this issue relates to. */
-  criteria: WcagCriterion[];
+  wcag: WcagCriterion[];
+  /** Highest relevant conformance level for this issue. */
+  level: WcagLevel;
+  severity: IssueSeverity;
+  /** Best-effort, readable CSS selector for the offending element. */
+  selector: string;
+  /** Short sanitized preview of the element. */
+  elementPreview: string;
+  /** Actionable, source-level recommendation. */
+  recommendation: string;
+  /**
+   * Whether a future, opt-in "safe enhancement" could assist at runtime.
+   * Always false in Phase 0B — KeyWise Web does not mutate the page.
+   */
+  canAutoEnhance: boolean;
 }
 
 /**
- * Static metadata describing an analysis rule.
- * Rule logic is intentionally not part of this contract.
+ * Static metadata describing an analysis rule. Detection logic is injected
+ * elsewhere (see `@keywise/wcag-rules`); this is the catalog entry.
  */
 export interface A11yRule {
   id: string;
   title: string;
   level: WcagLevel;
   severity: IssueSeverity;
+  category: RuleCategory;
   criteria: WcagCriterion[];
   status: RuleStatus;
-  description?: string;
+  description: string;
+  recommendation: string;
 }
 
-/** Options that may modulate how a scan runs (future use). */
+/** Options that may modulate how a scan runs. */
 export interface ScanOptions {
+  /** Include elements that are not visible. Default false. */
   includeHidden?: boolean;
-  maxElements?: number;
+  /** Traverse open shadow roots. Default true. */
+  traverseShadow?: boolean;
 }
 
 /** A request to scan the current document. */
 export interface ScanRequest {
-  requestId: string;
-  url: string;
   options?: ScanOptions;
 }
 
-/** Aggregate counts for a completed scan. */
-export interface ScanStats {
-  focusableElements: number;
-  issues: number;
-  durationMs: number;
+/** Counts of issues for a completed scan. */
+export interface ScanSummary {
+  total: number;
+  bySeverity: Record<IssueSeverity, number>;
+  byCategory: Record<RuleCategory, number>;
+  byRule: Record<string, number>;
 }
 
-/** The result of a (placeholder, in Phase 0A) document scan. */
+/** The result of a read-only document scan. */
 export interface ScanResult {
-  requestId: string;
   url: string;
+  title: string;
   /** Epoch milliseconds when the scan completed. */
-  timestamp: number;
+  scannedAt: number;
+  /** Human-readable description of the rule profile applied. */
+  profile: string;
   issues: A11yIssue[];
-  stats: ScanStats;
-  /** Always true in Phase 0A — signals no real analysis was performed. */
-  placeholder: boolean;
+  summary: ScanSummary;
+  /** Number of keyboard-focusable elements found (context, not an issue). */
+  focusableCount: number;
 }
 
 /** User-configurable extension settings. */
@@ -108,8 +126,9 @@ export interface ExtensionSettings {
 export type ExtensionMessage =
   | { type: "PING" }
   | { type: "PONG" }
-  | { type: "SCAN_REQUEST"; payload: ScanRequest }
+  | { type: "SCAN_REQUEST"; payload?: ScanRequest }
   | { type: "SCAN_RESULT"; payload: ScanResult }
+  | { type: "SCAN_ERROR"; payload: { message: string } }
   | { type: "FOCUS_HELPER_TOGGLE"; payload: { enabled: boolean } }
   | { type: "SETTINGS_UPDATED"; payload: ExtensionSettings };
 
@@ -121,3 +140,15 @@ export const DEFAULT_SETTINGS: ExtensionSettings = {
   enableSafeEnhancementsManually: false,
   disabledDomains: [],
 };
+
+/** All severities, ordered most to least urgent. Useful for summaries/UI. */
+export const SEVERITY_ORDER: IssueSeverity[] = ["critical", "serious", "moderate", "minor", "info"];
+
+/** All rule categories. */
+export const RULE_CATEGORIES: RuleCategory[] = [
+  "keyboard",
+  "focus",
+  "navigation",
+  "forms",
+  "naming",
+];

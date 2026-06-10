@@ -56,3 +56,24 @@ duplicate announcements, fight the framework, or hide real problems. Overlays th
 compliance are widely criticized for exactly these reasons. KeyWise Web therefore: defaults to
 inspection, makes any enhancement explicit and reversible, keeps changes minimal, and never claims to
 make a site compliant.
+
+## Scanner limitations (Phase 0B)
+
+The Phase 0B scanner is deliberately conservative and deterministic, which means it under-reports
+rather than guesses:
+
+- **DOM-observable only.** Rules act on what is visible in the DOM (attributes, roles, text, simple
+  structure). KeyWise Web does not — and cannot reliably — detect JavaScript click handlers added
+  via `addEventListener`, so some "fake buttons" wired up purely in script will not be flagged.
+- **Accessible name is a pragmatic subset.** Name computation covers the common cases
+  (`aria-labelledby`, `aria-label`, `label[for]` / wrapping `<label>`, button `value`, image `alt`,
+  inline `<svg><title>`); it is not a full implementation of the ARIA accessible-name algorithm.
+- **Visibility is best-effort.** Hidden detection uses the `hidden` attribute, `aria-hidden`,
+  `type="hidden"`, and computed `display` / `visibility`. Without layout (e.g. headless test
+  environments), off-screen or zero-size elements may still be treated as visible.
+- **`missing-skip-link` is conservative.** It only fires when there is nav/header content to bypass
+  and no recognizable skip link, to avoid false positives on simple pages.
+- **Open shadow DOM only.** Open shadow roots are traversed; closed shadow roots and cross-origin
+  iframes are not inspected (see the shadow DOM and iframe sections above).
+- **A clean scan is not a pass.** Zero issues means only that the implemented rules found nothing —
+  it is never a statement of accessibility or legal compliance.

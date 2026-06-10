@@ -1,20 +1,22 @@
 import { describe, it, expect } from "vitest";
 import { ALL_RULES, RULES, getRule } from "./index";
 
-describe("@keywise/wcag-rules", () => {
-  it("defines the seven Phase 0A placeholder rules", () => {
+describe("@keywise/wcag-rules metadata", () => {
+  it("defines the seven keyboard-profile rules", () => {
     expect(ALL_RULES).toHaveLength(7);
   });
 
-  it("marks every rule as not-implemented in Phase 0A", () => {
-    for (const rule of ALL_RULES) {
-      expect(rule.status).toBe("not-implemented");
-    }
+  it("marks the six Phase 0B rules as implemented and keeps focus-visible deferred", () => {
+    const implemented = ALL_RULES.filter((r) => r.status !== "not-implemented");
+    expect(implemented).toHaveLength(6);
+    expect(RULES["missing-visible-focus"].status).toBe("not-implemented");
   });
 
-  it("gives every rule at least one WCAG criterion", () => {
+  it("gives every rule criteria, a category, and a recommendation", () => {
     for (const rule of ALL_RULES) {
       expect(rule.criteria.length).toBeGreaterThan(0);
+      expect(rule.category).toBeTruthy();
+      expect(rule.recommendation.length).toBeGreaterThan(0);
     }
   });
 

@@ -13,7 +13,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@keywise/shared-types": "workspace:*"
+    "@keywise/shared-types": "workspace:*",
+    "@keywise/wcag-rules": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.2"

@@ -10,125 +10,143 @@ PROJECT NAME
   overlay, NOT an auto-fixer, NOT a legal compliance certifier.
 
 CURRENT PHASE
-  Phase 0A - repository skeleton initialization. No product features built.
+  Phase 0B - first read-only DOM scanner and WCAG keyboard-profile rules.
 
 CURRENT BRANCH
   main
 
 LATEST COMMIT HASH
-  (See `git log -1 --pretty=fuller`. The Phase 0A commit message is:
-   "chore: initialize KeyWise Web extension skeleton".)
+  (Run `git log -1 --pretty=fuller`. The Phase 0B commit message is:
+   "feat: implement read-only keyboard accessibility scanner".
+   Phase 0A baseline before it: 5f66f62.)
 
 COMMIT AUTHOR
   atj393 <alexistoby393@gmail.com>  (local git identity set for this repo)
   No Co-Authored-By. No generated-by trailers. No assistant attribution.
 
 DATE/TIME OF UPDATE
-  2026-06-10 (Phase 0A initialization).
+  2026-06-10 (Phase 0B).
 
 REPO PATH
   c:\Alexis\Test\browser\keyboard-extension\keywise-web
-  Chosen because the working directory was empty; created the required
-  `keywise-web` folder per the Phase 0A spec.
 
 SUMMARY OF WHAT CHANGED
-  - Initialized a pnpm + TypeScript monorepo.
-  - Added a WXT + React + Manifest V3 extension under apps/extension with
-    background, content, popup, and options entrypoints.
-  - Added six workspace packages (all documented placeholders / skeletons):
-    shared-types, wcag-rules, dom-scanner, keyboard-engine, focus-overlay,
-    report-generator.
-  - Added WCAG 2.2 keyboard-profile criteria + 7 placeholder rules
-    (all status = not-implemented).
-  - Added five static demo HTML pages under apps/demo-sites.
-  - Added README, CHANGELOG, LICENSE (MIT), and docs (architecture,
-    wcag-keyboard-profile, limitations, roadmap, demo-plan).
-  - Added Vitest tests, ESLint flat config, Prettier config, GitHub Actions CI.
+  - Replaced the placeholder scanner with a real, READ-ONLY DOM scanner.
+  - Implemented six deterministic WCAG keyboard-profile rules and wired them
+    into scanDocument via an injected RuleContext (no package dependency cycle:
+    dom-scanner -> wcag-rules -> shared-types).
+  - Extended shared types (A11yIssue, ScanResult, summary, SCAN_ERROR message).
+  - Content script now performs a real scan and returns SCAN_RESULT/SCAN_ERROR.
+  - Popup scans the active tab (activeTab + scripting), renders summary cards +
+    issue list, and exports a Markdown report.
+  - Report generator emits real issue data + WCAG refs + disclaimer.
+  - Tests moved to jsdom; added scanner, per-rule, and report coverage.
+  - Updated README, CHANGELOG, roadmap, limitations, HANDOVER.
 
-FILES AND FOLDERS CHANGED (created)
-  Root: package.json, pnpm-workspace.yaml, tsconfig.base.json,
-        eslint.config.js, prettier.config.cjs, vitest.config.ts,
-        .gitignore, .prettierignore, .nvmrc, README.md, CHANGELOG.md,
-        LICENSE, HANDOVER.txt
-  CI:   .github/workflows/ci.yml
-  Docs: docs/architecture.md, docs/wcag-keyboard-profile.md,
-        docs/limitations.md, docs/roadmap.md, docs/demo-plan.md
-  App:  apps/extension/ (package.json, wxt.config.ts, tsconfig.json,
-        entrypoints/background.ts, entrypoints/content.ts,
-        entrypoints/popup/{index.html,main.tsx,App.tsx,style.css},
-        entrypoints/options/{index.html,main.tsx,App.tsx,style.css},
-        lib/settings.ts)
-  Demo: apps/demo-sites/ (package.json, index.html, semantic-good-page.html,
-        broken-keyboard-page.html, fake-buttons-page.html,
-        modal-focus-trap-page.html, form-labels-page.html)
-  Pkgs: packages/shared-types, packages/wcag-rules, packages/dom-scanner,
-        packages/keyboard-engine, packages/focus-overlay,
-        packages/report-generator
-        (each: package.json, tsconfig.json, src/index.ts; tests where noted)
+RULES IMPLEMENTED (status = stable)
+  clickable-not-focusable   (WCAG 2.1.1, 4.1.2) serious
+  unlabeled-control         (WCAG 2.4.6, 4.1.2) serious
+  unlabeled-form-input      (WCAG 3.3.2, 4.1.2) serious; moderate if placeholder-only
+  positive-tabindex         (WCAG 2.4.3) moderate
+  missing-main-landmark     (WCAG 2.4.1, 4.1.2) moderate
+  missing-skip-link         (WCAG 2.4.1) moderate; conservative (needs nav/header)
+  missing-visible-focus     -> still status not-implemented (deferred)
+
+SCANNER FUNCTIONS IMPLEMENTED (packages/dom-scanner)
+  createScanContext, collectFocusableElements, getStableSelector,
+  getElementPreview, scanDocument (+ helpers: isHidden, isFocusable,
+  getAccessibleName, deepQuery open-shadow traversal, createRuleContext,
+  summarize). PROFILE constant exported.
+
+FILES AND FOLDERS CHANGED
+  packages/shared-types/src/index.ts            (new A11yIssue/ScanResult/etc.)
+  packages/shared-types/src/index.test.ts       (updated to new shape)
+  packages/wcag-rules/src/index.ts              (metadata + RuleContext + rules)
+  packages/wcag-rules/src/index.test.ts         (status/recommendation tests)
+  packages/dom-scanner/package.json             (+@keywise/wcag-rules dep)
+  packages/dom-scanner/src/index.ts             (real scanner)
+  packages/dom-scanner/src/index.test.ts        (jsdom scanner + rule tests)
+  packages/report-generator/src/index.ts        (real ScanResult report)
+  packages/report-generator/src/index.test.ts   (real issue + disclaimer tests)
+  apps/extension/entrypoints/content.ts         (real scan, SCAN_ERROR)
+  apps/extension/entrypoints/popup/App.tsx      (scan active tab + render + export)
+  apps/extension/entrypoints/popup/style.css    (issue list + severity badges)
+  vitest.config.ts                              (environment: jsdom)
+  package.json                                  (+jsdom devDependency)
+  README.md, CHANGELOG.md, docs/roadmap.md, docs/limitations.md, HANDOVER.txt
 
 COMMANDS RUN
-  Inspection: pwd, ls, git status, node --version (v24.13.0),
-              pnpm --version (9.15.9)
-  Setup:      git init; git config user.name/user.email; git branch -m main
-  Install:    pnpm install  (fixed a Vite/plugin-react version mismatch -
-              see DECISIONS)
-  Verify:     pnpm typecheck  -> PASS (8 projects)
-              pnpm lint       -> PASS (after CommonJS override for *.cjs)
-              pnpm test       -> PASS (4 files, 11 tests)
-              pnpm build      -> PASS (chrome-mv3)
-              pnpm build:firefox -> PASS (firefox-mv2)
-              pnpm run ci     -> PASS (typecheck + lint + test + build)
-              pnpm format     -> applied Prettier
+  Inspect: git status/branch/log, node --version (v24.13.0), pnpm (9.15.9)
+  pnpm install        -> OK (added jsdom 25.0.1, linked wcag-rules into scanner)
+  pnpm test           -> PASS (4 files, 39 tests)
+  pnpm typecheck      -> PASS (after fixing scripting files path to leading "/")
+  pnpm lint           -> PASS
+  pnpm build          -> PASS (chrome-mv3; permissions activeTab/scripting/storage,
+                         no host_permissions, content_scripts: [])
+  pnpm build:firefox  -> PASS (firefox-mv2)
+  pnpm run ci         -> PASS
 
 TEST RESULTS
-  Vitest: 4 test files, 11 tests, all passing.
-  Covers: shared-types defaults/contracts, wcag-rules metadata (7 rules,
-  all not-implemented), dom-scanner placeholder ScanResult, report-generator
-  Markdown + JSON output (incl. disclaimer).
+  39 tests passing across 4 files. Coverage: getStableSelector,
+  getElementPreview, collectFocusableElements, scanDocument shape + integration,
+  each of the six rules (positive/negative cases), open shadow DOM traversal,
+  report generator (markdown + json + empty), shared-types contract.
 
 IMPORTANT DECISIONS
-  - WXT pinned to ^0.20.0 and @wxt-dev/module-react pinned to EXACTLY 1.1.4.
-    Reason: module-react >=1.1.5 pulls @vitejs/plugin-react v5/v6 which needs
-    Vite 7, but WXT resolves Vite 6 here -> "./internal not defined" crash.
-    1.1.4 uses plugin-react v4 (Vite 6 compatible). If bumping WXT later,
-    re-check this pairing.
-  - Permissions: activeTab, scripting, storage ONLY. NO host_permissions.
-    The content script uses registration:"runtime"; WXT would normally add
-    host_permissions:["<all_urls>"]. A `build:manifestGenerated` hook in
-    wxt.config.ts deletes host_permissions so no broad host access is
-    requested. Content script file is still built for on-demand activeTab
-    injection in later phases.
-  - Branch renamed from master to main.
-  - Root "ci" script must be run as `pnpm run ci` (pnpm reserves `pnpm ci`).
-  - Packages export raw TypeScript via package.json "exports"; no per-package
-    build step. Vite (via WXT) and Vitest compile sources directly.
+  - Rule logic lives in wcag-rules but is DOM-agnostic: the scanner injects a
+    RuleContext (query/isVisible/isFocusable/getAccessibleName/selector/preview).
+    This keeps deps one-directional and avoids a cycle.
+  - scanDocument signature changed to scanDocument(doc?, options?, now?) and
+    returns the new ScanResult (no requestId/stats/placeholder). now() is
+    injectable for deterministic tests.
+  - A11yIssue.wcag replaces the old `criteria`; `message` replaced by
+    title+description. canAutoEnhance always false in Phase 0B.
+  - Tests run under jsdom (added as devDependency). jsdom has no layout, so
+    visibility checks rely on attributes + computed display/visibility only.
+  - browser.scripting.executeScript files must be root-absolute
+    ("/content-scripts/content.js") per WXT's ScriptPublicPath type.
+  - missing-skip-link only fires when nav/header/banner exists, to avoid noise.
 
 KNOWN LIMITATIONS
-  - Firefox build is Manifest V2 (WXT default for Firefox). Chrome/Edge is
-    MV3. Revisit if Firefox MV3 is required.
-  - No extension icons yet (WXT builds without them; add in a later phase).
-  - No real analysis: scanDocument returns a placeholder ScanResult and all
-    rules are status=not-implemented.
-  - pnpm warns about 2 deprecated transitive deps (glob@10.5.0, uuid@8.3.2);
-    harmless for Phase 0A.
+  - DOM-observable only: JS click handlers added via addEventListener are not
+    detected (some script-only "fake buttons" won't be flagged).
+  - Accessible-name computation is a pragmatic subset of the ARIA accname algo.
+  - Visibility detection is best-effort without layout.
+  - Open shadow DOM only; closed shadow roots and cross-origin iframes skipped.
+  - Firefox build is MV2 (WXT default); Chrome/Edge is MV3.
+  - No extension icons yet.
+  - A clean scan is NOT a compliance pass.
 
 WHAT WAS INTENTIONALLY NOT IMPLEMENTED
-  - No AI. No speech. No automatic DOM mutation / auto-fix / ARIA injection.
-  - No legal compliance claims (WCAG/BITV/EN 301 549/EAA/ADA/Section 508).
-  - No broad host permissions, no <all_urls> as a required permission.
-  - No remote, no publish, no PR. No icons. No real rule logic. No overlays.
+  - No assist mode, no focus overlay, no tab-path visualization.
+  - No auto-fix, no DOM mutation, no ARIA injection, no added tabindex/handlers.
+  - No AI, no speech.
+  - No missing-visible-focus heuristic (deferred to avoid unreliable results).
+  - No broad host permissions; no remote; no publish; no PR.
+
+RECOMMENDED MANUAL BROWSER WALKTHROUGH
+  1. pnpm dev  (loads chrome-mv3 dev build via WXT).
+  2. Serve demos: pnpm -C apps/demo-sites preview  (http://localhost:4321).
+  3. Open broken-keyboard-page.html, click the toolbar icon, "Scan current page".
+     Expect positive-tabindex + (no main) missing-main-landmark, etc.
+  4. Open fake-buttons-page.html -> expect clickable-not-focusable + unlabeled.
+  5. Open form-labels-page.html -> expect unlabeled-form-input for the bad inputs.
+  6. Open semantic-good-page.html -> expect few/no issues.
+  7. Click "Export report" -> downloads keywise-report.md.
+  8. Confirm restricted pages (chrome://) show a friendly error, not a crash.
 
 NEXT RECOMMENDED PHASE
-  Phase 0B - implement the read-only DOM scanner (@keywise/dom-scanner) and
-  light up the first WCAG keyboard-profile rules end-to-end into the popup.
+  Phase 0C - optional, user-initiated visual focus helper + element highlight
+  (read-only overlay drawn in an isolated layer), and/or tab-path visualization.
 
 NEXT RECOMMENDED PROMPT SUMMARY
-  "Phase 0B: Implement the read-only DOM scanner in @keywise/dom-scanner
-   (collectFocusableElements, getStableSelector, getElementPreview) and wire
-   the first rules (fake-buttons / clickable-not-focusable, unlabeled-form-input,
-   positive-tabindex, missing-main-landmark, missing-skip-link) to produce a
-   real ScanResult. Inject the content script into the active tab via
-   activeTab + scripting on the popup's 'Scan current page' button, render the
-   summary cards and issue list from the result, and keep the no-mutation,
-   no-compliance-claim constraints. Add unit tests against the demo pages.
-   Keep commits authored by atj393. Update HANDOVER.txt and CHANGELOG.md."
+  "Phase 0C: Implement a read-only, user-initiated focus/element highlight in
+   @keywise/focus-overlay and wire a 'Show focus helper' toggle in the popup +
+   a 'locate' affordance on each issue. The overlay must draw in its own
+   isolated container (e.g. a shadow-DOM or fixed overlay layer) WITHOUT
+   mutating the inspected page's nodes, must not steal focus or change tab
+   order, and must clean up fully on toggle-off. Add the visible-focus
+   detection only if a safe, reliable heuristic is feasible; otherwise keep it
+   deferred. Keep activeTab+scripting only, no broad host permissions, no
+   compliance claims. Add tests. Keep commits authored by atj393 (no
+   Co-Authored-By). Update HANDOVER.txt and CHANGELOG.md."

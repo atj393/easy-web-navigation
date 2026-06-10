@@ -6,6 +6,27 @@ All notable changes to KeyWise Web are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added — Phase 0B: read-only scanner and first rules
+
+- Real, read-only DOM scanner in `@keywise/dom-scanner`: `createScanContext`,
+  `collectFocusableElements`, `getStableSelector`, `getElementPreview`, accessible-name and
+  visibility/focusability helpers, open shadow-root traversal, and a structured `scanDocument`.
+- Six deterministic WCAG keyboard-profile rules wired into the scan (all DOM-observable only):
+  `clickable-not-focusable`, `unlabeled-control`, `unlabeled-form-input`, `positive-tabindex`,
+  `missing-main-landmark`, `missing-skip-link`. `missing-visible-focus` remains deferred metadata.
+- Rules are injected with a `RuleContext` from the scanner, avoiding a package dependency cycle.
+- Extended `A11yIssue` (title, description, wcag, level, recommendation, canAutoEnhance) and
+  `ScanResult` (url, title, scannedAt, profile, summary counts by severity/category/rule).
+- Content script performs a real read-only scan and returns `SCAN_RESULT` / `SCAN_ERROR`.
+- Popup runs a scan against the active tab (activeTab + scripting), renders summary cards, an issue
+  list (severity, WCAG refs, selector, recommendation), and a Markdown report export.
+- Report generator emits real issue data with WCAG references and the non-compliance disclaimer.
+- Tests now run under jsdom; added scanner, per-rule, and report coverage (39 tests).
+
+### Changed
+
+- `canAutoEnhance` is always `false` in Phase 0B (no runtime page changes).
+
 ### Added — Phase 0A: skeleton initialization
 
 - pnpm + TypeScript monorepo (`pnpm-workspace.yaml`, shared `tsconfig.base.json`).

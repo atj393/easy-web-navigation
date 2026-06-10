@@ -32,24 +32,30 @@ Target success criteria:
 | 3.3.2     | Labels or Instructions       | A     |
 | 4.1.2     | Name, Role, Value            | A     |
 
-## v0 scope (Phase 0A)
+## v0 scope (through Phase 0B)
 
-This is the **repository skeleton only**. No product features are implemented yet.
+A pnpm + TypeScript monorepo with a working **read-only** keyboard accessibility scanner.
 
 ### What v0 does
 
 - Establishes a pnpm + TypeScript monorepo with a WXT + React + Manifest V3 extension.
-- Provides typed package boundaries for types, rule metadata, scanning, the keyboard engine, the
-  focus overlay, and report generation — all as documented placeholders.
-- Ships popup, options, background, and content-script entrypoints that build and load.
-- Includes static demo pages, documentation, tests, and CI.
+- Runs a **read-only DOM scan** of the active tab (on the popup's "Scan current page" button) and
+  reports real issues for six deterministic WCAG keyboard-profile rules:
+  `clickable-not-focusable`, `unlabeled-control`, `unlabeled-form-input`, `positive-tabindex`,
+  `missing-main-landmark`, and `missing-skip-link`.
+- Displays a summary, an issue list (severity, WCAG references, selector, recommendation), and
+  exports a Markdown report.
+- Ships typed package boundaries for types, rule metadata, scanning, the keyboard engine, the
+  focus overlay (still placeholders), and report generation.
+- Includes static demo pages, documentation, tests (jsdom), and CI.
 
 ### What v0 does NOT do
 
-- No real accessibility analysis (scanning returns a placeholder result).
-- No automatic fixes or DOM rewriting.
+- No DOM mutation, no auto-fix, no ARIA injection (the scanner is strictly read-only).
+- No focus overlay, tab-path visualization, or assist mode yet.
+- No `missing-visible-focus` detection yet (kept as deferred metadata).
 - No AI. No speech. No overlays.
-- No legal compliance claims of any kind.
+- No legal compliance claims of any kind. A clean scan is **not** a pass.
 - No broad host permissions (`<all_urls>` is **not** requested).
 
 ## Setup
