@@ -6,6 +6,26 @@ All notable changes to Easy Web Navigation are documented here. The format is ba
 
 ## [Unreleased]
 
+### Added — Phase 0H: SPA route-change monitoring
+
+- While monitoring is active, Easy Web Navigation now detects single-page-app route changes and
+  refreshes (read-only) without a full navigation or a manual scan.
+- New helper `apps/extension/lib/spa-monitoring.ts`: `normalizeRouteSnapshot`, `hasRouteChanged`,
+  `createThrottledRouteRefresh`, `createSpaRouteMonitor`, and `DEFAULT_SPA_REFRESH_DELAY_MS` (400ms).
+- Detection signals: `history.pushState` / `history.replaceState` (safely wrapped — originals are
+  called through with correct `this`, wrappers are marked to avoid double-wrapping and restored on
+  stop), plus `popstate` and `hashchange`. No always-on heavy MutationObserver.
+- Refreshes are **trailing-debounced**: a burst of route signals collapses into a single refresh.
+  On refresh the overlay is re-established on the (possibly replaced) DOM, the enabled helpers are
+  re-applied (tab path recomputed), and one read-only scan runs.
+- Lifecycle is tied to monitoring: the content script starts the monitor on load when monitoring is
+  enabled and via a `local:monitoring` storage watch; stopping monitoring stops the monitor and
+  clears overlays. Fully cleanup-safe.
+- Popup shows "Active · SPA route changes refresh automatically." while monitoring is on.
+- Read-only throughout: no page mutation, no new permissions, no analytics, no external/AI calls.
+- Added `MonitoringRefreshReason` type and 14 unit tests (route snapshot, change detection,
+  throttle, push/replace/popstate/hashchange handling, no-double-wrap, idempotent start, cleanup).
+
 ### Added — Phase 0G: user-controlled monitoring mode
 
 - Added an explicit, user-started **monitoring mode**: a **Start / Stop** control plus a scope

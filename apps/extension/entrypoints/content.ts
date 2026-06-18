@@ -4,6 +4,7 @@ import { computeTabPath } from "@easy-web-navigation/keyboard-engine";
 import { FocusOverlayController } from "@easy-web-navigation/focus-overlay";
 import type { ExtensionMessage, TabPathSummary } from "@easy-web-navigation/shared-types";
 import { monitoringItem } from "../lib/settings";
+import { createSpaRouteMonitor, type SpaRouteMonitor } from "../lib/spa-monitoring";
 
 /**
  * Content script.
@@ -88,6 +89,36 @@ export default defineContentScript({
       else disableFocusHelper();
       if (tabPath) enableTabPath();
       else disableTabPath();
+    }
+
+    // --- SPA route-change monitoring (only while monitoring is active) -------
+    let spaMonitor: SpaRouteMonitor | null = null;
+
+    /**
+     * Re-establish overlays on the (possibly replaced) DOM after a route
+     * change, re-apply whichever helpers are enabled, and run one read-only
+     * scan. Tearing down first re-mounts a fresh overlay container if the SPA
+     * replaced <body>. Read-only throughout.
+     */
+    function refreshForRoute(): void {
+      const wantFocus = focusHelperEnabled;
+      const wantTab = tabPathEnabled;
+      applyMonitoring(false, false);
+      applyMonitoring(wantFocus, wantTab);
+      try {
+        scanDocument(document);
+      } catch {
+        /* read-only auto-scan; result not stored or uploaded */
+      }
+    }
+
+    function startSpaMonitor(): void {
+      if (!spaMonitor) spaMonitor = createSpaRouteMonitor({ onRouteChange: refreshForRoute });
+      spaMonitor.start();
+    }
+
+    function stopSpaMonitor(): void {
+      spaMonitor?.stop();
     }
 
     /** Best-effort selector resolution (light shadow-DOM fallback). */
@@ -201,18 +232,42 @@ export default defineContentScript({
     });
 
     // Monitoring auto-start: when the user has turned monitoring on, re-apply
-    // the remembered visual helpers and run one read-only scan on page ready.
-    // This runs only because the user explicitly enabled monitoring.
+    // the remembered visual helpers, run one read-only scan, and begin SPA
+    // route monitoring. This runs only because the user explicitly enabled
+    // monitoring.
     void (async () => {
       try {
         const monitoring = await monitoringItem.getValue();
         if (!monitoring.enabled) return;
         applyMonitoring(monitoring.focusHelperEnabled, monitoring.tabPathEnabled);
-        // Read-only auto-scan; result is not stored or uploaded.
         scanDocument(document);
+        startSpaMonitor();
       } catch {
         /* storage unavailable — monitoring simply does not auto-apply */
       }
     })();
+
+    // React to monitoring being toggled while this page is already open:
+    // enabling starts SPA monitoring (+ applies helpers); disabling stops it
+    // and clears overlays. Lifecycle is driven entirely by the user's choice.
+    try {
+      monitoringItem.watch((next, prev) => {
+        const wasEnabled = prev?.enabled ?? false;
+        if (next.enabled && !wasEnabled) {
+          applyMonitoring(next.focusHelperEnabled, next.tabPathEnabled);
+          try {
+            scanDocument(document);
+          } catch {
+            /* read-only */
+          }
+          startSpaMonitor();
+        } else if (!next.enabled && wasEnabled) {
+          stopSpaMonitor();
+          applyMonitoring(false, false);
+        }
+      });
+    } catch {
+      /* storage watch unavailable — popup messages still drive helper state */
+    }
   },
 });

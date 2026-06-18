@@ -50,6 +50,8 @@ aggressive auto-fix) do not.
   demo script.
 - **Phase 0G (done):** user-controlled monitoring mode (Start/Stop, scope selector, remembered
   helper preferences, optional host-permission flow, event-driven auto-injection). Read-only.
-- **Remaining:** screenshots/GIFs, manual cross-browser testing, optional SPA route-change
-  auto-rescan, and store-ready packaging for Chromium and Firefox.
+- **Phase 0H (done):** SPA route-change monitoring — History API / popstate / hashchange detection
+  with a throttled, cleanup-safe, read-only refresh while monitoring is active.
+- **Remaining:** screenshots/GIFs, manual cross-browser testing, and store-ready packaging for
+  Chromium and Firefox.
 - Clear, honest positioning as an inspection/assistive tool throughout.

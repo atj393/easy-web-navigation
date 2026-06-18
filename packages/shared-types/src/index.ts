@@ -192,6 +192,9 @@ export interface MonitoringSettings {
   tabPathEnabled: boolean;
 }
 
+/** Why a monitoring refresh ran. `spa-route` is a detected SPA route change. */
+export type MonitoringRefreshReason = "manual" | "start" | "navigation" | "spa-route";
+
 /** Result of an optional host-permission request. */
 export interface PermissionRequestResult {
   granted: boolean;

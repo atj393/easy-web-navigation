@@ -389,6 +389,9 @@ export function App() {
         <p className="monitor__state">
           Monitoring: <strong>{scopeLabel(monitoringScope, monitoringEnabled)}</strong>
         </p>
+        {monitoringEnabled && (
+          <p className="monitor__spa">Active · SPA route changes refresh automatically.</p>
+        )}
         <label className="monitor__scope">
           <span>Scope</span>
           <select

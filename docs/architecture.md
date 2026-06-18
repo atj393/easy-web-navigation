@@ -90,6 +90,26 @@ tabPathEnabled }`. `MonitoringScope` is `off | current-tab | site | all-sites`. 
 - **Content script** reads `local:monitoring` on load and, if enabled, re-applies the remembered
   helpers (read-only) and runs one scan. `isSupportedPageUrl` blocks restricted schemes.
 
+### SPA route monitoring (Phase 0H)
+
+While monitoring is active, the content script also watches for single-page-app route changes via
+`apps/extension/lib/spa-monitoring.ts`:
+
+- **Signals:** `history.pushState` / `history.replaceState` are wrapped (the original is always
+  called through with the correct `this`; the wrapper only schedules a refresh and is marked to
+  avoid double-wrapping), plus `popstate` and `hashchange` listeners. There is **no always-on heavy
+  MutationObserver** and **no polling**.
+- **Throttling:** signals are trailing-debounced (`DEFAULT_SPA_REFRESH_DELAY_MS`, 400ms), so a burst
+  of route events produces a single refresh. The refresh only runs if the normalized route snapshot
+  actually changed.
+- **Refresh:** tears down and re-establishes the extension-owned overlay on the (possibly replaced)
+  DOM, re-applies whichever helpers are enabled (the tab path is recomputed), and runs one read-only
+  `scanDocument`. It never mutates page nodes.
+- **Lifecycle / cleanup:** the monitor starts on load when monitoring is enabled and via a
+  `local:monitoring` storage watch; `stop()` cancels the throttle, removes listeners, and restores
+  the wrapped History methods (an `active` flag also neutralizes any wrapper that cannot be
+  restored). Stopping monitoring stops the monitor and clears overlays.
+
 ## Package responsibilities
 
 | Package                                 | Responsibility                                                        |

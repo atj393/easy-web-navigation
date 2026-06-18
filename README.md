@@ -50,7 +50,7 @@ Target success criteria:
 | 3.3.2     | Labels or Instructions       | A     |
 | 4.1.2     | Name, Role, Value            | A     |
 
-## v0 scope (through Phase 0G)
+## v0 scope (through Phase 0H)
 
 A pnpm + TypeScript monorepo with a working **read-only** keyboard accessibility scanner, a
 read-only visual focus helper / issue locator, a read-only tab-path visualization, a
@@ -78,8 +78,10 @@ developer-friendly report export, and an explicit, user-controlled monitoring mo
   Navigation scans supported pages automatically and re-applies the visual helpers you enabled,
   within the scope you choose — _current tab session_ (no new permission), _this site_, or _all
   supported websites_ (the latter two request an **optional** host permission first, only on your
-  action). **Stop monitoring** turns it off and clears overlays. Monitoring never uploads page
-  content or changes the website.
+  action). While monitoring is on it also detects **single-page-app route changes** (History API,
+  `popstate`, `hashchange`) and refreshes the scan/helpers in a throttled, read-only way. **Stop
+  monitoring** turns it off and clears overlays. Monitoring never uploads page content or changes
+  the website.
 - Includes static demo pages, documentation, tests (jsdom), and CI.
 
 ### What v0 does NOT do

@@ -144,8 +144,22 @@ Monitoring is explicit, user-started, and read-only:
 - **Restricted pages are never scanned.** Browser-internal and privileged schemes
   (`chrome://`, `edge://`, `about:`, `moz-extension:`, `chrome-extension:`, `devtools:`,
   `view-source:`, `file:`, …) are skipped with a friendly message.
-- **SPA route changes.** Auto-rescan happens on full page loads (and background injection on
-  navigation). In-page SPA route changes are not auto-rescanned in this phase (no `MutationObserver`
-  yet); reopen the popup or re-scan manually.
 - **Still read-only.** Monitoring does not change the page, does not fix anything, uploads nothing,
   and makes no external/AI calls. It only re-applies the visual helpers and inspects.
+
+## SPA route-refresh limitations (Phase 0H)
+
+While monitoring is active, in-page SPA route changes trigger a throttled, read-only refresh — but
+it is **best-effort**:
+
+- **URL-driven.** Detection relies on the History API (`pushState`/`replaceState`), `popstate`, and
+  `hashchange`. Apps that swap content **without** changing the URL may not trigger a refresh; use
+  the manual scan there.
+- **Not framework lifecycle-aware.** A refresh fires after a short debounce; if content is still
+  loading after that window, re-scan manually. Heavy/async dynamic pages may need a manual refresh.
+- **No continuous scanning.** There is no always-on MutationObserver; refreshes are debounced and
+  only run when the route actually changed.
+- **Shared History.** History methods are wrapped defensively and restored on stop; if another
+  script re-wraps them, the wrapper stays a harmless pass-through.
+- **Scope still applies.** SPA refresh runs only when monitoring is active, and closed shadow DOM /
+  cross-origin iframes remain out of scope.
