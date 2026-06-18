@@ -1,11 +1,15 @@
 import { describe, it, expect } from "vitest";
-import { DEFAULT_MONITORING } from "@easy-web-navigation/shared-types";
+import { DEFAULT_MONITORING, type MonitoringSettings } from "@easy-web-navigation/shared-types";
 import {
   isSupportedPageUrl,
   originPatternFromUrl,
   hostPermissionsForScope,
   scopeNeedsPermission,
   scopeLabel,
+  mergeMonitoringSettings,
+  updateMonitoringHelperPreference,
+  createApplyMonitoringPayload,
+  shouldAutoApplyHelpers,
   ALL_SITES_ORIGINS,
 } from "./monitoring";
 
@@ -100,5 +104,68 @@ describe("DEFAULT_MONITORING", () => {
       focusHelperEnabled: false,
       tabPathEnabled: false,
     });
+  });
+});
+
+const SETTINGS: MonitoringSettings = {
+  enabled: true,
+  scope: "site",
+  focusHelperEnabled: true,
+  tabPathEnabled: false,
+};
+
+describe("mergeMonitoringSettings", () => {
+  it("applies a patch without dropping other fields", () => {
+    expect(mergeMonitoringSettings(SETTINGS, { enabled: false })).toEqual({
+      enabled: false,
+      scope: "site",
+      focusHelperEnabled: true,
+      tabPathEnabled: false,
+    });
+  });
+
+  it("does not mutate the input", () => {
+    const copy = { ...SETTINGS };
+    mergeMonitoringSettings(SETTINGS, { scope: "all-sites" });
+    expect(SETTINGS).toEqual(copy);
+  });
+});
+
+describe("updateMonitoringHelperPreference", () => {
+  it("updates only the focus preference", () => {
+    expect(updateMonitoringHelperPreference(SETTINGS, "focus", false)).toEqual({
+      ...SETTINGS,
+      focusHelperEnabled: false,
+    });
+  });
+
+  it("updates only the tab-path preference", () => {
+    expect(updateMonitoringHelperPreference(SETTINGS, "tabPath", true)).toEqual({
+      ...SETTINGS,
+      tabPathEnabled: true,
+    });
+  });
+
+  it("preserves enabled and scope (so Stop/Start keeps prefs)", () => {
+    const next = updateMonitoringHelperPreference(SETTINGS, "focus", false);
+    expect(next.enabled).toBe(SETTINGS.enabled);
+    expect(next.scope).toBe(SETTINGS.scope);
+  });
+});
+
+describe("createApplyMonitoringPayload", () => {
+  it("maps remembered preferences to the apply payload", () => {
+    expect(createApplyMonitoringPayload(SETTINGS)).toEqual({ focusHelper: true, tabPath: false });
+  });
+});
+
+describe("shouldAutoApplyHelpers", () => {
+  it("is true only when enabled and at least one helper is on", () => {
+    expect(shouldAutoApplyHelpers(SETTINGS)).toBe(true);
+    expect(shouldAutoApplyHelpers({ ...SETTINGS, focusHelperEnabled: false })).toBe(false);
+    expect(shouldAutoApplyHelpers({ ...SETTINGS, enabled: false })).toBe(false);
+    expect(
+      shouldAutoApplyHelpers({ ...SETTINGS, focusHelperEnabled: false, tabPathEnabled: true }),
+    ).toBe(true);
   });
 });

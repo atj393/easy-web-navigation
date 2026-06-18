@@ -75,9 +75,13 @@ auto-scans supported pages within a chosen scope. It is **off by default**.
 tabPathEnabled }`. `MonitoringScope` is `off | current-tab | site | all-sites`. The popup is the
   writer; the content script and background read it. No page content is ever stored.
 - **Popup** owns the UX: Start/Stop, the scope selector, and the status label. On Start it persists
-  the choice, requests an optional host permission when the scope needs one (from the click
-  gesture), scans the active tab, and applies the helpers via `APPLY_MONITORING`. On Stop it
-  persists `enabled:false` and clears overlays.
+  `enabled`/`scope` only (the remembered helper preferences are preserved), requests an optional host
+  permission when the scope needs one (from the click gesture), scans the active tab, and applies the
+  remembered helpers via `APPLY_MONITORING`. On Stop it persists `enabled:false` and clears overlays
+  **without** erasing the helper preferences (so the next Start restores them). When the popup opens
+  while monitoring is enabled, it injects into the active tab and re-applies the remembered helpers —
+  which is how monitoring re-applies on each page in the current-tab scope. Helper preferences are
+  persisted whenever a toggle changes (`updateMonitoringHelperPreference`), independent of UI state.
 - **Permission flow** (no required broad host permissions): `current-tab` uses `activeTab` only;
   `site` requests `https://<host>/*`; `all-sites` requests `http://*/*` + `https://*/*`. These are
   declared as `optional_host_permissions` and requested only on user action. A denial falls back to

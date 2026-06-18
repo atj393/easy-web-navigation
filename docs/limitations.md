@@ -135,10 +135,17 @@ The exported report is a developer aid, not an audit:
 Monitoring is explicit, user-started, and read-only:
 
 - **Current-tab scope is permission-limited.** It relies on `activeTab`, which the browser grants
-  for the active tab when you act. It cannot reliably re-scan across cross-origin navigations on its
-  own; reopening the popup re-scans the active tab.
-- **Site / all-sites need optional host permissions.** These scopes ask you to approve an optional
-  host permission first. If you deny it, monitoring falls back to the current-tab session.
+  for the active tab only when you act. The background **cannot** inject into pages you navigate to
+  in this scope, so helpers do not re-apply automatically as you browse. They **do** re-apply (with
+  your remembered preferences) whenever you reopen the popup on a supported page — opening the popup
+  is the user gesture that grants access. For hands-free re-application across pages, use **This
+  site** or **All supported websites** and grant the optional host permission.
+- **Site / all-sites auto-apply.** With the optional host permission granted, the background injects
+  the read-only content script as you navigate to matching pages, and the remembered helpers
+  re-apply automatically (no popup needed). If you deny the permission, monitoring falls back to the
+  current-tab session.
+- **Preferences are remembered across Start/Stop.** Stopping monitoring removes the overlays but
+  keeps your Focus helper / Tab path choices; the next Start re-applies them.
 - **Firefox limitation.** Firefox's MV2 build does not expose optional host permissions, so the
   `site` and `all-sites` scopes fall back to current-tab there. Chrome/Edge (MV3) support them.
 - **Restricted pages are never scanned.** Browser-internal and privileged schemes

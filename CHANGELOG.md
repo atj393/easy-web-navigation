@@ -6,6 +6,28 @@ All notable changes to Easy Web Navigation are documented here. The format is ba
 
 ## [Unreleased]
 
+### Fixed — Phase 0H-Fix: monitoring helper-preference persistence & auto-apply
+
+- Monitoring now actually re-applies the remembered Focus helper / Tab path on each supported page.
+  Previously, after navigating you had to click the toggles again.
+- **Root causes fixed:** (1) opening the popup while monitoring was on only _read_ helper state
+  (no injection), so nothing re-applied — especially in the current-tab scope where the background
+  cannot inject; (2) **Start** overwrote the saved helper preferences from popup UI state and
+  **Stop** reset the popup toggles, so a Stop→Start cycle silently lost the preferences;
+  (3) the SPA route refresh used stale in-memory values.
+- **Popup:** on open, if monitoring is enabled it injects into the active tab (popup open is a user
+  gesture), re-applies the remembered helpers, and scans — so helpers reappear automatically.
+  **Start** now only sets `enabled`/`scope` and preserves the remembered helper preferences, then
+  applies them; **Stop** keeps the preferences for the next Start.
+- **Content script:** `refreshForRoute` reads the latest saved preferences from storage on every SPA
+  route change (no stale values).
+- Clearer wording: monitoring "remembers your Focus helper and Tab path choices"; the current-tab
+  scope explains it may stop after cross-origin navigation (choose This site / All supported
+  websites for automatic scanning across pages).
+- Added pure, tested helpers in `lib/monitoring.ts`: `mergeMonitoringSettings`,
+  `updateMonitoringHelperPreference`, `createApplyMonitoringPayload`, `shouldAutoApplyHelpers`.
+- No new permissions, no page mutation, read-only throughout.
+
 ### Added — Phase 0H: SPA route-change monitoring
 
 - While monitoring is active, Easy Web Navigation now detects single-page-app route changes and

@@ -2,7 +2,7 @@
  * Pure, browser-API-free helpers for monitoring mode. Kept side-effect-free so
  * they are unit-testable without a real extension environment.
  */
-import type { MonitoringScope } from "@easy-web-navigation/shared-types";
+import type { MonitoringScope, MonitoringSettings } from "@easy-web-navigation/shared-types";
 
 /** Broad optional host patterns used by the "all-sites" scope. */
 export const ALL_SITES_ORIGINS = ["http://*/*", "https://*/*"];
@@ -70,6 +70,41 @@ export function hostPermissionsForScope(scope: MonitoringScope, url?: string | n
 /** Whether starting this scope requires requesting an optional host permission. */
 export function scopeNeedsPermission(scope: MonitoringScope): boolean {
   return scope === "site" || scope === "all-sites";
+}
+
+/** Merge a partial patch onto monitoring settings (pure). */
+export function mergeMonitoringSettings(
+  current: MonitoringSettings,
+  patch: Partial<MonitoringSettings>,
+): MonitoringSettings {
+  return { ...current, ...patch };
+}
+
+/**
+ * Update one remembered helper preference without touching the others
+ * (or the enabled/scope state). Used when the user toggles a helper.
+ */
+export function updateMonitoringHelperPreference(
+  current: MonitoringSettings,
+  helper: "focus" | "tabPath",
+  enabled: boolean,
+): MonitoringSettings {
+  return helper === "focus"
+    ? { ...current, focusHelperEnabled: enabled }
+    : { ...current, tabPathEnabled: enabled };
+}
+
+/** The APPLY_MONITORING payload derived from the remembered preferences. */
+export function createApplyMonitoringPayload(settings: MonitoringSettings): {
+  focusHelper: boolean;
+  tabPath: boolean;
+} {
+  return { focusHelper: settings.focusHelperEnabled, tabPath: settings.tabPathEnabled };
+}
+
+/** Whether monitoring should auto-apply at least one visual helper. */
+export function shouldAutoApplyHelpers(settings: MonitoringSettings): boolean {
+  return settings.enabled && (settings.focusHelperEnabled || settings.tabPathEnabled);
 }
 
 /** Human-readable monitoring status label for the popup. */

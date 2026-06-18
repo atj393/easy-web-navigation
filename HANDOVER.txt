@@ -12,24 +12,25 @@ PROJECT NAME
   Tagline: A keyboard accessibility companion for the web.
 
 CURRENT PHASE
-  Phase 0H - safe SPA route-change monitoring for active monitoring mode.
-  Read-only; throttled; cleanup-safe.
+  Phase 0H-Fix - persist monitoring helper preferences and reliably auto-apply
+  them on supported pages. Bugfix/refinement. Read-only.
 
 CURRENT BRANCH
   main
 
 LATEST COMMIT HASH
-  (Run `git log -1 --pretty=fuller`. The Phase 0H commit message is:
-   "feat: add SPA route monitoring refresh".
-   Prior baselines: 0G = 5629d66, 0F = c27a543, 0P = 7f8cfed, 0E = 17b9e02,
-   0N rename = 7e7dd28, 0D = 54d3651, 0C = 8cd154d, 0B = 1890b49, 0A = 54dcba4.)
+  (Run `git log -1 --pretty=fuller`. The Phase 0H-Fix commit message is:
+   "fix: persist monitoring helper preferences".
+   Prior baselines: 0H = 2f81470, 0G = 5629d66, 0F = c27a543, 0P = 7f8cfed,
+   0E = 17b9e02, 0N rename = 7e7dd28, 0D = 54d3651, 0C = 8cd154d, 0B = 1890b49,
+   0A = 54dcba4.)
 
 COMMIT AUTHOR
   atj393 <alexistoby393@gmail.com>  (local git identity set for this repo)
   No Co-Authored-By. No generated-by trailers. No assistant attribution.
 
 DATE/TIME OF UPDATE
-  2026-06-18 (Phase 0H).
+  2026-06-18 (Phase 0H-Fix).
 
 REPO PATH
   c:\Alexis\Test\browser\keyboard-extension\keywise-web
@@ -40,85 +41,84 @@ GITHUB REPOSITORY URL
   Remote: origin -> https://github.com/atj393/easy-web-navigation.git
 
 PUSH STATUS
-  Phase 0H committed and pushed to origin/main.
+  Phase 0H-Fix committed and pushed to origin/main.
 
 PERMISSION CHANGES
   NONE. Required: activeTab, scripting, storage. optional_host_permissions:
-  http://*/*, https://*/* (unchanged from 0G). No new permissions added.
+  http://*/*, https://*/* (unchanged). No new permissions.
 
-SUMMARY OF WHAT CHANGED
-  - Added SPA route-change monitoring that runs ONLY while monitoring is active.
-  - New helper apps/extension/lib/spa-monitoring.ts:
-    normalizeRouteSnapshot, hasRouteChanged, createThrottledRouteRefresh
-    (trailing debounce), createSpaRouteMonitor, DEFAULT_SPA_REFRESH_DELAY_MS=400.
-  - Detection: wraps history.pushState/replaceState (calls original through with
-    correct this; wrapper marked __ewnWrapped to avoid double-wrap; restored on
-    stop; an `active` flag neutralizes any unrestorable wrapper) + popstate +
-    hashchange listeners. No always-on MutationObserver, no polling.
-  - Content script integration: starts the monitor on load when monitoring is
-    enabled and via a local:monitoring storage watch; stops it when monitoring
-    turns off (and clears overlays). On route change -> refreshForRoute():
-    tear down + re-apply enabled helpers (tab path recomputed; overlay re-mounted
-    if SPA replaced <body>) + one read-only scanDocument.
-  - Popup: shows "Active · SPA route changes refresh automatically." when on.
-  - shared-types: added MonitoringRefreshReason ("manual"|"start"|"navigation"|
-    "spa-route").
-  - Docs (README, architecture, limitations, roadmap), CHANGELOG, HANDOVER.
+ROOT CAUSE (user: "helpers don't auto re-apply; must click toggles again")
+  1) Popup-open while monitoring ON only READ helper state (GET_* with no
+     injection). In current-tab scope the content script isn't present on a new
+     page, so nothing re-applied and the toggles showed off.
+  2) Start wrote focusHelperEnabled/tabPathEnabled from popup UI state, and Stop
+     reset those toggles to false -> a Stop->Start cycle lost the remembered
+     preferences.
+  3) SPA refreshForRoute used stale in-memory closure values.
+
+FIX SUMMARY
+  - Popup useEffect: when monitoring is enabled, inject into the active tab
+    (popup open = user gesture), re-apply remembered helpers via APPLY_MONITORING
+    (payload from saved settings) and scan. When off, best-effort GET_* (no
+    inject). This makes helpers re-appear on each supported page, incl.
+    current-tab when the popup is opened.
+  - startMonitoring: persists only { enabled, scope } and PRESERVES saved helper
+    prefs, then applies createApplyMonitoringPayload(savedSettings). stopMonitoring
+    keeps prefs (only enabled:false) and clears overlays.
+  - content refreshForRoute: now async; reads latest monitoringItem prefs on each
+    SPA route change (no stale values); returns early if monitoring disabled.
+  - Added tested pure helpers in lib/monitoring.ts: mergeMonitoringSettings,
+    updateMonitoringHelperPreference, createApplyMonitoringPayload,
+    shouldAutoApplyHelpers.
+  - Clearer popup wording (remember choices; current-tab cross-origin note;
+    site/all-sites auto-apply note).
 
 FILES AND FOLDERS CHANGED
-  apps/extension/lib/spa-monitoring.ts            (new helper)
-  apps/extension/lib/spa-monitoring.test.ts       (new tests)
-  apps/extension/entrypoints/content.ts           (SPA monitor integration)
-  apps/extension/entrypoints/popup/App.tsx        (SPA status note)
-  apps/extension/entrypoints/popup/style.css      (.monitor__spa)
-  packages/shared-types/src/index.ts              (MonitoringRefreshReason)
-  README.md, CHANGELOG.md, docs/architecture.md, docs/limitations.md,
-  docs/roadmap.md, HANDOVER.txt
+  apps/extension/lib/monitoring.ts            (+4 pure helpers)
+  apps/extension/lib/monitoring.test.ts       (+ helper tests)
+  apps/extension/entrypoints/popup/App.tsx    (auto-apply on open; Start preserves
+                                               prefs; wording)
+  apps/extension/entrypoints/content.ts       (refreshForRoute reads saved prefs)
+  README.md (unchanged this fix), CHANGELOG.md, docs/architecture.md,
+  docs/limitations.md, HANDOVER.txt
 
 COMMANDS RUN
   Inspect: git status/branch/log, node v24.13.0, pnpm 9.15.9
   pnpm typecheck -> PASS
   pnpm lint -> PASS
-  pnpm test -> PASS (9 files, 102 tests)
+  pnpm test -> PASS (9 files, 109 tests)
   pnpm build + build:firefox -> PASS; manifests verified (no perm changes)
   pnpm run ci -> PASS
   git commit + git push origin main -> pushed
 
 TEST RESULTS
-  102 tests across 9 files. New: 14 spa-monitoring tests (route snapshot,
-  change detection, throttle fires-once + cancel, pushState/replaceState/
-  popstate/hashchange refresh, unchanged-route no-op, burst throttling, stop
-  restores history + prevents later refresh, no double-wrap, idempotent start).
-  Existing monitoring/scanner/overlay/tab-path/report/clipboard tests still pass.
+  109 tests across 9 files. New: 7 monitoring-settings helper tests
+  (mergeMonitoringSettings, updateMonitoringHelperPreference no-mutation +
+  preserves enabled/scope, createApplyMonitoringPayload, shouldAutoApplyHelpers).
+  Existing monitoring/spa-monitoring/scanner/overlay/tab-path/report/clipboard
+  tests still pass.
 
 IMPORTANT DECISIONS
-  - SPA detection is URL-signal based (History API + popstate + hashchange) with
-    a trailing debounce (400ms). No always-on MutationObserver (kept lightweight,
-    avoids continuous scanning).
-  - History wrapping is defensive: original always called through, double-wrap
-    guarded via a marker, restored on stop, and an `active` flag makes any
-    leftover wrapper a pass-through.
-  - Monitor lifecycle is tied to local:monitoring (load + storage.watch), so it
-    starts/stops exactly with the user's monitoring choice; cleanup-safe.
-  - refreshForRoute tears down then re-applies helpers so the overlay re-mounts
-    even when the SPA replaced <body>; tab path is recomputed for the new DOM.
-  - Browser-coupled wiring kept thin; pure/injectable helper fully unit-tested
-    (injectable history/target/getLocation).
+  - Saved monitoring settings are the single source of truth for helper prefs;
+    popup UI state no longer overwrites them on Start.
+  - Popup-open auto-apply is the mechanism that makes current-tab monitoring
+    re-apply across pages (background can't inject in that scope). This is honest
+    and documented; for hands-free cross-page behavior use site/all-sites.
+  - SPA refresh reads storage so prefs changed elsewhere are respected.
+  - No behavior change to scanner/report/overlay beyond the apply flow.
 
 KNOWN LIMITATIONS
-  - SPA refresh is best-effort and URL-driven: apps that change content WITHOUT
-    changing the URL may not trigger a refresh (use manual scan).
-  - Not framework-lifecycle-aware; heavy async pages may still need a manual
-    re-scan after the debounce window.
-  - Closed shadow DOM / cross-origin iframes remain excluded.
-  - Current-tab scope still session/gesture limited; site/all-sites need optional
-    host permissions (unavailable on Firefox MV2 -> current-tab fallback).
+  - Current-tab scope: helpers re-apply on popup open (gesture), not silently as
+    you browse; for that, grant site/all-sites optional host permission.
+  - Site/all-sites unavailable on Firefox MV2 (falls back to current-tab).
+  - SPA refresh is URL-signal based and best-effort (apps that change content
+    without changing the URL won't trigger it).
+  - Restricted browser pages can't be monitored (friendly message).
   - Local folder still keywise-web; missing-visible-focus still deferred.
 
 WHAT WAS INTENTIONALLY NOT IMPLEMENTED
-  - No always-on / heavy MutationObserver scanner loop; no continuous scanning.
-  - No new permissions, no tabs/webRequest/cookies/history/downloads/clipboard
-    permissions.
+  - No new features, no scanner-rule/report changes.
+  - No new permissions, no tabs/webRequest/cookies/etc.
   - No page mutation (overlay only), no tab-order change, no ARIA injection, no
     auto-fix, no AI, no speech, no analytics, no external calls, no compliance
     claims.
@@ -133,15 +133,15 @@ FIREFOX MANIFEST PERMISSIONS
   permissions: activeTab, scripting, storage (no optional host perms in MV2)
 
 NEXT RECOMMENDED PHASE
-  Phase 0I - capture real screenshots/GIF (incl. a monitoring + SPA demo) into
-  docs/assets and embed in README; manual cross-browser test pass; optional
-  toolbar badge reflecting monitoring on/off. Still read-only.
+  Phase 0I - capture real screenshots/GIF (incl. monitoring auto-apply + SPA
+  refresh) into docs/assets and embed in README; manual cross-browser test pass;
+  optional toolbar badge reflecting monitoring on/off. Still read-only.
 
 NEXT RECOMMENDED PROMPT SUMMARY
   "Phase 0I: Capture and commit real screenshots + a short GIF (manual scan,
-   focus helper, tab path, monitoring with an SPA route refresh) into docs/assets
-   and embed them in the README; add a manual cross-browser test checklist and an
-   optional toolbar badge showing monitoring on/off. Keep read-only; no new
-   permissions, no AI/speech/auto-fix/compliance claims. Commits authored by
-   atj393 (no Co-Authored-By). Update HANDOVER.txt and CHANGELOG.md; push to
-   origin."
+   focus helper, tab path, monitoring auto-apply across pages, SPA route refresh)
+   into docs/assets and embed them in the README; add a manual cross-browser test
+   checklist and an optional toolbar badge showing monitoring on/off. Keep
+   read-only; no new permissions, no AI/speech/auto-fix/compliance claims.
+   Commits authored by atj393 (no Co-Authored-By). Update HANDOVER.txt and
+   CHANGELOG.md; push to origin."

@@ -3,7 +3,12 @@ import { browser } from "#imports";
 import { generateMarkdownReport } from "@easy-web-navigation/report-generator";
 import { copyTextToClipboard } from "../../lib/clipboard";
 import { monitoringItem } from "../../lib/settings";
-import { hostPermissionsForScope, scopeLabel, scopeNeedsPermission } from "../../lib/monitoring";
+import {
+  createApplyMonitoringPayload,
+  hostPermissionsForScope,
+  scopeLabel,
+  scopeNeedsPermission,
+} from "../../lib/monitoring";
 import {
   PRODUCT_NAME,
   PRODUCT_TAGLINE,
@@ -109,10 +114,11 @@ export function App() {
   useEffect(() => {
     (async () => {
       // Load persisted monitoring settings (and remembered helper prefs).
+      let settings: MonitoringSettings | undefined;
       try {
-        const m = await monitoringItem.getValue();
-        setMonitoringEnabled(m.enabled);
-        setMonitoringScope(m.scope === "off" ? "current-tab" : m.scope);
+        settings = await monitoringItem.getValue();
+        setMonitoringEnabled(settings.enabled);
+        setMonitoringScope(settings.scope === "off" ? "current-tab" : settings.scope);
       } catch {
         /* storage unavailable — defaults stand */
       }
@@ -123,7 +129,37 @@ export function App() {
       } catch {
         /* no active tab yet */
       }
-      // Best-effort sync of live helper state (does not inject).
+
+      if (settings?.enabled) {
+        // Monitoring is on: opening the popup is a user gesture, so we may inject
+        // into the active tab and re-apply the remembered helpers + scan. This is
+        // what makes monitoring re-apply on each supported page (also in the
+        // current-tab scope, where the background cannot inject on navigation).
+        try {
+          const tab = await getActiveTab();
+          await ensureInjected(tab.id);
+          const scan = await send(tab.id, { type: "SCAN_REQUEST", payload: {} });
+          if (scan?.type === "SCAN_RESULT") {
+            setResult(scan.payload);
+            setPhase("done");
+          }
+          const applied = await send(tab.id, {
+            type: "APPLY_MONITORING",
+            payload: createApplyMonitoringPayload(settings),
+          });
+          if (applied?.type === "MONITORING_APPLIED") {
+            setFocusHelperOn(applied.payload.focusHelper);
+            setTabPathOn(applied.payload.tabPath);
+            setTabSummary(applied.payload.tabPathSummary);
+          }
+        } catch (e) {
+          // Restricted/unsupported page — monitoring can't act here.
+          setMonitoringMsg(humanizeError(e instanceof Error ? e.message : String(e)));
+        }
+        return;
+      }
+
+      // Monitoring off: best-effort sync of live helper state (does not inject).
       try {
         const tab = await getActiveTab();
         const focus = await send(tab.id, { type: "GET_FOCUS_HELPER_STATE" });
@@ -244,12 +280,11 @@ export function App() {
         }
       }
 
-      await saveMonitoring({
-        enabled: true,
-        scope: effectiveScope,
-        focusHelperEnabled: focusHelperOn,
-        tabPathEnabled: tabPathOn,
-      });
+      // Enable monitoring + set scope, but PRESERVE the remembered helper
+      // preferences (focusHelperEnabled / tabPathEnabled) so Stop→Start keeps
+      // them. Toggling a helper persists its preference independently.
+      await saveMonitoring({ enabled: true, scope: effectiveScope });
+      const settings = await monitoringItem.getValue();
       setMonitoringEnabled(true);
       setMonitoringScope(effectiveScope);
 
@@ -266,10 +301,11 @@ export function App() {
         setPhase("error");
       }
 
-      // Re-apply the remembered visual helpers.
+      // Re-apply the remembered visual helpers (from saved settings, not stale
+      // popup state).
       const applied = await send(tab.id, {
         type: "APPLY_MONITORING",
-        payload: { focusHelper: focusHelperOn, tabPath: tabPathOn },
+        payload: createApplyMonitoringPayload(settings),
       });
       if (applied?.type === "MONITORING_APPLIED") {
         setFocusHelperOn(applied.payload.focusHelper);
@@ -416,12 +452,22 @@ export function App() {
           </button>
         )}
         <p className="monitor__desc">
-          When monitoring is on, {PRODUCT_NAME} scans supported pages automatically and re-applies
-          the visual helpers you enabled. It does not upload page content or change the website.
-          {monitoringScope === "all-sites" && !monitoringEnabled
-            ? " “All supported websites” asks for permission to inspect every http/https page."
-            : null}
+          Monitoring remembers your Focus helper and Tab path choices and re-applies them on
+          supported pages where permission allows. It does not upload page content or change the
+          website.
         </p>
+        {monitoringScope === "current-tab" && (
+          <p className="monitor__desc">
+            Current tab session may stop after cross-origin navigation. Choose This site or All
+            supported websites for automatic scanning across more pages.
+          </p>
+        )}
+        {monitoringScope === "all-sites" && !monitoringEnabled && (
+          <p className="monitor__desc">
+            “All supported websites” asks for permission to inspect every http/https page; once
+            granted, helpers auto-apply while monitoring is on.
+          </p>
+        )}
         {monitoringMsg && (
           <p className="monitor__msg" role="status">
             {monitoringMsg}

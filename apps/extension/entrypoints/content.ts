@@ -100,9 +100,18 @@ export default defineContentScript({
      * scan. Tearing down first re-mounts a fresh overlay container if the SPA
      * replaced <body>. Read-only throughout.
      */
-    function refreshForRoute(): void {
-      const wantFocus = focusHelperEnabled;
-      const wantTab = tabPathEnabled;
+    async function refreshForRoute(): Promise<void> {
+      // Use the LATEST saved preferences, not stale in-memory values.
+      let wantFocus = focusHelperEnabled;
+      let wantTab = tabPathEnabled;
+      try {
+        const monitoring = await monitoringItem.getValue();
+        if (!monitoring.enabled) return; // monitoring turned off — nothing to refresh
+        wantFocus = monitoring.focusHelperEnabled;
+        wantTab = monitoring.tabPathEnabled;
+      } catch {
+        /* storage unavailable — fall back to current in-memory prefs */
+      }
       applyMonitoring(false, false);
       applyMonitoring(wantFocus, wantTab);
       try {
