@@ -2,32 +2,46 @@ import { useEffect, useState } from "react";
 import { browser } from "#imports";
 import { generateMarkdownReport } from "@easy-web-navigation/report-generator";
 import { copyTextToClipboard } from "../../lib/clipboard";
+import { monitoringItem } from "../../lib/settings";
+import { hostPermissionsForScope, scopeLabel, scopeNeedsPermission } from "../../lib/monitoring";
 import {
   PRODUCT_NAME,
   PRODUCT_TAGLINE,
   type ExtensionMessage,
   type IssueSeverity,
+  type MonitoringScope,
+  type MonitoringSettings,
   type ScanResult,
   type TabPathSummary,
 } from "@easy-web-navigation/shared-types";
 
 /**
- * Popup UI (Phase 0F).
+ * Popup UI (Phase 0G).
  *
- * "Scan current page" runs a read-only scan of the active tab. "Show focus
- * helper" and "Show tab path" toggle read-only visual overlays. Each issue has
- * a "Locate" action. The Markdown report can be copied or downloaded. Nothing
- * here modifies the inspected page.
+ * Manual: "Scan current page", focus-helper / tab-path toggles, per-issue
+ * "Locate", and Copy / Download report. Monitoring: an explicit, user-started
+ * mode that re-applies the remembered visual helpers and auto-scans supported
+ * pages (within the granted permission scope). Nothing modifies the page; no
+ * page content is uploaded.
  */
 const DISCLAIMER =
   "Easy Web Navigation inspects keyboard accessibility at runtime. It does not certify legal " +
   "compliance, and a clean report is not a compliance pass.";
+
+const PERMISSION_DENIED_MSG =
+  "Permission was not granted. Monitoring is limited to the current active tab session.";
 
 const SEVERITY_LEGEND: { key: IssueSeverity; label: string }[] = [
   { key: "critical", label: "Critical" },
   { key: "serious", label: "Serious" },
   { key: "moderate", label: "Moderate" },
   { key: "minor", label: "Minor" },
+];
+
+const SCOPE_OPTIONS: { value: MonitoringScope; label: string }[] = [
+  { value: "current-tab", label: "Current tab session" },
+  { value: "site", label: "This site" },
+  { value: "all-sites", label: "All supported websites" },
 ];
 
 type Phase = "idle" | "scanning" | "done" | "error";
@@ -55,10 +69,10 @@ function humanizeError(message: string): string {
   return message;
 }
 
-async function getActiveTabId(): Promise<number> {
+async function getActiveTab(): Promise<{ id: number; url: string }> {
   const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
   if (!tab?.id) throw new Error("No active tab.");
-  return tab.id;
+  return { id: tab.id, url: tab.url ?? "" };
 }
 
 async function ensureInjected(tabId: number): Promise<void> {
@@ -85,26 +99,50 @@ export function App() {
   const [tabSummary, setTabSummary] = useState<TabPathSummary | null>(null);
   const [locateStatus, setLocateStatus] = useState<string | null>(null);
   const [reportStatus, setReportStatus] = useState<string | null>(null);
+  // Monitoring
+  const [monitoringEnabled, setMonitoringEnabled] = useState(false);
+  const [monitoringScope, setMonitoringScope] = useState<MonitoringScope>("current-tab");
+  const [monitoringMsg, setMonitoringMsg] = useState<string | null>(null);
+  // Cached active tab so permission requests stay within the click gesture.
+  const [activeUrl, setActiveUrl] = useState<string>("");
 
-  // Best-effort sync of helper/tab-path state when the popup opens. Does not
-  // inject: if the content script isn't present yet, the message rejects and
-  // we stay in the default (off) state.
   useEffect(() => {
     (async () => {
+      // Load persisted monitoring settings (and remembered helper prefs).
       try {
-        const tabId = await getActiveTabId();
-        const focus = await send(tabId, { type: "GET_FOCUS_HELPER_STATE" });
+        const m = await monitoringItem.getValue();
+        setMonitoringEnabled(m.enabled);
+        setMonitoringScope(m.scope === "off" ? "current-tab" : m.scope);
+      } catch {
+        /* storage unavailable — defaults stand */
+      }
+      // Cache the active tab URL up front for gesture-safe permission requests.
+      try {
+        const tab = await getActiveTab();
+        setActiveUrl(tab.url);
+      } catch {
+        /* no active tab yet */
+      }
+      // Best-effort sync of live helper state (does not inject).
+      try {
+        const tab = await getActiveTab();
+        const focus = await send(tab.id, { type: "GET_FOCUS_HELPER_STATE" });
         if (focus?.type === "FOCUS_HELPER_STATE") setFocusHelperOn(focus.payload.enabled);
-        const tab = await send(tabId, { type: "GET_TAB_PATH_STATE" });
-        if (tab?.type === "TAB_PATH_RESULT") {
-          setTabPathOn(tab.payload.enabled);
-          setTabSummary(tab.payload.summary);
+        const tp = await send(tab.id, { type: "GET_TAB_PATH_STATE" });
+        if (tp?.type === "TAB_PATH_RESULT") {
+          setTabPathOn(tp.payload.enabled);
+          setTabSummary(tp.payload.summary);
         }
       } catch {
-        /* content script not injected yet — everything is off */
+        /* content script not injected yet — helpers are off */
       }
     })();
   }, []);
+
+  async function saveMonitoring(patch: Partial<MonitoringSettings>) {
+    const current = await monitoringItem.getValue();
+    await monitoringItem.setValue({ ...current, ...patch });
+  }
 
   async function runScan() {
     setPhase("scanning");
@@ -113,9 +151,9 @@ export function App() {
     setLocateStatus(null);
     setReportStatus(null);
     try {
-      const tabId = await getActiveTabId();
-      await ensureInjected(tabId);
-      const response = await send(tabId, { type: "SCAN_REQUEST", payload: {} });
+      const tab = await getActiveTab();
+      await ensureInjected(tab.id);
+      const response = await send(tab.id, { type: "SCAN_REQUEST", payload: {} });
       if (!response) throw new Error("No response from the page.");
       if (response.type === "SCAN_ERROR") throw new Error(response.payload.message);
       if (response.type !== "SCAN_RESULT") throw new Error("Unexpected response from the page.");
@@ -130,14 +168,17 @@ export function App() {
   async function toggleFocusHelper() {
     setLocateStatus(null);
     try {
-      const tabId = await getActiveTabId();
-      await ensureInjected(tabId);
+      const tab = await getActiveTab();
+      await ensureInjected(tab.id);
       const next = !focusHelperOn;
-      const response = await send(tabId, {
+      const response = await send(tab.id, {
         type: "TOGGLE_FOCUS_HELPER",
         payload: { enabled: next },
       });
-      if (response?.type === "FOCUS_HELPER_STATE") setFocusHelperOn(response.payload.enabled);
+      if (response?.type === "FOCUS_HELPER_STATE") {
+        setFocusHelperOn(response.payload.enabled);
+        await saveMonitoring({ focusHelperEnabled: response.payload.enabled });
+      }
     } catch (e) {
       setLocateStatus(humanizeError(e instanceof Error ? e.message : String(e)));
     }
@@ -146,16 +187,17 @@ export function App() {
   async function toggleTabPath() {
     setLocateStatus(null);
     try {
-      const tabId = await getActiveTabId();
-      await ensureInjected(tabId);
+      const tab = await getActiveTab();
+      await ensureInjected(tab.id);
       const next = !tabPathOn;
-      const response = await send(tabId, {
+      const response = await send(tab.id, {
         type: "TOGGLE_TAB_PATH",
         payload: { enabled: next },
       });
       if (response?.type === "TAB_PATH_RESULT") {
         setTabPathOn(response.payload.enabled);
         setTabSummary(response.payload.summary);
+        await saveMonitoring({ tabPathEnabled: response.payload.enabled });
       }
     } catch (e) {
       setLocateStatus(humanizeError(e instanceof Error ? e.message : String(e)));
@@ -165,9 +207,9 @@ export function App() {
   async function locate(selector: string) {
     setLocateStatus("Locating…");
     try {
-      const tabId = await getActiveTabId();
-      await ensureInjected(tabId);
-      const response = await send(tabId, { type: "LOCATE_ISSUE", payload: { selector } });
+      const tab = await getActiveTab();
+      await ensureInjected(tab.id);
+      const response = await send(tab.id, { type: "LOCATE_ISSUE", payload: { selector } });
       if (response?.type === "LOCATE_RESULT") {
         setLocateStatus(
           response.payload.found
@@ -182,9 +224,89 @@ export function App() {
     }
   }
 
+  async function startMonitoring() {
+    setMonitoringMsg(null);
+    let effectiveScope = monitoringScope;
+    try {
+      // Request optional host permission FIRST (still inside the click gesture)
+      // using the cached active URL — no awaits before request() for site/all.
+      if (scopeNeedsPermission(monitoringScope)) {
+        const origins = hostPermissionsForScope(monitoringScope, activeUrl);
+        if (origins.length === 0) {
+          effectiveScope = "current-tab";
+          setMonitoringMsg(PERMISSION_DENIED_MSG);
+        } else {
+          const granted = await browser.permissions.request({ origins });
+          if (!granted) {
+            effectiveScope = "current-tab";
+            setMonitoringMsg(PERMISSION_DENIED_MSG);
+          }
+        }
+      }
+
+      await saveMonitoring({
+        enabled: true,
+        scope: effectiveScope,
+        focusHelperEnabled: focusHelperOn,
+        tabPathEnabled: tabPathOn,
+      });
+      setMonitoringEnabled(true);
+      setMonitoringScope(effectiveScope);
+
+      const tab = await getActiveTab();
+      await ensureInjected(tab.id);
+
+      // Scan immediately and show the result.
+      const scan = await send(tab.id, { type: "SCAN_REQUEST", payload: {} });
+      if (scan?.type === "SCAN_RESULT") {
+        setResult(scan.payload);
+        setPhase("done");
+      } else if (scan?.type === "SCAN_ERROR") {
+        setError(humanizeError(scan.payload.message));
+        setPhase("error");
+      }
+
+      // Re-apply the remembered visual helpers.
+      const applied = await send(tab.id, {
+        type: "APPLY_MONITORING",
+        payload: { focusHelper: focusHelperOn, tabPath: tabPathOn },
+      });
+      if (applied?.type === "MONITORING_APPLIED") {
+        setFocusHelperOn(applied.payload.focusHelper);
+        setTabPathOn(applied.payload.tabPath);
+        setTabSummary(applied.payload.tabPathSummary);
+      }
+    } catch (e) {
+      setMonitoringMsg(humanizeError(e instanceof Error ? e.message : String(e)));
+    }
+  }
+
+  async function stopMonitoring() {
+    try {
+      await saveMonitoring({ enabled: false });
+      setMonitoringEnabled(false);
+      setMonitoringMsg(null);
+      const tab = await getActiveTab();
+      // Clear any active overlays on the current tab.
+      const applied = await send(tab.id, {
+        type: "APPLY_MONITORING",
+        payload: { focusHelper: false, tabPath: false },
+      });
+      if (applied?.type === "MONITORING_APPLIED") {
+        setFocusHelperOn(false);
+        setTabPathOn(false);
+        setTabSummary(null);
+      }
+    } catch {
+      // Content script may not be present (e.g. restricted page) — monitoring
+      // is still recorded as off; overlays will not re-apply.
+      setMonitoringEnabled(false);
+      setFocusHelperOn(false);
+      setTabPathOn(false);
+    }
+  }
+
   function buildReport(): string {
-    // Include the latest tab-path summary when we have one (clearly labeled in
-    // the report as a runtime visual aid, not an audit metric).
     return generateMarkdownReport(result!, { tabPathSummary: tabSummary ?? undefined });
   }
 
@@ -262,6 +384,47 @@ export function App() {
           {error ?? "Something went wrong."}
         </p>
       )}
+
+      <section className="monitor" aria-label="Monitoring">
+        <p className="monitor__state">
+          Monitoring: <strong>{scopeLabel(monitoringScope, monitoringEnabled)}</strong>
+        </p>
+        <label className="monitor__scope">
+          <span>Scope</span>
+          <select
+            value={monitoringScope}
+            disabled={monitoringEnabled}
+            onChange={(e) => setMonitoringScope(e.target.value as MonitoringScope)}
+          >
+            {SCOPE_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        {monitoringEnabled ? (
+          <button type="button" className="btn btn--on btn--toggle" onClick={stopMonitoring}>
+            Stop monitoring
+          </button>
+        ) : (
+          <button type="button" className="btn btn--primary btn--toggle" onClick={startMonitoring}>
+            Start monitoring
+          </button>
+        )}
+        <p className="monitor__desc">
+          When monitoring is on, {PRODUCT_NAME} scans supported pages automatically and re-applies
+          the visual helpers you enabled. It does not upload page content or change the website.
+          {monitoringScope === "all-sites" && !monitoringEnabled
+            ? " “All supported websites” asks for permission to inspect every http/https page."
+            : null}
+        </p>
+        {monitoringMsg && (
+          <p className="monitor__msg" role="status">
+            {monitoringMsg}
+          </p>
+        )}
+      </section>
 
       <div className="popup__tools">
         <button

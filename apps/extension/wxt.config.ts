@@ -33,13 +33,13 @@ export default defineConfig({
         128: "icon-128.png",
       },
     },
-    // Phase 0A required permissions only.
+    // Required permissions only — intentionally minimal.
     permissions: ["activeTab", "scripting", "storage"],
-    // No host_permissions in Phase 0A. The content script is registered at
-    // runtime and injected into the active tab via activeTab + scripting,
-    // so no broad <all_urls> host access is requested up front.
-    //
-    // Future (documented, NOT relied upon in v0):
-    //   optional_host_permissions: ["<all_urls>"]
+    // No REQUIRED host_permissions. Optional host permissions are requested at
+    // runtime, only after the user starts monitoring with a site / all-sites
+    // scope (see Phase 0G). Manual scanning uses activeTab and needs none of
+    // these. The `build:manifestGenerated` hook above strips any required
+    // host_permissions WXT would add for the runtime content script.
+    optional_host_permissions: ["http://*/*", "https://*/*"],
   },
 });

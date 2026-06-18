@@ -48,6 +48,8 @@ aggressive auto-fix) do not.
 - **Phase 0F (done):** presentation polish — original extension icons wired into the manifest,
   polished popup (severity legend, empty/error states) and options page, and a concrete 60-second
   demo script.
-- **Remaining:** screenshots/GIFs, manual cross-browser testing, and store-ready packaging for
-  Chromium and Firefox.
+- **Phase 0G (done):** user-controlled monitoring mode (Start/Stop, scope selector, remembered
+  helper preferences, optional host-permission flow, event-driven auto-injection). Read-only.
+- **Remaining:** screenshots/GIFs, manual cross-browser testing, optional SPA route-change
+  auto-rescan, and store-ready packaging for Chromium and Firefox.
 - Clear, honest positioning as an inspection/assistive tool throughout.

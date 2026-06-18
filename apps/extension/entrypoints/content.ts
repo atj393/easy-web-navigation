@@ -3,22 +3,27 @@ import { scanDocument } from "@easy-web-navigation/dom-scanner";
 import { computeTabPath } from "@easy-web-navigation/keyboard-engine";
 import { FocusOverlayController } from "@easy-web-navigation/focus-overlay";
 import type { ExtensionMessage, TabPathSummary } from "@easy-web-navigation/shared-types";
+import { monitoringItem } from "../lib/settings";
 
 /**
  * Content script.
  *
- * Registered at RUNTIME (not in the manifest) so Easy Web Navigation does not request
- * broad <all_urls> host permissions. It is injected into the active tab on
- * demand via activeTab + scripting.
+ * Registered at RUNTIME (not in the manifest) so Easy Web Navigation does not
+ * request broad <all_urls> host permissions. It is injected into the active tab
+ * on demand via activeTab + scripting, or (when monitoring is on and the user
+ * granted optional host permissions) into matching tabs by the background.
  *
- * Phase 0C/0D: in addition to the read-only scan, this script owns a single
- * extension-owned visual overlay (focus helper, issue locator, and tab-path
- * markers). It still does NOT modify any inspected page node — the only DOM it
- * creates is its own isolated overlay container, fully removed when unused.
+ * Phase 0C/0D/0G: in addition to the read-only scan, this script owns a single
+ * extension-owned visual overlay (focus helper, issue locator, tab-path
+ * markers). When monitoring is enabled it re-applies the remembered visual
+ * helpers on load. It still does NOT modify any inspected page node — the only
+ * DOM it creates is its own isolated overlay container, fully removed when
+ * unused.
  *
  * IMPORTANT — inspection vs. compliance: runtime inspection helps users
  * UNDERSTAND keyboard accessibility; it cannot GUARANTEE legal compliance with
- * WCAG, BITV, EN 301 549, EAA, ADA, or Section 508.
+ * WCAG, BITV, EN 301 549, EAA, ADA, or Section 508. Nothing is uploaded; no
+ * external APIs are called.
  */
 
 const LOCATE_DURATION_MS = 2000;
@@ -50,7 +55,6 @@ export default defineContentScript({
       focusHelperEnabled = true;
       overlay.mount();
       document.addEventListener("focusin", onFocusIn, true);
-      // Reflect the element that already has focus, if any.
       const active = document.activeElement;
       if (active && active !== document.body) overlay.updateForElement(active);
     }
@@ -60,7 +64,6 @@ export default defineContentScript({
       focusHelperEnabled = false;
       document.removeEventListener("focusin", onFocusIn, true);
       overlay.clearHighlight("focus");
-      // Keep the overlay mounted if the tab path (or anything else) still needs it.
       if (!tabPathEnabled && !overlay.hasContent()) overlay.unmount();
     }
 
@@ -79,6 +82,14 @@ export default defineContentScript({
       if (!focusHelperEnabled && !overlay.hasContent()) overlay.unmount();
     }
 
+    /** Apply (or clear) the remembered visual helpers. Read-only. */
+    function applyMonitoring(focusHelper: boolean, tabPath: boolean): void {
+      if (focusHelper) enableFocusHelper();
+      else disableFocusHelper();
+      if (tabPath) enableTabPath();
+      else disableTabPath();
+    }
+
     /** Best-effort selector resolution (light shadow-DOM fallback). */
     function findBySelector(selector: string): Element | null {
       try {
@@ -87,7 +98,6 @@ export default defineContentScript({
       } catch {
         return null;
       }
-      // Fallback: search open shadow roots one level deep.
       for (const host of Array.from(document.querySelectorAll("*"))) {
         const shadow = (host as Element & { shadowRoot?: ShadowRoot | null }).shadowRoot;
         if (!shadow) continue;
@@ -158,7 +168,6 @@ export default defineContentScript({
             if (message.payload.enabled) summary = enableTabPath(message.payload.options);
             else disableTabPath();
           } catch {
-            // Defensive: never let a computation error break the page.
             disableTabPath();
           }
           sendResponse({
@@ -174,9 +183,36 @@ export default defineContentScript({
           } satisfies ExtensionMessage);
           return false;
         }
+        case "APPLY_MONITORING": {
+          applyMonitoring(message.payload.focusHelper, message.payload.tabPath);
+          sendResponse({
+            type: "MONITORING_APPLIED",
+            payload: {
+              focusHelper: focusHelperEnabled,
+              tabPath: tabPathEnabled,
+              tabPathSummary: lastTabSummary,
+            },
+          } satisfies ExtensionMessage);
+          return false;
+        }
         default:
           return false;
       }
     });
+
+    // Monitoring auto-start: when the user has turned monitoring on, re-apply
+    // the remembered visual helpers and run one read-only scan on page ready.
+    // This runs only because the user explicitly enabled monitoring.
+    void (async () => {
+      try {
+        const monitoring = await monitoringItem.getValue();
+        if (!monitoring.enabled) return;
+        applyMonitoring(monitoring.focusHelperEnabled, monitoring.tabPathEnabled);
+        // Read-only auto-scan; result is not stored or uploaded.
+        scanDocument(document);
+      } catch {
+        /* storage unavailable — monitoring simply does not auto-apply */
+      }
+    })();
   },
 });

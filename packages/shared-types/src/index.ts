@@ -175,6 +175,46 @@ export interface ExtensionSettings {
 }
 
 /**
+ * How far monitoring (automatic scanning + helper re-application) reaches.
+ * `off` — disabled. `current-tab` — this tab session only (activeTab; no new
+ * permission). `site` — the current origin (needs optional host permission).
+ * `all-sites` — all http/https pages (needs broad optional host permission).
+ */
+export type MonitoringScope = "off" | "current-tab" | "site" | "all-sites";
+
+/** Persisted monitoring settings + remembered visual-helper preferences. */
+export interface MonitoringSettings {
+  enabled: boolean;
+  scope: MonitoringScope;
+  /** Remembered preference: re-apply the focus helper while monitoring. */
+  focusHelperEnabled: boolean;
+  /** Remembered preference: re-apply the tab path while monitoring. */
+  tabPathEnabled: boolean;
+}
+
+/** Result of an optional host-permission request. */
+export interface PermissionRequestResult {
+  granted: boolean;
+}
+
+/** Outcome of a Start-monitoring action, surfaced in the popup. */
+export interface MonitoringStartResult {
+  started: boolean;
+  /** The scope actually applied (may fall back to `current-tab`). */
+  scope: MonitoringScope;
+  permissionGranted: boolean;
+  message?: string;
+}
+
+/** Sensible monitoring defaults: off, current-tab, helpers remembered as off. */
+export const DEFAULT_MONITORING: MonitoringSettings = {
+  enabled: false,
+  scope: "current-tab",
+  focusHelperEnabled: false,
+  tabPathEnabled: false,
+};
+
+/**
  * Typed message envelope passed between extension surfaces
  * (popup <-> background <-> content). Discriminated on `type`.
  */
@@ -195,6 +235,12 @@ export type ExtensionMessage =
   | { type: "TOGGLE_TAB_PATH"; payload: { enabled: boolean; options?: TabPathOptions } }
   | { type: "GET_TAB_PATH_STATE" }
   | { type: "TAB_PATH_RESULT"; payload: { enabled: boolean; summary: TabPathSummary | null } }
+  // Monitoring: apply/clear the remembered visual helpers (read-only).
+  | { type: "APPLY_MONITORING"; payload: { focusHelper: boolean; tabPath: boolean } }
+  | {
+      type: "MONITORING_APPLIED";
+      payload: { focusHelper: boolean; tabPath: boolean; tabPathSummary: TabPathSummary | null };
+    }
   | { type: "SETTINGS_UPDATED"; payload: ExtensionSettings };
 
 /** Sensible defaults for first run. */

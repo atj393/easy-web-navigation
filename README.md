@@ -50,11 +50,11 @@ Target success criteria:
 | 3.3.2     | Labels or Instructions       | A     |
 | 4.1.2     | Name, Role, Value            | A     |
 
-## v0 scope (through Phase 0E)
+## v0 scope (through Phase 0G)
 
 A pnpm + TypeScript monorepo with a working **read-only** keyboard accessibility scanner, a
-read-only visual focus helper / issue locator, a read-only tab-path visualization, and a
-developer-friendly report export.
+read-only visual focus helper / issue locator, a read-only tab-path visualization, a
+developer-friendly report export, and an explicit, user-controlled monitoring mode.
 
 ### What v0 does
 
@@ -74,6 +74,12 @@ developer-friendly report export.
 - Offers a **read-only tab-path visualization**: toggle "Show tab path" to draw numbered markers in
   the computed keyboard tab order (positive `tabindex` first, then DOM order), with a summary and a
   performance cap (default 100 items).
+- Offers an explicit, user-started **monitoring mode**: click **Start monitoring** and Easy Web
+  Navigation scans supported pages automatically and re-applies the visual helpers you enabled,
+  within the scope you choose — _current tab session_ (no new permission), _this site_, or _all
+  supported websites_ (the latter two request an **optional** host permission first, only on your
+  action). **Stop monitoring** turns it off and clears overlays. Monitoring never uploads page
+  content or changes the website.
 - Includes static demo pages, documentation, tests (jsdom), and CI.
 
 ### What v0 does NOT do
@@ -152,8 +158,12 @@ Easy Web Navigation requests the **minimum** permissions needed and **no broad h
 | `scripting` | Inject the read-only content script into the active tab on demand. |
 | `storage`   | Persist your options (e.g. focus-helper preference) locally.       |
 
-`<all_urls>` and other broad host permissions are **not** requested. The content script is
-registered at runtime and injected only into the active tab when you act.
+No broad host permissions are **required**. For automatic monitoring of a whole site or all
+websites, Easy Web Navigation declares **optional** host permissions (`http://*/*`, `https://*/*`)
+that are requested **only when you choose that scope and click Start monitoring** — never at
+install time, and never as a requirement for manual scanning. The content script is registered at
+runtime and injected only into the active tab (or, while monitoring with a granted scope, into
+matching tabs you navigate to).
 
 ## Privacy & security
 
@@ -164,6 +174,8 @@ registered at runtime and injected only into the active tab when you act.
 - **No speech, no recording.**
 - **Read-only.** The extension never modifies inspected page nodes; the only DOM it creates is its
   own isolated overlay container, fully removed when not in use.
+- **Monitoring is opt-in.** It only runs when you explicitly start it, and all-sites monitoring
+  requires you to approve an optional host permission first.
 
 See [SECURITY.md](SECURITY.md) for the security policy and how to report a vulnerability.
 

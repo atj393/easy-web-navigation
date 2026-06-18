@@ -226,6 +226,56 @@ body {
   gap: 8px;
 }
 
+/* Monitoring panel */
+.monitor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid rgba(128, 128, 128, 0.35);
+  border-radius: 8px;
+}
+
+.monitor__state {
+  margin: 0;
+  font-size: 12px;
+}
+
+.monitor__scope {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.monitor__scope select {
+  flex: 1;
+  font: inherit;
+  font-size: 12px;
+  padding: 5px 6px;
+  border-radius: 6px;
+  border: 1px solid rgba(128, 128, 128, 0.5);
+  background: transparent;
+}
+
+.monitor__scope select:disabled {
+  opacity: 0.6;
+}
+
+.monitor__desc {
+  margin: 0;
+  font-size: 10px;
+  line-height: 1.4;
+  opacity: 0.75;
+}
+
+.monitor__msg {
+  margin: 0;
+  font-size: 11px;
+  color: #b45309;
+}
+
 /* Error / alert box */
 .popup__error {
   margin: 0;

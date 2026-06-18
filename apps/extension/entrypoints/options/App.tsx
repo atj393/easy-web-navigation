@@ -115,6 +115,20 @@ export function App() {
         </label>
       </fieldset>
 
+      <fieldset className="options__group">
+        <legend>Monitoring &amp; privacy</legend>
+        <p className="options__desc">
+          Monitoring is started from the popup. It is off by default. When you start it,{" "}
+          {PRODUCT_NAME} scans supported pages automatically and re-applies the visual helpers you
+          enabled, within the scope you choose (current tab, this site, or all supported websites).
+          Site and all-sites scopes ask for an optional permission first.
+        </p>
+        <p className="options__desc">
+          {PRODUCT_NAME} does not upload page content, does not call external APIs, and does not use
+          analytics. Monitoring only runs when you explicitly start it.
+        </p>
+      </fieldset>
+
       <footer className="options__footer">
         <p>
           {PRODUCT_NAME} inspects keyboard accessibility at runtime. It does not certify legal

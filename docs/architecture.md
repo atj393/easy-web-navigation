@@ -66,6 +66,30 @@ extension popup document:
 Every report includes a prominent disclaimer; a clean report is never presented as a compliance
 pass.
 
+## Monitoring mode (Phase 0G)
+
+Monitoring is an explicit, user-started mode that re-applies the remembered visual helpers and
+auto-scans supported pages within a chosen scope. It is **off by default**.
+
+- **State** lives in typed storage (`local:monitoring`): `{ enabled, scope, focusHelperEnabled,
+tabPathEnabled }`. `MonitoringScope` is `off | current-tab | site | all-sites`. The popup is the
+  writer; the content script and background read it. No page content is ever stored.
+- **Popup** owns the UX: Start/Stop, the scope selector, and the status label. On Start it persists
+  the choice, requests an optional host permission when the scope needs one (from the click
+  gesture), scans the active tab, and applies the helpers via `APPLY_MONITORING`. On Stop it
+  persists `enabled:false` and clears overlays.
+- **Permission flow** (no required broad host permissions): `current-tab` uses `activeTab` only;
+  `site` requests `https://<host>/*`; `all-sites` requests `http://*/*` + `https://*/*`. These are
+  declared as `optional_host_permissions` and requested only on user action. A denial falls back to
+  the current-tab session with a friendly message. (Firefox MV2 does not expose optional host
+  permissions, so site/all-sites fall back to current-tab there — see [limitations.md](limitations.md).)
+- **Background** is event-driven only: a `tabs.onUpdated` listener injects the read-only content
+  script into a navigated tab **only** when monitoring is enabled with a `site`/`all-sites` scope
+  and the tab's URL is supported and covered by a granted host permission (checked with
+  `permissions.contains`). No polling, no `tabs` permission, no inactive-tab scanning.
+- **Content script** reads `local:monitoring` on load and, if enabled, re-applies the remembered
+  helpers (read-only) and runs one scan. `isSupportedPageUrl` blocks restricted schemes.
+
 ## Package responsibilities
 
 | Package                                 | Responsibility                                                        |

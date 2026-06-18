@@ -129,3 +129,23 @@ The exported report is a developer aid, not an audit:
   contexts); the popup falls back to a temporary textarea + `execCommand("copy")` and, if that also
   fails, tells the user that download is still available. No automatic copying happens without a
   user action.
+
+## Monitoring limitations (Phase 0G)
+
+Monitoring is explicit, user-started, and read-only:
+
+- **Current-tab scope is permission-limited.** It relies on `activeTab`, which the browser grants
+  for the active tab when you act. It cannot reliably re-scan across cross-origin navigations on its
+  own; reopening the popup re-scans the active tab.
+- **Site / all-sites need optional host permissions.** These scopes ask you to approve an optional
+  host permission first. If you deny it, monitoring falls back to the current-tab session.
+- **Firefox limitation.** Firefox's MV2 build does not expose optional host permissions, so the
+  `site` and `all-sites` scopes fall back to current-tab there. Chrome/Edge (MV3) support them.
+- **Restricted pages are never scanned.** Browser-internal and privileged schemes
+  (`chrome://`, `edge://`, `about:`, `moz-extension:`, `chrome-extension:`, `devtools:`,
+  `view-source:`, `file:`, …) are skipped with a friendly message.
+- **SPA route changes.** Auto-rescan happens on full page loads (and background injection on
+  navigation). In-page SPA route changes are not auto-rescanned in this phase (no `MutationObserver`
+  yet); reopen the popup or re-scan manually.
+- **Still read-only.** Monitoring does not change the page, does not fix anything, uploads nothing,
+  and makes no external/AI calls. It only re-applies the visual helpers and inspects.
