@@ -12,25 +12,26 @@ PROJECT NAME
   Tagline: A keyboard accessibility companion for the web.
 
 CURRENT PHASE
-  Phase 0H-Fix - persist monitoring helper preferences and reliably auto-apply
-  them on supported pages. Bugfix/refinement. Read-only.
+  Phase 1A - production release-candidate hardening for Chrome Web Store and
+  Microsoft Edge Add-ons (code audit + cleanup + store-submission package).
+  No product behavior changes.
 
 CURRENT BRANCH
   main
 
 LATEST COMMIT HASH
-  (Run `git log -1 --pretty=fuller`. The Phase 0H-Fix commit message is:
-   "fix: persist monitoring helper preferences".
-   Prior baselines: 0H = 2f81470, 0G = 5629d66, 0F = c27a543, 0P = 7f8cfed,
-   0E = 17b9e02, 0N rename = 7e7dd28, 0D = 54d3651, 0C = 8cd154d, 0B = 1890b49,
-   0A = 54dcba4.)
+  (Run `git log -1 --pretty=fuller`. The Phase 1A commit message is:
+   "chore: prepare store release candidate".
+   Prior baselines: 0H-Fix = be0956e, 0H = 2f81470, 0G = 5629d66, 0F = c27a543,
+   0P = 7f8cfed, 0E = 17b9e02, 0N rename = 7e7dd28, 0D = 54d3651, 0C = 8cd154d,
+   0B = 1890b49, 0A = 54dcba4.)
 
 COMMIT AUTHOR
   atj393 <alexistoby393@gmail.com>  (local git identity set for this repo)
   No Co-Authored-By. No generated-by trailers. No assistant attribution.
 
 DATE/TIME OF UPDATE
-  2026-06-18 (Phase 0H-Fix).
+  2026-06-18 (Phase 1A).
 
 REPO PATH
   c:\Alexis\Test\browser\keyboard-extension\keywise-web
@@ -41,107 +42,119 @@ GITHUB REPOSITORY URL
   Remote: origin -> https://github.com/atj393/easy-web-navigation.git
 
 PUSH STATUS
-  Phase 0H-Fix committed and pushed to origin/main.
+  Phase 1A committed and pushed to origin/main.
 
 PERMISSION CHANGES
   NONE. Required: activeTab, scripting, storage. optional_host_permissions:
-  http://*/*, https://*/* (unchanged). No new permissions.
+  http://*/*, https://*/* (unchanged). No required host_permissions. No CSP
+  override. content_scripts: [] (runtime-registered).
 
-ROOT CAUSE (user: "helpers don't auto re-apply; must click toggles again")
-  1) Popup-open while monitoring ON only READ helper state (GET_* with no
-     injection). In current-tab scope the content script isn't present on a new
-     page, so nothing re-applied and the toggles showed off.
-  2) Start wrote focusHelperEnabled/tabPathEnabled from popup UI state, and Stop
-     reset those toggles to false -> a Stop->Start cycle lost the remembered
-     preferences.
-  3) SPA refreshForRoute used stale in-memory closure values.
-
-FIX SUMMARY
-  - Popup useEffect: when monitoring is enabled, inject into the active tab
-    (popup open = user gesture), re-apply remembered helpers via APPLY_MONITORING
-    (payload from saved settings) and scan. When off, best-effort GET_* (no
-    inject). This makes helpers re-appear on each supported page, incl.
-    current-tab when the popup is opened.
-  - startMonitoring: persists only { enabled, scope } and PRESERVES saved helper
-    prefs, then applies createApplyMonitoringPayload(savedSettings). stopMonitoring
-    keeps prefs (only enabled:false) and clears overlays.
-  - content refreshForRoute: now async; reads latest monitoringItem prefs on each
-    SPA route change (no stale values); returns early if monitoring disabled.
-  - Added tested pure helpers in lib/monitoring.ts: mergeMonitoringSettings,
-    updateMonitoringHelperPreference, createApplyMonitoringPayload,
-    shouldAutoApplyHelpers.
-  - Clearer popup wording (remember choices; current-tab cross-origin note;
-    site/all-sites auto-apply note).
+SUMMARY OF WHAT CHANGED
+  Part 1 (code audit + cleanup):
+  - Audited runtime code: no console.log/debug, no debugger, no dead code, no
+    remote code (no eval/new Function), no analytics, no external network calls,
+    no disallowed permissions. (The only console.log is in the dev-only
+    generate-icons.mjs build script, which is NOT bundled.)
+  - Relocated icon-source.svg from apps/extension/public/ to the package root so
+    it no longer ships in the store ZIP (17 zip entries now, SVG excluded).
+  - Set a clean store ZIP base name ("easy-web-navigation") in wxt.config.
+  Part 2 (store docs) under docs/store/:
+  - chrome-web-store-listing.md, edge-add-ons-listing.md, privacy-policy.md,
+    privacy-disclosure.md, permission-justifications.md,
+    reviewer-test-instructions.md, release-checklist.md, release-notes-v0.1.0.md,
+    screenshot-plan.md, manual-qa-before-submit.md, assets/README.md.
+  - Top-level docs/privacy-policy.md pointer.
+  Part 3 (assets):
+  - Generated REAL brand artwork: docs/store/assets/chrome-small-promo-440x280.png
+    and edge-logo-300x300.png (scripts/generate-store-assets.mjs, pure Node).
+  - Screenshots: labeled placeholder (screenshot-placeholder-1280x800.svg) +
+    screenshot-plan.md. NOT faked; real captures required before submission.
+  Part 4 (release artifacts):
+  - scripts/create-store-zips.mjs + pnpm release:all / release:inspect.
+  - artifacts/ is git-ignored.
+  Docs: README (release section + scripts), CHANGELOG (1A), roadmap (1A),
+  architecture (release packaging), HANDOVER.
 
 FILES AND FOLDERS CHANGED
-  apps/extension/lib/monitoring.ts            (+4 pure helpers)
-  apps/extension/lib/monitoring.test.ts       (+ helper tests)
-  apps/extension/entrypoints/popup/App.tsx    (auto-apply on open; Start preserves
-                                               prefs; wording)
-  apps/extension/entrypoints/content.ts       (refreshForRoute reads saved prefs)
-  README.md (unchanged this fix), CHANGELOG.md, docs/architecture.md,
-  docs/limitations.md, HANDOVER.txt
+  apps/extension/wxt.config.ts (zip.name)
+  apps/extension/scripts/generate-icons.mjs (svg -> package root)
+  apps/extension/public/icon-source.svg  -> removed (git rm)
+  apps/extension/icon-source.svg          -> added (regenerated)
+  scripts/create-store-zips.mjs           (new)
+  scripts/generate-store-assets.mjs       (new)
+  package.json (release:* scripts)
+  .gitignore (artifacts/)
+  docs/store/*.md (10 files) + docs/store/assets/{README.md,
+    chrome-small-promo-440x280.png, edge-logo-300x300.png,
+    screenshot-placeholder-1280x800.svg}
+  docs/privacy-policy.md (pointer)
+  README.md, CHANGELOG.md, docs/roadmap.md, docs/architecture.md, docs/assets/README.md
 
 COMMANDS RUN
-  Inspect: git status/branch/log, node v24.13.0, pnpm 9.15.9
-  pnpm typecheck -> PASS
-  pnpm lint -> PASS
-  pnpm test -> PASS (9 files, 109 tests)
-  pnpm build + build:firefox -> PASS; manifests verified (no perm changes)
-  pnpm run ci -> PASS
-  git commit + git push origin main -> pushed
+  git status/branch/log; node v24.13.0; pnpm 9.15.9
+  audits: rg console/debug, TODO/FIXME, old names, attribution, external URLs,
+    overclaiming -> clean (only allowed CHANGELOG/HANDOVER history + w3.org data)
+  pnpm lint -> PASS; pnpm typecheck -> PASS; pnpm test -> PASS (9 files, 109)
+  pnpm build + build:firefox -> PASS
+  pnpm release:all -> built + validated zips (manifest.json at ROOT in both)
+  manifest inspect -> name/version 0.1.0/desc(103 chars)/icons/perms verified
+  (final) pnpm run ci -> PASS
 
 TEST RESULTS
-  109 tests across 9 files. New: 7 monitoring-settings helper tests
-  (mergeMonitoringSettings, updateMonitoringHelperPreference no-mutation +
-  preserves enabled/scope, createApplyMonitoringPayload, shouldAutoApplyHelpers).
-  Existing monitoring/spa-monitoring/scanner/overlay/tab-path/report/clipboard
-  tests still pass.
+  109 tests across 9 files, all passing (unchanged by this phase).
 
-IMPORTANT DECISIONS
-  - Saved monitoring settings are the single source of truth for helper prefs;
-    popup UI state no longer overwrites them on Start.
-  - Popup-open auto-apply is the mechanism that makes current-tab monitoring
-    re-apply across pages (background can't inject in that scope). This is honest
-    and documented; for hands-free cross-page behavior use site/all-sites.
-  - SPA refresh reads storage so prefs changed elsewhere are respected.
-  - No behavior change to scanner/report/overlay beyond the apply flow.
+PRODUCTION READINESS DECISIONS
+  - Version 0.1.0 is the release-candidate version (root + extension + manifest).
+  - No dependencies removed (all are used: eslint/ts/vitest/jsdom/wxt/react etc.).
+  - Kept the dev-only console.log in generate-icons.mjs (build tool, not shipped).
+  - icon-source.svg moved out of public/ to keep the store package clean.
+
+STORE READINESS DECISIONS
+  - Edge package = the Chrome MV3 zip (Edge Add-ons accepts MV3); documented.
+  - Privacy: no data collected/transmitted; remote code = No; analytics = none.
+  - blank issues disabled; reviewer notes + manual-QA checklist provided.
+
+RELEASE ARTIFACT PATHS (generated by `pnpm release:all`; git-ignored)
+  artifacts/chrome/easy-web-navigation-chrome-v0.1.0.zip  (manifest at root: YES)
+  artifacts/edge/easy-web-navigation-edge-v0.1.0.zip      (manifest at root: YES)
+
+ASSETS: REAL OR PLACEHOLDER
+  - Toolbar icons 16/32/48/128: REAL.
+  - chrome-small-promo-440x280.png, edge-logo-300x300.png: REAL brand artwork.
+  - Product screenshots: PLACEHOLDER (SVG) + plan only; capture real ones first.
 
 KNOWN LIMITATIONS
-  - Current-tab scope: helpers re-apply on popup open (gesture), not silently as
-    you browse; for that, grant site/all-sites optional host permission.
-  - Site/all-sites unavailable on Firefox MV2 (falls back to current-tab).
-  - SPA refresh is URL-signal based and best-effort (apps that change content
-    without changing the URL won't trigger it).
-  - Restricted browser pages can't be monitored (friendly message).
-  - Local folder still keywise-web; missing-visible-focus still deferred.
+  - Release ZIPs are generated, not committed (artifacts/ git-ignored).
+  - Real product screenshots must be captured manually before submission.
+  - Manual cross-browser QA (docs/store/manual-qa-before-submit.md) is REQUIRED
+    before submitting (cannot be automated here).
+  - SPA refresh best-effort; missing-visible-focus still deferred; Firefox MV2.
+  - Local folder still keywise-web.
 
 WHAT WAS INTENTIONALLY NOT IMPLEMENTED
-  - No new features, no scanner-rule/report changes.
-  - No new permissions, no tabs/webRequest/cookies/etc.
-  - No page mutation (overlay only), no tab-order change, no ARIA injection, no
-    auto-fix, no AI, no speech, no analytics, no external calls, no compliance
-    claims.
-  - No store publishing.
+  - No store upload/submission (manual, user-owned).
+  - No new features, no permission changes, no AI/speech/auto-fix/analytics/
+    remote calls/ARIA injection/page mutation.
+  - No dependency additions.
 
-CHROME MANIFEST PERMISSIONS
-  permissions: activeTab, scripting, storage
-  optional_host_permissions: http://*/*, https://*/*
-  host_permissions: (none); content_scripts: [] (runtime-registered)
-
-FIREFOX MANIFEST PERMISSIONS
-  permissions: activeTab, scripting, storage (no optional host perms in MV2)
+MANUAL TASKS BEFORE STORE SUBMISSION
+  - Confirm Chrome Web Store + Microsoft Partner Center (Edge) developer accounts.
+  - Review privacy policy; host it at a public URL if the store requires one.
+  - Capture real screenshots (screenshot-plan.md); replace the placeholder.
+  - Run manual-qa-before-submit.md in Chrome and Edge.
+  - Upload artifacts/chrome ZIP + paste chrome-web-store-listing.md + privacy
+    disclosure + reviewer notes.
+  - Upload artifacts/edge ZIP + paste edge-add-ons-listing.md + privacy/cert notes.
+  - Submit only after QA passes; tag v0.1.0 after submission.
 
 NEXT RECOMMENDED PHASE
-  Phase 0I - capture real screenshots/GIF (incl. monitoring auto-apply + SPA
-  refresh) into docs/assets and embed in README; manual cross-browser test pass;
-  optional toolbar badge reflecting monitoring on/off. Still read-only.
+  Phase 1B - after manual QA + real screenshots: tag v0.1.0, optionally add a
+  GitHub Release with the ZIPs attached, and (manually) submit to the stores;
+  then triage first-run feedback.
 
 NEXT RECOMMENDED PROMPT SUMMARY
-  "Phase 0I: Capture and commit real screenshots + a short GIF (manual scan,
-   focus helper, tab path, monitoring auto-apply across pages, SPA route refresh)
-   into docs/assets and embed them in the README; add a manual cross-browser test
-   checklist and an optional toolbar badge showing monitoring on/off. Keep
-   read-only; no new permissions, no AI/speech/auto-fix/compliance claims.
-   Commits authored by atj393 (no Co-Authored-By). Update HANDOVER.txt and
-   CHANGELOG.md; push to origin."
+  "Phase 1B: After manual cross-browser QA passes and real screenshots are
+   captured into docs/store/assets, create a git tag v0.1.0 and a GitHub Release
+   (attach the artifacts/chrome and artifacts/edge ZIPs) using gh release; keep
+   store submission manual. Update HANDOVER.txt and CHANGELOG.md. No code/feature
+   changes, no new permissions. Commits authored by atj393 (no Co-Authored-By)."

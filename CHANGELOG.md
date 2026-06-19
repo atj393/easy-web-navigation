@@ -6,6 +6,26 @@ All notable changes to Easy Web Navigation are documented here. The format is ba
 
 ## [Unreleased]
 
+### Changed — Phase 1A: production release-candidate hardening (store readiness)
+
+- Prepared the extension as a production release candidate for the Chrome Web Store and Microsoft
+  Edge Add-ons. No product features, scanner/overlay/monitoring behavior, or permissions changed.
+- **Package cleanup:** moved `icon-source.svg` out of `public/` (package root) so it no longer ships
+  in the store ZIP; set a clean store ZIP name (`easy-web-navigation`). Audited the runtime code —
+  no debug logging, no dead code, no remote code, no analytics, no external network calls.
+- **Release artifacts:** added `scripts/create-store-zips.mjs` (pure Node) and
+  `pnpm release:all` / `release:inspect`. They build + package the Chromium MV3 zip and copy it to
+  `artifacts/chrome/easy-web-navigation-chrome-v0.1.0.zip` and
+  `artifacts/edge/easy-web-navigation-edge-v0.1.0.zip` (Edge = same MV3 build), validating that
+  `manifest.json` is at each ZIP root. `artifacts/` is git-ignored.
+- **Store documentation** under `docs/store/`: Chrome and Edge listings, privacy policy + privacy
+  disclosure, permission justifications, reviewer test instructions, screenshot plan, a release
+  checklist, a required manual-QA checklist, and v0.1.0 release notes. Added a top-level
+  `docs/privacy-policy.md` pointer.
+- **Store assets:** generated original brand artwork (`docs/store/assets/chrome-small-promo-440x280.png`,
+  `edge-logo-300x300.png`) via `scripts/generate-store-assets.mjs`. Product screenshots are a
+  labeled placeholder + plan (real captures required before submission — not faked).
+
 ### Fixed — Phase 0H-Fix: monitoring helper-preference persistence & auto-apply
 
 - Monitoring now actually re-applies the remembered Focus helper / Tab path on each supported page.

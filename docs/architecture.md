@@ -140,3 +140,16 @@ step for packages in Phase 0A.
   conservative (see [limitations.md](limitations.md)).
 - **No network, no AI, no speech.** The extension does not call external services.
 - **Future host access** (e.g. `optional_host_permissions`) is documented but not relied upon by v0.
+
+## Release packaging (Phase 1A)
+
+`pnpm release:all` runs `scripts/create-store-zips.mjs`, which builds the Chromium MV3 package via
+WXT (`wxt zip`) and writes versioned, store-ready ZIPs to `artifacts/` (git-ignored):
+
+- `artifacts/chrome/easy-web-navigation-chrome-v<version>.zip`
+- `artifacts/edge/easy-web-navigation-edge-v<version>.zip` (the same Chromium MV3 package — Edge
+  Add-ons accepts MV3)
+
+The script validates that `manifest.json` is at each ZIP root (a Chrome/Edge requirement) using a
+built-in ZIP central-directory parser — no external dependencies — and prints file sizes. It never
+uploads anything; store submission is manual (see [store/](store/)).

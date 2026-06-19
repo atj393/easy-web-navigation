@@ -1,0 +1,55 @@
+# Reviewer test instructions (Chrome & Edge)
+
+These steps let a store reviewer verify Easy Web Navigation end-to-end. The extension is read-only
+and runs entirely locally.
+
+## Build artifact
+
+- Chrome: `artifacts/chrome/easy-web-navigation-chrome-v0.1.0.zip`
+- Edge: `artifacts/edge/easy-web-navigation-edge-v0.1.0.zip` (identical Chromium MV3 package)
+
+Each ZIP has `manifest.json` at its root.
+
+## Load the extension (unpacked, for local testing)
+
+1. Unzip the package.
+2. Chrome: open `chrome://extensions`, enable **Developer mode**, click **Load unpacked**, select the
+   unzipped folder. Edge: open `edge://extensions`, enable **Developer mode**, **Load unpacked**.
+3. Pin **Easy Web Navigation** so the toolbar icon is visible.
+
+## Test pages
+
+Any normal `http`/`https` page works. The repository also includes deliberately broken demo pages
+(`apps/demo-sites/`): serve them with `pnpm -C apps/demo-sites preview` (http://localhost:4321) and
+open, e.g., `fake-buttons-page.html` or `form-labels-page.html`.
+
+## Core flows
+
+1. **Manual scan** — click the toolbar icon, then **Scan current page**. Findings appear with
+   severity badges and WCAG references.
+2. **Focus helper** — click **Show focus helper**, press Tab a few times. A rectangle tracks the
+   keyboard-focused element. Click **Hide focus helper** to remove it.
+3. **Tab path** — click **Show tab path**. Numbered markers appear in the computed keyboard tab
+   order (positive `tabindex` first). Hide to remove.
+4. **Locate** — on any issue card, click **Locate on page**. The element is briefly highlighted.
+5. **Copy report** — click **Copy Markdown report**, paste into an editor. A clean report with a
+   non-compliance disclaimer appears.
+6. **Download report** — click **Download Markdown report** to save `easy-web-navigation-report.md`.
+7. **Monitoring — current tab** — choose **Current tab session**, click **Start monitoring**; the
+   page scans and your enabled helpers re-apply. No extra permission is requested for this scope.
+8. **Monitoring — this site** — choose **This site**, click **Start monitoring**; the browser shows
+   an optional host-permission prompt for the current origin. Granting enables auto re-apply across
+   that site; denying falls back to the current-tab session with a friendly message.
+9. **Stop monitoring** — overlays are removed.
+10. **Restricted page** — open a browser-internal page (e.g. `chrome://settings` / `edge://settings`)
+    and click Scan: the extension shows a friendly "can't act on this page" message (it does not
+    crash and cannot script privileged pages).
+
+## Reviewer notes
+
+- The extension **does not modify page source**. The only DOM insertion is an extension-owned
+  overlay container used for visual highlighting; it is removed when not in use.
+- **All analysis happens locally.** No remote API calls, no analytics, no AI, no page-content upload.
+- **Optional host permissions** are requested only after the user chooses "This site" or "All
+  supported websites" monitoring — never at install time and never for manual scanning.
+- There is **no remote code** (no `eval`, no `new Function`, no externally hosted scripts).

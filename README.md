@@ -105,19 +105,34 @@ pnpm dev:firefox    # Firefox dev build
 
 ## Scripts
 
-| Script               | Description                                  |
-| -------------------- | -------------------------------------------- |
-| `pnpm dev`           | Run the extension in development (Chromium). |
-| `pnpm dev:firefox`   | Run the extension in development (Firefox).  |
-| `pnpm build`         | Production build (Chromium / MV3).           |
-| `pnpm build:firefox` | Production build (Firefox).                  |
-| `pnpm typecheck`     | Type-check every workspace package.          |
-| `pnpm lint`          | Lint the repository with ESLint.             |
-| `pnpm test`          | Run the Vitest unit tests.                   |
-| `pnpm format`        | Format the repository with Prettier.         |
-| `pnpm run ci`        | typecheck → lint → test → build.             |
+| Script                 | Description                                      |
+| ---------------------- | ------------------------------------------------ |
+| `pnpm dev`             | Run the extension in development (Chromium).     |
+| `pnpm dev:firefox`     | Run the extension in development (Firefox).      |
+| `pnpm build`           | Production build (Chromium / MV3).               |
+| `pnpm build:firefox`   | Production build (Firefox).                      |
+| `pnpm typecheck`       | Type-check every workspace package.              |
+| `pnpm lint`            | Lint the repository with ESLint.                 |
+| `pnpm test`            | Run the Vitest unit tests.                       |
+| `pnpm format`          | Format the repository with Prettier.             |
+| `pnpm run ci`          | typecheck → lint → test → build.                 |
+| `pnpm release:all`     | Build + package store ZIPs into `artifacts/`.    |
+| `pnpm release:inspect` | Validate existing store ZIPs (manifest at root). |
 
 > Note: use `pnpm run ci` (not `pnpm ci`) — `ci` is a reserved pnpm command.
+
+## Releases & store submission
+
+`pnpm release:all` builds the Chromium MV3 package and writes versioned, store-ready ZIPs
+(`manifest.json` at the root) to `artifacts/`:
+
+- `artifacts/chrome/easy-web-navigation-chrome-v<version>.zip` — Chrome Web Store
+- `artifacts/edge/easy-web-navigation-edge-v<version>.zip` — Microsoft Edge Add-ons (same Chromium MV3 build)
+
+Artifacts are git-ignored (regenerate any time). Submission is **manual** — copy-paste-ready store
+listings, privacy policy, permission justifications, reviewer test instructions, a release checklist,
+and a required manual-QA checklist live in [`docs/store/`](docs/store/). Privacy policy:
+[`docs/store/privacy-policy.md`](docs/store/privacy-policy.md).
 
 ## Architecture overview
 
@@ -188,7 +203,7 @@ See [SECURITY.md](SECURITY.md) for the security policy and how to report a vulne
 > and follow the 60-second walkthrough in [docs/demo-plan.md](docs/demo-plan.md).
 
 The toolbar icon is original artwork generated from
-[`apps/extension/public/icon-source.svg`](apps/extension/public/icon-source.svg).
+[`apps/extension/icon-source.svg`](apps/extension/icon-source.svg).
 
 ## Demo pages
 

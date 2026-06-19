@@ -14,7 +14,8 @@ import { writeFileSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
-const OUT = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
+const PKG_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
+const OUT = join(PKG_ROOT, "public");
 const SIZES = [16, 32, 48, 128];
 const SS = 4; // supersampling factor
 
@@ -155,9 +156,11 @@ const SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" vi
 `;
 
 mkdirSync(OUT, { recursive: true });
-writeFileSync(join(OUT, "icon-source.svg"), SVG);
+// The SVG source lives at the package root (NOT in public/), so it is not
+// copied into the built extension / store ZIP. Only the PNGs ship.
+writeFileSync(join(PKG_ROOT, "icon-source.svg"), SVG);
 for (const size of SIZES) {
   writeFileSync(join(OUT, `icon-${size}.png`), render(size));
   console.log(`wrote icon-${size}.png`);
 }
-console.log("wrote icon-source.svg");
+console.log("wrote icon-source.svg (package root)");

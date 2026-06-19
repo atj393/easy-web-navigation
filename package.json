@@ -28,7 +28,11 @@
     "test": "vitest run",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "ci": "pnpm typecheck && pnpm lint && pnpm test && pnpm build"
+    "ci": "pnpm typecheck && pnpm lint && pnpm test && pnpm build",
+    "release:all": "node scripts/create-store-zips.mjs",
+    "release:chrome": "node scripts/create-store-zips.mjs",
+    "release:edge": "node scripts/create-store-zips.mjs",
+    "release:inspect": "node scripts/create-store-zips.mjs --inspect"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",

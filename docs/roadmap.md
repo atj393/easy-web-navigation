@@ -52,6 +52,9 @@ aggressive auto-fix) do not.
   helper preferences, optional host-permission flow, event-driven auto-injection). Read-only.
 - **Phase 0H (done):** SPA route-change monitoring — History API / popstate / hashchange detection
   with a throttled, cleanup-safe, read-only refresh while monitoring is active.
-- **Remaining:** screenshots/GIFs, manual cross-browser testing, and store-ready packaging for
-  Chromium and Firefox.
+- **Phase 0H-Fix (done):** monitoring helper preferences persist and auto-apply on supported pages.
+- **Phase 1A (done):** production release-candidate hardening — package cleanup, store-ready ZIP
+  artifacts (`pnpm release:all`), and a full store-submission documentation set in `docs/store/`.
+- **Remaining (manual):** real screenshots/GIFs, manual cross-browser QA, and the actual store
+  submissions (Chrome Web Store + Microsoft Edge Add-ons).
 - Clear, honest positioning as an inspection/assistive tool throughout.

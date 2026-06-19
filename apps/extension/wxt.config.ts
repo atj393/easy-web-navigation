@@ -4,6 +4,10 @@ import { defineConfig } from "wxt";
 // Phase 0A permissions are intentionally minimal: no broad host permissions.
 export default defineConfig({
   modules: ["@wxt-dev/module-react"],
+  // Clean, predictable store ZIP names: easy-web-navigation-<version>-<browser>.zip
+  zip: {
+    name: "easy-web-navigation",
+  },
   hooks: {
     // The runtime-registered content script would otherwise cause WXT to add
     // `host_permissions: ["<all_urls>"]`. Phase 0A deliberately ships NO broad
