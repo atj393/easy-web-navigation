@@ -31,6 +31,17 @@ For each item, mark Pass/Fail.
       automatic checking.
 - [ ] **Hide keyboard path** → markers removed.
 
+## Keyboard path — collapsed/hidden controls (visibility fix)
+
+- [ ] Open ChatGPT and **close its sidebar**. Open Easy Web Navigation → **Show keyboard path**.
+      Expected: **no** numbered markers appear for the closed sidebar's controls.
+- [ ] **Open the sidebar**, then refresh/re-enable keyboard path → its visible controls can now appear.
+- [ ] On a normal long page, scroll down → regular controls below the initial viewport are still
+      included in the keyboard path (vertical off-screen is not a reason to hide a control).
+- [ ] Controls above the viewport remain included; a control styled `opacity: 0` is not excluded just
+      for opacity.
+- [ ] Repeat with 100 / 250 / 500 marker limits → no console errors; no page elements are modified.
+
 ## Show this problem
 
 - [ ] **Show this problem** on an issue → element briefly highlighted; "no longer on the page" message

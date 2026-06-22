@@ -6,6 +6,12 @@ All notable changes to Easy Web Navigation are documented here. The format is ba
 
 ## [Unreleased]
 
+### Fixed — Phase 1A-UX-Visibility-Fix: hidden controls excluded from keyboard path
+
+- Keyboard-path markers now exclude controls that are visually unavailable because they are collapsed, clipped, hidden, inert, or fully off-canvas.
+- Normal page controls above or below the visible viewport remain part of the keyboard path.
+- No scanner rules, permissions, page mutations, or tab-order behavior changed.
+
 ### Changed — Phase 1A-UX-Follow-up: clearer automatic checking and adjustable keyboard path
 
 - Clarified that "This page only" may require reopening the extension after navigation.

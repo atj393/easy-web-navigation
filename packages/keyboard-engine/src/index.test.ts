@@ -143,3 +143,39 @@ describe("computeTabPath", () => {
     expect(summary).toEqual({ shown: 342, totalDetected: 342, capped: false });
   });
 });
+
+describe("computeTabPath excludes visually-unavailable controls", () => {
+  // content-visibility:hidden is in the tab order yet not visible to the user,
+  // and (unlike display:none) it is NOT removed by collectFocusableElements —
+  // so this verifies the keyboard-path visibility filter is wired into
+  // computeTabPath. It also works without real layout (jsdom).
+  it("drops a content-visibility:hidden sidebar from the path and the total", () => {
+    document.body.innerHTML = `
+      <button id="v1">one</button>
+      <nav style="content-visibility:hidden">
+        <button>hidden-a</button>
+        <button>hidden-b</button>
+      </nav>
+      <button id="v2">two</button>
+    `;
+    const { items, summary } = computeTabPath(document);
+    expect(items.map((i) => i.selector)).toEqual(["#v1", "#v2"]);
+    expect(summary).toEqual({ shown: 2, totalDetected: 2, capped: false });
+  });
+
+  it("reports only the visible total and applies the limit after filtering", () => {
+    const visible = Array.from({ length: 342 }, (_, i) => `<button>v${i}</button>`).join("");
+    const hiddenSidebar = `<aside style="content-visibility:hidden">${Array.from(
+      { length: 30 },
+      (_, i) => `<button>s${i}</button>`,
+    ).join("")}</aside>`;
+    document.body.innerHTML = visible + hiddenSidebar;
+
+    // 372 focusable in the DOM, but only 342 are visible.
+    const at100 = computeTabPath(document, { maxItems: 100 });
+    expect(at100.summary).toEqual({ shown: 100, totalDetected: 342, capped: true });
+
+    const at500 = computeTabPath(document, { maxItems: 500 });
+    expect(at500.summary).toEqual({ shown: 342, totalDetected: 342, capped: false });
+  });
+});

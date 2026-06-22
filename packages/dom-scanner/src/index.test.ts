@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import type { ScanResult } from "@easy-web-navigation/shared-types";
 import {
   scanDocument,
@@ -6,6 +6,10 @@ import {
   getElementPreview,
   collectFocusableElements,
   createScanContext,
+  isVisuallyAvailableForKeyboardPath,
+  hasMeaningfulSize,
+  isFullyOffCanvasHorizontally,
+  isClippedAwayBy,
   PROFILE,
 } from "./index";
 
@@ -248,5 +252,195 @@ describe("open shadow DOM traversal", () => {
     const root = host.attachShadow({ mode: "open" });
     root.innerHTML = `<button></button>`;
     expect(issuesFor(scan(), "unlabeled-control").length).toBe(1);
+  });
+});
+
+/* ---- Keyboard-path visual availability -------------------------------- */
+
+/** A DOMRect-like value for stubbing layout in jsdom (which has none). */
+function vrect(left: number, top: number, width: number, height: number): DOMRect {
+  return {
+    left,
+    top,
+    width,
+    height,
+    right: left + width,
+    bottom: top + height,
+    x: left,
+    y: top,
+    toJSON() {
+      return this;
+    },
+  } as DOMRect;
+}
+
+/** Make `isLayoutAvailable` report true (jsdom returns zeros for everything). */
+function enableLayout(): void {
+  (
+    document.documentElement as unknown as { getBoundingClientRect: () => DOMRect }
+  ).getBoundingClientRect = () => vrect(0, 0, 1024, 768);
+}
+
+/** Give an element a fixed rendered rectangle + matching client rects. */
+function stubRect(el: Element, r: DOMRect): void {
+  (el as unknown as { getBoundingClientRect: () => DOMRect }).getBoundingClientRect = () => r;
+  (el as unknown as { getClientRects: () => DOMRect[] }).getClientRects = () =>
+    r.width > 0 || r.height > 0 ? [r] : [];
+}
+
+afterEach(() => {
+  // Drop any per-test layout stub so other suites see jsdom defaults again.
+  delete (document.documentElement as unknown as { getBoundingClientRect?: unknown })
+    .getBoundingClientRect;
+});
+
+describe("keyboard-path geometry helpers (pure, mocked rectangles)", () => {
+  it("hasMeaningfulSize requires >= 1px on both axes", () => {
+    expect(
+      hasMeaningfulSize({ left: 0, right: 10, top: 0, bottom: 10, width: 10, height: 10 }),
+    ).toBe(true);
+    expect(hasMeaningfulSize({ left: 0, right: 0, top: 0, bottom: 10, width: 0, height: 10 })).toBe(
+      false,
+    );
+    expect(hasMeaningfulSize({ left: 0, right: 10, top: 0, bottom: 0, width: 10, height: 0 })).toBe(
+      false,
+    );
+  });
+
+  it("isFullyOffCanvasHorizontally flags drawers translated off either side", () => {
+    const vw = 1000;
+    // translated fully left (right <= 0)
+    expect(
+      isFullyOffCanvasHorizontally(
+        { left: -300, right: -20, top: 0, bottom: 40, width: 280, height: 40 },
+        vw,
+      ),
+    ).toBe(true);
+    // translated fully right (left >= viewport width)
+    expect(
+      isFullyOffCanvasHorizontally(
+        { left: 1000, right: 1280, top: 0, bottom: 40, width: 280, height: 40 },
+        vw,
+      ),
+    ).toBe(true);
+    // partially visible → kept
+    expect(
+      isFullyOffCanvasHorizontally(
+        { left: -50, right: 230, top: 0, bottom: 40, width: 280, height: 40 },
+        vw,
+      ),
+    ).toBe(false);
+    // below the fold but on-canvas → kept (vertical is never an off-canvas reason)
+    expect(
+      isFullyOffCanvasHorizontally(
+        { left: 10, right: 290, top: 5000, bottom: 5040, width: 280, height: 40 },
+        vw,
+      ),
+    ).toBe(false);
+    // unknown viewport width → never excludes
+    expect(
+      isFullyOffCanvasHorizontally(
+        { left: -300, right: -20, top: 0, bottom: 40, width: 280, height: 40 },
+        0,
+      ),
+    ).toBe(false);
+  });
+
+  it("isClippedAwayBy respects the clipped axis and keeps partial overlap", () => {
+    const clip = { left: 0, right: 200, top: 0, bottom: 200, width: 200, height: 200 };
+    const right = { left: 300, right: 480, top: 10, bottom: 50, width: 180, height: 40 };
+    const below = { left: 10, right: 190, top: 300, bottom: 340, width: 180, height: 40 };
+    const overlap = { left: 150, right: 330, top: 10, bottom: 50, width: 180, height: 40 };
+    expect(isClippedAwayBy(right, clip, true, false)).toBe(true); // x-clipped, fully right
+    expect(isClippedAwayBy(below, clip, false, true)).toBe(true); // y-clipped, fully below
+    expect(isClippedAwayBy(right, clip, false, true)).toBe(false); // ancestor doesn't clip x
+    expect(isClippedAwayBy(overlap, clip, true, false)).toBe(false); // partial overlap kept
+  });
+});
+
+describe("isVisuallyAvailableForKeyboardPath (DOM/style signals, no layout)", () => {
+  const ctx = () => createScanContext(document);
+  const el = (id: string) => document.getElementById(id)!;
+
+  it("includes a normal visible control", () => {
+    document.body.innerHTML = `<button id="b">Save</button>`;
+    expect(isVisuallyAvailableForKeyboardPath(ctx(), el("b"))).toBe(true);
+  });
+
+  it("excludes hidden and display:none controls", () => {
+    document.body.innerHTML = `<button id="h" hidden>x</button><button id="d" style="display:none">y</button>`;
+    expect(isVisuallyAvailableForKeyboardPath(ctx(), el("h"))).toBe(false);
+    expect(isVisuallyAvailableForKeyboardPath(ctx(), el("d"))).toBe(false);
+  });
+
+  it("excludes a descendant of a hidden ancestor", () => {
+    document.body.innerHTML = `<div hidden><button id="c">x</button></div>`;
+    expect(isVisuallyAvailableForKeyboardPath(ctx(), el("c"))).toBe(false);
+  });
+
+  it("excludes a control inside an inert subtree", () => {
+    document.body.innerHTML = `<div inert><button id="c">x</button></div>`;
+    expect(isVisuallyAvailableForKeyboardPath(ctx(), el("c"))).toBe(false);
+  });
+
+  it("excludes a control under content-visibility: hidden", () => {
+    document.body.innerHTML = `<div style="content-visibility:hidden"><button id="c">x</button></div>`;
+    expect(isVisuallyAvailableForKeyboardPath(ctx(), el("c"))).toBe(false);
+  });
+
+  it("does NOT exclude a control only because of opacity: 0", () => {
+    document.body.innerHTML = `<button id="b" style="opacity:0">x</button>`;
+    expect(isVisuallyAvailableForKeyboardPath(ctx(), el("b"))).toBe(true);
+  });
+});
+
+describe("isVisuallyAvailableForKeyboardPath (layout/geometry signals)", () => {
+  const ctx = () => createScanContext(document);
+
+  it("excludes controls inside a width:0 overflow:hidden collapsed sidebar", () => {
+    enableLayout();
+    document.body.innerHTML = `<div id="side" style="overflow:hidden"><button id="b">menu</button></div>`;
+    stubRect(document.getElementById("side")!, vrect(0, 0, 0, 600)); // collapsed to 0 width
+    const b = document.getElementById("b")!;
+    stubRect(b, vrect(0, 10, 240, 40)); // child overflows the 0-width parent
+    expect(isVisuallyAvailableForKeyboardPath(ctx(), b)).toBe(false);
+  });
+
+  it("excludes controls in a drawer translated fully off-canvas", () => {
+    enableLayout();
+    document.body.innerHTML = `<div id="drawer"><button id="b">menu</button></div>`;
+    const b = document.getElementById("b")!;
+    stubRect(b, vrect(-320, 10, 280, 40)); // translateX(-100%): right = -40
+    expect(isVisuallyAvailableForKeyboardPath(ctx(), b)).toBe(false);
+  });
+
+  it("keeps a partially visible control", () => {
+    enableLayout();
+    document.body.innerHTML = `<button id="b">x</button>`;
+    const b = document.getElementById("b")!;
+    stubRect(b, vrect(-30, 10, 280, 40)); // left edge clipped, most still visible
+    expect(isVisuallyAvailableForKeyboardPath(ctx(), b)).toBe(true);
+  });
+
+  it("keeps a normal control far BELOW the viewport (long page)", () => {
+    enableLayout();
+    document.body.innerHTML = `<button id="b">x</button>`;
+    const b = document.getElementById("b")!;
+    stubRect(b, vrect(20, 9000, 200, 40));
+    expect(isVisuallyAvailableForKeyboardPath(ctx(), b)).toBe(true);
+  });
+
+  it("keeps a normal control ABOVE the viewport", () => {
+    enableLayout();
+    document.body.innerHTML = `<button id="b">x</button>`;
+    const b = document.getElementById("b")!;
+    stubRect(b, vrect(20, -500, 200, 40));
+    expect(isVisuallyAvailableForKeyboardPath(ctx(), b)).toBe(true);
+  });
+
+  it("does not exclude everything when layout is unavailable (jsdom fallback)", () => {
+    // No enableLayout() here: isLayoutAvailable is false, so geometry is skipped.
+    document.body.innerHTML = `<button id="b">x</button>`;
+    expect(isVisuallyAvailableForKeyboardPath(ctx(), document.getElementById("b")!)).toBe(true);
   });
 });

@@ -12,27 +12,28 @@ PROJECT NAME
   Tagline (popup): Check whether a page is easy to use with a keyboard.
 
 CURRENT PHASE
-  Phase 1A-UX-Follow-up - clarify automatic-checking limitations and add a
-  user-controlled keyboard-path marker limit. UI wording + one new persisted
-  preference (marker limit). No scanner/monitoring/permission behavior change
-  beyond applying the user-selected marker limit.
+  Phase 1A-UX-Visibility-Fix - prevent keyboard-path markers from appearing on
+  collapsed, clipped, off-canvas, inert, or otherwise visually-unavailable
+  controls (e.g. a closed ChatGPT sidebar). Keyboard-path visualization
+  correctness only. No scanner-rule, permission, or tab-order change.
 
 CURRENT BRANCH
   main
 
 LATEST COMMIT HASH
-  (Run `git log -1 --pretty=fuller`. The Phase 1A-UX-Follow-up commit message is:
-   "feat: clarify automatic checking and keyboard path limit".
-   Prior baselines: 1A-UX = 29217d3, 1A = 2f62d78, 0H-Fix = be0956e,
-   0H = 2f81470, 0G = 5629d66, 0F = c27a543, 0P = 7f8cfed, 0E = 17b9e02,
-   0N rename = 7e7dd28, 0D = 54d3651, 0C = 8cd154d, 0B = 1890b49, 0A = 54dcba4.)
+  (Run `git log -1 --pretty=fuller`. The Phase 1A-UX-Visibility-Fix commit
+   message is: "fix: exclude collapsed controls from keyboard path".
+   Prior baselines: 1A-UX-Follow-up = 0443910, 1A-UX = 29217d3, 1A = 2f62d78,
+   0H-Fix = be0956e, 0H = 2f81470, 0G = 5629d66, 0F = c27a543, 0P = 7f8cfed,
+   0E = 17b9e02, 0N rename = 7e7dd28, 0D = 54d3651, 0C = 8cd154d, 0B = 1890b49,
+   0A = 54dcba4.)
 
 COMMIT AUTHOR
   atj393 <alexistoby393@gmail.com>  (local git identity set for this repo)
   No Co-Authored-By. No generated-by trailers. No assistant attribution.
 
 DATE/TIME OF UPDATE
-  2026-06-22 (Phase 1A-UX-Follow-up).
+  2026-06-22 (Phase 1A-UX-Visibility-Fix).
 
 REPO PATH
   c:\Alexis\Test\browser\keyboard-extension\keywise-web
@@ -43,129 +44,131 @@ GITHUB REPOSITORY URL
   Remote: origin -> https://github.com/atj393/easy-web-navigation.git
 
 PUSH STATUS
-  Phase 1A-UX-Follow-up committed and pushed to origin/main.
+  Phase 1A-UX-Visibility-Fix committed and pushed to origin/main.
 
-ROOT CAUSE / PRODUCT DECISION FOR THE "THIS PAGE ONLY" MESSAGE
-  "This page only" relies on activeTab, which the browser grants for the page
-  you act on. The background cannot inject into pages you navigate to in this
-  scope, so automatic checking does not silently continue across navigations;
-  it re-applies when you reopen the extension on a supported page. This is
-  browser permission behavior and is NOT bypassed and adds NO permissions.
-  Product decision: make the limitation unmistakable in plain English, shown
-  directly under the status line both before and after checking starts:
-    "This choice checks the page you started on. When you open another page,
-     you may need to open Easy Web Navigation again."
-  Plus, before starting, a guidance line:
-    "To keep checking pages as you browse, choose This website or All websites
-     before starting automatic checking."
-  "This website" / "All websites" explanations use "browser access" wording.
-  No technical terms (activeTab, host permission, cross-origin, SPA, route,
-  injection, browser API) appear in the popup.
+ROOT CAUSE
+  computeTabPath built the keyboard path from collectFocusableElements ->
+  sortFocusableElementsForTabOrder. The shared hidden test (isHidden) only
+  covered input[type=hidden], the hidden attribute, aria-hidden=true,
+  display:none, and visibility:hidden|collapse. A closed application sidebar
+  (e.g. ChatGPT) stays in the DOM and focusable while being collapsed via
+  zero size, content-visibility:hidden, clipping by an overflow ancestor, or a
+  full off-canvas translate. None of those were detected, so hidden sidebar
+  controls still received numbered markers.
 
-KEYBOARD-PATH MARKER-LIMIT BEHAVIOR
-  New persisted preference tabPathMaxItems: 100 | 250 | 500 (default + capped
-  at 500). Stored in local:monitoring alongside the other remembered prefs so
-  it also applies during automatic checking. Old stored settings without the
-  key fall back to 100 via normalizeTabPathMaxItems (existing users unaffected).
-  - Popup control "Number of keyboard path markers" with options
-    "100 markers (recommended) / 250 markers / 500 markers" and helper text
-    "More markers can make very large pages slower and harder to read." It sits
-    directly under the Keyboard path control and stays available even before the
-    path is shown.
-  - Changing the limit saves immediately and, if the path is visible, redraws it
-    on the current page right away (no toggle off/on needed).
-  - The limit is threaded popup -> settings -> APPLY_MONITORING / TOGGLE_TAB_PATH
-    -> content script -> computeTabPath(maxItems) -> overlay. It is used for
-    manual activation, automatic-checking re-application after navigation, SPA
-    route refresh, and popup-open reapply.
-  - Summary wording uses "keyboard items" (never "focusable items") and the real
-    detected total: "Showing all 78 keyboard items." when nothing is limited, or
-    "Showing the first 100 of 342 keyboard items." + "Choose a higher limit to
-    show more." when limited. totalDetected is always the count BEFORE the limit.
+VISIBILITY-FILTER DECISION
+  Added a dedicated, site-independent predicate in @easy-web-navigation/
+  dom-scanner: isVisuallyAvailableForKeyboardPath(ctx, el). The scanner's
+  focusability semantics (isFocusable/isHidden) were intentionally NOT changed.
+  computeTabPath now filters the sorted tab order through this predicate BEFORE
+  computing totalDetected and applying the 100/250/500 marker cap, so the
+  summary total and the overlay both reflect only visible controls. The filter
+  is read-only and never alters the page or its tab order.
+
+  The predicate excludes a control when it (or an ancestor) is hidden /
+  aria-hidden / display:none / visibility:hidden|collapse, disabled, inside an
+  [inert] subtree, or content-visibility:hidden; or, when real layout is
+  available, when it has no rendered client rects, no meaningful size, is fully
+  off-canvas HORIZONTALLY, or is fully clipped by a non-document
+  overflow:hidden|clip ancestor. Pure geometry helpers (hasMeaningfulSize,
+  isFullyOffCanvasHorizontally, isClippedAwayBy) are exported and unit-tested
+  with mocked rectangles. Geometry runs only when isLayoutAvailable(ctx) is
+  true, so jsdom/headless falls back to DOM/style signals instead of hiding
+  everything; the predicate never throws on exotic/detached nodes (defaults to
+  keeping the control). It is generic - no class/id/text/product heuristics and
+  no ChatGPT-specific checks. The same filter applies to manual activation,
+  popup-reopen reapply, This website / All websites automatic checking, and SPA
+  route refresh, because they all flow through computeTabPath.
+
+EXPLICIT: NORMAL VERTICALLY OFF-SCREEN CONTROLS REMAIN INCLUDED
+  Controls above or below the current viewport on a normal long page are NOT
+  excluded. Only HORIZONTAL full off-canvas (the drawer/sidebar pattern) is a
+  reason to exclude. Controls inside normal scrollable areas (overflow:auto|
+  scroll) are kept; html/body are never treated as clipping ancestors.
+
+EXPLICIT: OPACITY ALONE IS NOT TREATED AS HIDDEN
+  opacity:0 is never a reason to exclude a control - some real, keyboard-
+  focusable controls intentionally use opacity:0.
 
 FILES CHANGED
-  packages/shared-types/src/index.ts        (TabPathMaxItems type + constants;
-                                             MonitoringSettings.tabPathMaxItems;
-                                             DEFAULT_MONITORING; APPLY_MONITORING)
-  apps/extension/lib/monitoring.ts          (normalizeTabPathMaxItems;
-                                             createApplyMonitoringPayload;
-                                             scopeExplanation rewrite;
-                                             CURRENT_TAB_KEEP_CHECKING_HINT;
-                                             keyboardPathSummaryText)
-  apps/extension/lib/monitoring.test.ts     (updated + new tests)
-  apps/extension/entrypoints/content.ts     (thread maxItems through
-                                             applyMonitoring / auto-apply /
-                                             refreshForRoute / watch /
-                                             APPLY_MONITORING)
-  apps/extension/entrypoints/popup/App.tsx  (marker-limit state/select/redraw;
-                                             summary wording; current-tab note)
-  apps/extension/entrypoints/popup/style.css(field hint + tab-summary layout)
-  packages/keyboard-engine/src/index.test.ts(342-item @100 and @500 tests)
-  README.md, CHANGELOG.md, HANDOVER.txt
+  packages/dom-scanner/src/index.ts        (VisRect; hasMeaningfulSize;
+                                            isFullyOffCanvasHorizontally;
+                                            isClippedAwayBy; isInert;
+                                            content-visibility + layout/geometry
+                                            helpers; isVisuallyAvailableForKeyboardPath)
+  packages/dom-scanner/src/index.test.ts   (geometry-helper + predicate tests)
+  packages/keyboard-engine/src/index.ts    (filter wired into computeTabPath)
+  packages/keyboard-engine/src/index.test.ts (visibility-filter integration tests)
+  packages/shared-types/src/index.ts       (TabPathSummary.totalDetected doc note)
+  CHANGELOG.md, HANDOVER.txt
   docs/architecture.md, docs/limitations.md,
-  docs/store/reviewer-test-instructions.md,
-  docs/store/manual-qa-before-submit.md, docs/store/screenshot-plan.md
+  docs/store/manual-qa-before-submit.md,
+  docs/store/reviewer-test-instructions.md
 
 COMMANDS RUN
   git status/branch/log; node v24.13.0; pnpm 9.15.9
-  pnpm typecheck -> PASS; pnpm lint -> PASS; pnpm test -> PASS (9 files, 125)
+  pnpm typecheck -> PASS; pnpm lint -> PASS; pnpm test -> PASS (9 files, 142)
   pnpm build + build:firefox -> PASS; pnpm run ci -> PASS; pnpm release:all -> PASS
   manifest inspect -> permissions unchanged
-  rg old-wording / "Keyboard path:.*of" / "focusable item" audit -> clean popup
+  rg focused search (isHidden/isVisible/collectFocusableElements/computeTabPath/
+    content-visibility/overflow/inert/getClientRects/getBoundingClientRect)
 
 TEST RESULTS
-  125 tests across 9 files, all passing (was 113; +12 new). New/updated:
-  monitoring.test.ts (normalizeTabPathMaxItems, keyboardPathSummaryText,
-  createApplyMonitoringPayload incl. limit, scopeExplanation new wording,
-  current-tab keep-checking hint, marker-limit preserves prefs, Stop/Start
-  preserves limit, DEFAULT_MONITORING incl. tabPathMaxItems:100) and
-  keyboard-engine (342-item @100 -> shown 100 / total 342 / capped true;
-  342-item @500 -> shown 342 / total 342 / capped false).
+  142 tests across 9 files, all passing (was 125; +17 new). New: dom-scanner
+  geometry-helper tests (hasMeaningfulSize, isFullyOffCanvasHorizontally,
+  isClippedAwayBy) and predicate tests (visible included; hidden/display:none
+  excluded; hidden-ancestor descendant excluded; inert excluded;
+  content-visibility:hidden excluded; opacity:0 NOT excluded; collapsed
+  width:0/overflow:hidden sidebar excluded; off-canvas drawer excluded;
+  partially visible kept; below/above viewport kept; jsdom layout-less
+  fallback keeps controls). keyboard-engine integration: content-visibility
+  sidebar dropped from path + total; 342 visible + 30 hidden reports
+  totalDetected 342 with 100/500 limits applied after filtering. All existing
+  keyboard-order, scanner, overlay, monitoring, marker-limit, SPA, and report
+  tests still pass.
+
+MANUAL CHATGPT SIDEBAR VERIFICATION STEPS
+  1. Open ChatGPT. 2. Close its sidebar. 3. Open Easy Web Navigation.
+  4. Choose "Show keyboard path." 5. Expected: NO markers for closed-sidebar
+  controls. 6. Open the sidebar. 7. Refresh/re-enable keyboard path.
+  8. Expected: visible sidebar controls can appear. 9. Scroll a long page.
+  10. Expected: controls below the initial viewport are still included.
+  11. Test 100/250/500 marker limits. 12. Confirm no console errors and no page
+  elements modified. (Cannot be reproduced in jsdom unit tests - browser-only;
+  see docs/store/manual-qa-before-submit.md "Keyboard path - collapsed/hidden
+  controls".)
 
 PERMISSION CHANGES
   NONE. Required: activeTab, scripting, storage. optional_host_permissions:
   http://*/*, https://*/*. No required host permissions.
-
-EXPLICIT BEHAVIOR NOTES
-  - "This page only" may require opening the extension again after navigating to
-    another page. This is intended browser-permission behavior and is stated in
-    the popup; it is not a bug and is not bypassed.
-  - The keyboard-path marker limit is capped at 500 by design in this phase.
-    There is no free numeric input and no value above 500.
-  - No scanner rules, monitoring permission model, monitoring behavior, overlay
-    ownership, or extension purpose changed. The only new behavior is applying
-    the user-selected marker limit. Still read-only; no page-node mutation
-    outside the extension-owned overlay; no ARIA injection; no tab-order change.
 
 RELEASE ARTIFACT STATUS
   Regenerated via `pnpm release:all` (git-ignored):
   artifacts/chrome/easy-web-navigation-chrome-v0.1.0.zip  (manifest at root: YES)
   artifacts/edge/easy-web-navigation-edge-v0.1.0.zip      (manifest at root: YES)
 
-OLD-WORDING SEARCH
-  No old popup labels in active popup UI. No "Keyboard path: N of M" or
-  "focusable item(s)" wording in the popup. Remaining matches are internal code
-  identifiers/comments and historical CHANGELOG/HANDOVER notes, which is
-  acceptable.
-
 KNOWN LIMITATIONS
-  - Real product screenshots still pending (placeholder + plan in docs/store);
-    the new marker-limit control should be captured in 05-tab-path.png.
-  - Manual cross-browser QA still required before store submission.
-  - "This page only" does not auto-continue across navigations (by design).
-  - Marker limit capped at 500; SPA refresh best-effort; Firefox MV2 has no
-    optional host permissions (site/all-sites fall back to current-tab).
-  - Local folder still keywise-web.
+  - Geometry checks (size/off-canvas/clipping) require a real browser; jsdom and
+    other layout-less environments fall back to DOM/style signals only.
+  - Clipping detection considers non-scrolling overflow:hidden|clip ancestors;
+    unusual transform/scale/filter-based hiding may not be perfectly modeled.
+  - A collapsed area that becomes visible again needs a refresh/re-enable (or a
+    monitoring refresh) before its controls reappear - markers are a snapshot.
+  - "This page only" automatic checking still does not continue across
+    navigation (intended browser-permission behavior; explained in the popup).
+  - Real product screenshots still pending; manual cross-browser QA still
+    required before store submission. Local folder still keywise-web.
 
 WHAT WAS INTENTIONALLY NOT IMPLEMENTED
-  - No new permissions, no scanner-rule/monitoring-model change, no auto-fix.
-  - No AI/speech/analytics/remote calls/ARIA injection/page mutation.
-  - No unrestricted numeric marker input; nothing above 500.
-  - No store submission.
+  - No new permissions; no scanner-rule change; no AI/speech/analytics/remote/
+    auto-fix/tracking; no ARIA injection; no page mutation; no tab-order change.
+  - No site-specific (ChatGPT or other) selectors or class/id/text heuristics.
+  - 100/250/500 marker-limit feature kept unchanged; off-viewport page controls
+    still included. No store submission.
 
 NEXT RECOMMENDED PHASE
-  Phase 1B - capture real popup screenshots (incl. the new marker-limit control
-  and the "This page only" note), run manual-qa-before-submit.md in Chrome and
-  Edge, then tag v0.1.0 + GitHub Release attaching artifacts/chrome and
-  artifacts/edge ZIPs (gh release). Keep store submission manual; no
-  code/feature/permission changes. Commits authored by atj393 (no Co-Authored-By).
+  Phase 1B - capture real popup screenshots, run manual-qa-before-submit.md in
+  Chrome and Edge (including the new collapsed-sidebar keyboard-path checks),
+  then tag v0.1.0 + GitHub Release attaching the artifacts/chrome and
+  artifacts/edge ZIPs. Keep store submission manual; no code/feature/permission
+  changes. Commits authored by atj393 (no Co-Authored-By).

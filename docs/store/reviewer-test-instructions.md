@@ -33,7 +33,10 @@ open, e.g., `fake-buttons-page.html` or `form-labels-page.html`.
    tab order (positive `tabindex` first). The summary reports the real number of keyboard items (e.g.
    "Showing all 78 keyboard items." or "Showing the first 100 of 342 keyboard items."). Use **Number
    of keyboard path markers** to choose 100 (recommended), 250, or 500 — while the path is visible the
-   markers redraw immediately, with no need to toggle off and on. Hide to remove.
+   markers redraw immediately, with no need to toggle off and on. Markers are only drawn for controls
+   that are actually visible: controls in a collapsed/off-canvas sidebar or other hidden/inert/clipped
+   area get no marker, while normal controls above or below the viewport are still included. Hide to
+   remove.
 4. **Locate** — on any issue card, click **Show this problem**. The element is briefly highlighted.
 5. **Copy report** — click **Copy results**, paste into an editor. A clean report with a
    non-compliance disclaimer appears.

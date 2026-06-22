@@ -184,6 +184,216 @@ export function collectFocusableElements(ctx: ScanContext): Element[] {
   return deepQuery(ctx, FOCUSABLE_CANDIDATES).filter((el) => isFocusable(ctx, el));
 }
 
+/* -------------------------------------------------------------------------
+ * Visual availability for keyboard-path markers (read-only).
+ *
+ * A control can be in the sequential tab order yet be invisible to a sighted
+ * user — e.g. a collapsed sidebar/drawer that stays in the DOM while being
+ * inert, content-visibility:hidden, zero-sized, clipped by an overflow
+ * ancestor, or translated fully off-canvas. The keyboard-path overlay should
+ * not draw markers for such controls. This is a stricter VISUAL test than
+ * `isFocusable`; the scanner's focusability semantics are intentionally left
+ * unchanged. Everything here is site-independent (no class/id/text/product
+ * heuristics) and never mutates the page.
+ *
+ * The pure geometry helpers below take plain rectangles so they can be
+ * unit-tested with mocked values; the element-level checks only run them when
+ * real layout measurements are available.
+ * ------------------------------------------------------------------------- */
+
+/** A minimal, comparable rectangle (subset of DOMRect). */
+export interface VisRect {
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+  width: number;
+  height: number;
+}
+
+/** True when a rectangle has at least `min` px of rendered area on both axes. */
+export function hasMeaningfulSize(rect: VisRect, min = 1): boolean {
+  return rect.width >= min && rect.height >= min;
+}
+
+/**
+ * True when a rectangle is entirely to the left of, or entirely to the right
+ * of, the visible browser area — the off-canvas drawer/sidebar pattern. Only
+ * the HORIZONTAL axis is considered; vertical off-viewport is never excluded
+ * (a normal long page has valid controls above/below the fold). Returns false
+ * when the viewport width is unknown (non-positive).
+ */
+export function isFullyOffCanvasHorizontally(rect: VisRect, viewportWidth: number): boolean {
+  if (!(viewportWidth > 0)) return false;
+  return rect.right <= 0 || rect.left >= viewportWidth;
+}
+
+/**
+ * True when `target` has no visible intersection with a clipping ancestor's
+ * box `clip`, considering only the axes the ancestor actually clips. Used to
+ * detect controls hidden by a non-scrolling `overflow: hidden|clip` ancestor
+ * (e.g. a width:0 collapsed panel). A partially-overlapping target returns
+ * false (it stays visible).
+ */
+export function isClippedAwayBy(
+  target: VisRect,
+  clip: VisRect,
+  clipsX: boolean,
+  clipsY: boolean,
+): boolean {
+  const offX = clipsX && (target.right <= clip.left || target.left >= clip.right);
+  const offY = clipsY && (target.bottom <= clip.top || target.top >= clip.bottom);
+  return offX || offY;
+}
+
+/** Whether an element is inside an inert subtree. */
+function isInert(el: Element): boolean {
+  try {
+    return !!el.closest("[inert]");
+  } catch {
+    return false;
+  }
+}
+
+/** Read `content-visibility` (computed first, inline-attribute as a fallback). */
+function readContentVisibility(ctx: ScanContext, el: Element): string {
+  const style = computedStyle(ctx, el);
+  const computed = style?.getPropertyValue?.("content-visibility")?.trim();
+  if (computed) return computed.toLowerCase();
+  // Some layout-less environments do not expose content-visibility via
+  // getComputedStyle; fall back to the inline style attribute.
+  const inline = el.getAttribute("style") ?? "";
+  const match = /content-visibility\s*:\s*([a-z-]+)/i.exec(inline);
+  return match ? match[1].toLowerCase() : "";
+}
+
+/** Whether the element or an ancestor has `content-visibility: hidden`. */
+function hasContentVisibilityHidden(ctx: ScanContext, el: Element): boolean {
+  let node: Element | null = el;
+  while (node && node.nodeType === 1) {
+    if (readContentVisibility(ctx, node) === "hidden") return true;
+    node = node.parentElement;
+  }
+  return false;
+}
+
+/** Whether real layout measurements are available (false under jsdom etc.). */
+function isLayoutAvailable(ctx: ScanContext): boolean {
+  const probe = (el: Element | null | undefined): boolean => {
+    try {
+      if (!el || typeof el.getBoundingClientRect !== "function") return false;
+      const r = el.getBoundingClientRect();
+      return !!r && (r.width > 0 || r.height > 0);
+    } catch {
+      return false;
+    }
+  };
+  return probe(ctx.doc?.documentElement) || probe(ctx.doc?.body);
+}
+
+function toVisRect(r: DOMRect): VisRect {
+  return {
+    left: r.left,
+    right: r.right,
+    top: r.top,
+    bottom: r.bottom,
+    width: r.width,
+    height: r.height,
+  };
+}
+
+/** Best-effort viewport width; 0 when unknown. */
+function viewportWidth(ctx: ScanContext): number {
+  try {
+    const inner = ctx.view?.innerWidth;
+    if (typeof inner === "number" && inner > 0) return inner;
+    const client = ctx.doc?.documentElement?.clientWidth;
+    return typeof client === "number" ? client : 0;
+  } catch {
+    return 0;
+  }
+}
+
+/** html/body are never treated as clipping ancestors (they hold the page). */
+const DOC_LEVEL_TAGS = new Set(["HTML", "BODY"]);
+
+/**
+ * Geometry-based unavailability: no rendered box, no meaningful size, fully
+ * off-canvas horizontally, or fully clipped by a non-document overflow ancestor.
+ * Only called when `isLayoutAvailable` is true.
+ */
+function isGeometricallyUnavailable(ctx: ScanContext, el: Element): boolean {
+  let rect: DOMRect;
+  let rectCount = 1;
+  try {
+    const rects = el.getClientRects?.();
+    rectCount = rects ? rects.length : 1;
+    rect = el.getBoundingClientRect();
+  } catch {
+    return false; // cannot measure → do not exclude
+  }
+  if (!rect) return false;
+
+  const vr = toVisRect(rect);
+  // No rendered client rectangles AND no box → not rendered at all.
+  if (rectCount === 0 && !(vr.width > 0 || vr.height > 0)) return true;
+  // No meaningful rendered size.
+  if (!hasMeaningfulSize(vr)) return true;
+  // Fully off-canvas horizontally (collapsed / translated drawer).
+  if (isFullyOffCanvasHorizontally(vr, viewportWidth(ctx))) return true;
+
+  // Clipped away by a non-document, non-scrolling overflow ancestor.
+  let node: Element | null = el.parentElement;
+  let depth = 0;
+  while (node && node.nodeType === 1 && depth < 40) {
+    if (!DOC_LEVEL_TAGS.has(node.tagName)) {
+      const style = computedStyle(ctx, node);
+      if (style) {
+        const ox = (style.overflowX || style.overflow || "").trim();
+        const oy = (style.overflowY || style.overflow || "").trim();
+        const clipsX = ox === "hidden" || ox === "clip";
+        const clipsY = oy === "hidden" || oy === "clip";
+        if (clipsX || clipsY) {
+          try {
+            const clip = toVisRect(node.getBoundingClientRect());
+            if (isClippedAwayBy(vr, clip, clipsX, clipsY)) return true;
+          } catch {
+            /* unmeasurable ancestor — ignore this level */
+          }
+        }
+      }
+    }
+    node = node.parentElement;
+    depth += 1;
+  }
+  return false;
+}
+
+/**
+ * Whether an element should receive a keyboard-path marker. Stricter than
+ * `isFocusable`: it removes tab-order controls that are not actually visible to
+ * a sighted user (hidden/aria-hidden/display:none/visibility, disabled, inert,
+ * content-visibility:hidden, zero-size, clipped, or fully off-canvas).
+ *
+ * Deliberately NEVER excludes a control for being vertically above/below the
+ * viewport, nor for `opacity: 0` alone. Geometry checks run only when real
+ * layout is available, so layout-less environments fall back to DOM/style
+ * signals instead of hiding everything. Read-only; never throws on exotic or
+ * detached nodes (defaults to keeping the control).
+ */
+export function isVisuallyAvailableForKeyboardPath(ctx: ScanContext, el: Element): boolean {
+  try {
+    if (isHidden(ctx, el)) return false;
+    if (isDisabled(el)) return false;
+    if (isInert(el)) return false;
+    if (hasContentVisibilityHidden(ctx, el)) return false;
+    if (isLayoutAvailable(ctx) && isGeometricallyUnavailable(ctx, el)) return false;
+    return true;
+  } catch {
+    return true;
+  }
+}
+
 function collapseWhitespace(text: string): string {
   return text.replace(/\s+/g, " ").trim();
 }

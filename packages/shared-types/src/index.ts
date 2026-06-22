@@ -157,7 +157,11 @@ export const DEFAULT_TAB_PATH_MAX_ITEMS: TabPathMaxItems = 100;
 export interface TabPathSummary {
   /** Number of items returned/rendered (after any cap). */
   shown: number;
-  /** Total focusable items detected before the cap. */
+  /**
+   * Total keyboard items available for the path before the cap — i.e. controls
+   * in the sequential tab order that are also visually available to the user
+   * (collapsed/off-canvas/clipped/inert/hidden controls are excluded).
+   */
   totalDetected: number;
   /** True when `totalDetected` exceeded the cap and the list was truncated. */
   capped: boolean;

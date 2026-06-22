@@ -117,6 +117,16 @@ The tab-path visualization is a read-only approximation:
 - **Open shadow DOM / cross-origin iframes.** Elements inside closed shadow roots or cross-origin
   iframes are not included; open shadow roots are traversed best-effort and may not interleave in
   perfect document order.
+- **Visually unavailable controls are skipped.** Controls that are in the tab order but not visible
+  to a sighted user — collapsed/off-canvas drawers and sidebars, `content-visibility:hidden` or
+  `inert` subtrees, zero-size controls, and controls fully clipped by a non-scrolling
+  `overflow:hidden|clip` ancestor — do not receive markers, and the summary total reflects only the
+  visible set. This is a generic, site-independent visual check (no per-site rules). It intentionally
+  does **not** drop controls merely for being above/below the viewport (a normal long page), for
+  `opacity:0` alone, or for living inside a normal scrollable area you can reach by scrolling. The
+  geometry checks need a real browser; without layout (e.g. headless tests) only DOM/style signals
+  apply. When a collapsed area becomes visible again, its controls reappear after you refresh/re-enable
+  the path or the monitoring refresh runs.
 - **Visual only.** The markers do not change the page's tab order or fix anything; they only make
   the detected order visible.
 

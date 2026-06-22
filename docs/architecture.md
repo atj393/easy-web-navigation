@@ -48,6 +48,36 @@ instantiated and owned by the content script:
 - It **never** touches inspected nodes — no attributes, classes, wrapping, moving, or listeners on
   them. `unmount()`/`destroy()` removes the container, all window listeners, and all timers.
 
+## Keyboard-path visibility filter (Phase 1A-UX-Visibility-Fix)
+
+The keyboard path is computed by `@easy-web-navigation/keyboard-engine`'s `computeTabPath`, which
+reuses the scanner's focusable detection and browser-like tab ordering. A control can be in the
+sequential tab order yet be invisible to a sighted user — e.g. a collapsed sidebar/drawer that stays
+in the DOM. To avoid drawing markers for such controls, `computeTabPath` applies a dedicated,
+site-independent visual-availability filter **after** sorting and **before** the marker limit:
+
+```
+collectFocusableElements → sortFocusableElementsForTabOrder
+  → filter(isVisuallyAvailableForKeyboardPath) → slice(maxItems) → render markers
+```
+
+`isVisuallyAvailableForKeyboardPath` (in `@easy-web-navigation/dom-scanner`) excludes a control when
+it (or an ancestor) is `hidden` / `aria-hidden` / `display:none` / `visibility:hidden|collapse`,
+disabled, inside an `[inert]` subtree, or `content-visibility:hidden`; or when real layout shows it
+has no rendered box, no meaningful size, is fully off-canvas **horizontally**, or is fully clipped by
+a non-document `overflow:hidden|clip` ancestor. It deliberately does **not** exclude controls merely
+for being vertically above/below the viewport, for `opacity:0`, or for living inside a normal
+scrollable (`overflow:auto|scroll`) area; `html`/`body` are never treated as clipping ancestors.
+
+The geometry checks are pure helpers (`hasMeaningfulSize`, `isFullyOffCanvasHorizontally`,
+`isClippedAwayBy`) unit-tested with mocked rectangles. They run only when `isLayoutAvailable` is true,
+so layout-less environments (jsdom) fall back to DOM/style signals instead of hiding everything, and
+the filter never throws on exotic/detached nodes (it defaults to keeping the control). The filter is
+read-only and changes neither the scanner's focusability semantics nor the page's tab order. Because
+the filter feeds `computeTabPath`, it applies uniformly to manual activation, popup-reopen reapply,
+`This website`/`All websites` automatic checking, and SPA route refreshes; `totalDetected` and the
+summary reflect the visible set.
+
 ## Report export (Phase 0E)
 
 `@easy-web-navigation/report-generator` renders a `ScanResult` (plus an optional `ReportOptions`

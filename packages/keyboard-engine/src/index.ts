@@ -15,6 +15,7 @@ import {
   getAccessibleName,
   getElementPreview,
   getStableSelector,
+  isVisuallyAvailableForKeyboardPath,
 } from "@easy-web-navigation/dom-scanner";
 import type { TabPathItem, TabPathOptions, TabPathResult } from "@easy-web-navigation/shared-types";
 
@@ -85,7 +86,14 @@ export function computeTabPath(
     traverseShadow: options.traverseShadow,
   });
 
-  const ordered = sortFocusableElementsForTabOrder(collectFocusableElements(ctx));
+  // Keep the browser-like sequential tab order, then drop controls that are in
+  // the tab order but not visually available to a sighted user (collapsed /
+  // off-canvas / clipped / inert / content-visibility:hidden). `totalDetected`
+  // and the cap apply to this visible set, so the summary and overlay only
+  // count/render markers the user can actually see.
+  const ordered = sortFocusableElementsForTabOrder(collectFocusableElements(ctx)).filter((el) =>
+    isVisuallyAvailableForKeyboardPath(ctx, el),
+  );
   const totalDetected = ordered.length;
   const elements = cap >= 0 ? ordered.slice(0, cap) : ordered;
 
