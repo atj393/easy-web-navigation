@@ -35,11 +35,24 @@ GitHub Discussions may be enabled later. Until then, please use issues.
 To help us reproduce and fix issues quickly, please include:
 
 - **Browser** and version (Chrome / Edge / Firefox).
+- **Operating system** (e.g. Windows 11, macOS 14, Ubuntu 24.04).
 - **Extension build** (development via `pnpm dev`, or a packaged build).
 - **Page type** (e.g. a public URL, or one of the bundled demo pages).
 - **Steps to reproduce.**
-- **Expected behavior.**
-- **Actual behavior.**
-- **Screenshots** (only if they contain no sensitive information).
+- **Expected result.**
+- **Actual result.**
+- **Screenshots** (only with personal data removed — see below).
 - Whether it also happens on the bundled **demo pages**.
 - Any **console errors**.
+
+## Protect your privacy when reporting
+
+Easy Web Navigation processes pages locally and uploads nothing — but **issue reports are public**.
+Before attaching a report, screenshot, or page details, please **remove anything sensitive**:
+
+- Do **not** share passwords, tokens, or API keys.
+- Do **not** share private documents, customer data, or other personal data.
+- Do **not** share confidential website content.
+
+When possible, reproduce the problem on one of the bundled **demo pages** (`apps/demo-sites/`) so your
+report contains no private information.

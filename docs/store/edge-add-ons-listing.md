@@ -9,7 +9,7 @@ Easy Web Navigation
 
 ## Short description
 
-A keyboard accessibility companion for inspecting focus, tab order, and navigation issues on web pages.
+A keyboard accessibility companion for inspecting focus, keyboard path, and navigation issues on web pages.
 
 ## Detailed description
 

@@ -5,8 +5,8 @@ and runs entirely locally.
 
 ## Build artifact
 
-- Chrome: `artifacts/chrome/easy-web-navigation-chrome-v0.1.0.zip`
-- Edge: `artifacts/edge/easy-web-navigation-edge-v0.1.0.zip` (identical Chromium MV3 package)
+- Chrome: `artifacts/chrome/easy-web-navigation-chrome-v1.0.0.zip`
+- Edge: `artifacts/edge/easy-web-navigation-edge-v1.0.0.zip` (identical Chromium MV3 package)
 
 Each ZIP has `manifest.json` at its root.
 

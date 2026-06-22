@@ -6,6 +6,21 @@ All notable changes to Easy Web Navigation are documented here. The format is ba
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [1.0.0] — 2026-06-22
+
+### Changed
+
+- Prepared Easy Web Navigation for its first public production release on the Chrome Web Store and Microsoft Edge Add-ons.
+- Replaced generated icon artwork with the official user-provided Easy Web Navigation icon.
+- Updated production package assets, release documentation, store copy, and end-user-facing GitHub documentation.
+- Rewrote the README to serve as the public product home for users, testers, and organisations.
+
+### Security and privacy
+
+- No permissions, tracking, analytics, remote calls, AI features, page mutations, automatic fixes, or compliance claims were added.
+
 ### Fixed — Phase 1A-UX-Visibility-Fix: hidden controls excluded from keyboard path
 
 - Keyboard-path markers now exclude controls that are visually unavailable because they are collapsed, clipped, hidden, inert, or fully off-canvas.

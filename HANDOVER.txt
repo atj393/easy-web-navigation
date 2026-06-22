@@ -5,35 +5,37 @@ This file is plain-text memory for continuing in a fresh session. Keep it
 updated at the end of every prompt iteration.
 
 PROJECT NAME
-  Easy Web Navigation (formerly "KeyWise Web") - a keyboard accessibility
-  companion browser extension for Chrome, Edge, and Firefox. Inspection /
-  assistive browsing tool. NOT an overlay product, NOT an auto-fixer, NOT a
-  legal compliance certifier.
+  Easy Web Navigation (formerly "KeyWise Web") - a privacy-first, read-only
+  keyboard accessibility companion browser extension for Chrome, Edge, and
+  Firefox. Inspection / assistive browsing tool. NOT an overlay product, NOT an
+  auto-fixer, NOT a legal compliance certifier.
   Tagline (popup): Check whether a page is easy to use with a keyboard.
 
 CURRENT PHASE
-  Phase 1A-UX-Visibility-Fix - prevent keyboard-path markers from appearing on
-  collapsed, clipped, off-canvas, inert, or otherwise visually-unavailable
-  controls (e.g. a closed ChatGPT sidebar). Keyboard-path visualization
-  correctness only. No scanner-rule, permission, or tab-order change.
+  Phase 1C - Final production-release preparation for Chrome and Microsoft Edge.
+  Build/package/document/commit/push only. No store submission, no git tag, no
+  GitHub Release in this phase.
 
 CURRENT BRANCH
   main
 
 LATEST COMMIT HASH
-  (Run `git log -1 --pretty=fuller`. The Phase 1A-UX-Visibility-Fix commit
-   message is: "fix: exclude collapsed controls from keyboard path".
-   Prior baselines: 1A-UX-Follow-up = 0443910, 1A-UX = 29217d3, 1A = 2f62d78,
-   0H-Fix = be0956e, 0H = 2f81470, 0G = 5629d66, 0F = c27a543, 0P = 7f8cfed,
-   0E = 17b9e02, 0N rename = 7e7dd28, 0D = 54d3651, 0C = 8cd154d, 0B = 1890b49,
-   0A = 54dcba4.)
+  (Run `git log -1 --pretty=fuller`. The Phase 1C commit message is:
+   "chore: prepare v1.0.0 production release".
+   Prior baselines: 1A-UX-Visibility-Fix = 7c2a3a8, 1A-UX-Follow-up = 0443910,
+   1A-UX = 29217d3, 1A = 2f62d78, 0H-Fix = be0956e, 0H = 2f81470, 0G = 5629d66,
+   0F = c27a543, 0P = 7f8cfed, 0E = 17b9e02, 0N rename = 7e7dd28, 0D = 54d3651,
+   0C = 8cd154d, 0B = 1890b49, 0A = 54dcba4.)
 
 COMMIT AUTHOR
   atj393 <alexistoby393@gmail.com>  (local git identity set for this repo)
   No Co-Authored-By. No generated-by trailers. No assistant attribution.
 
 DATE/TIME OF UPDATE
-  2026-06-22 (Phase 1A-UX-Visibility-Fix).
+  2026-06-22 (Phase 1C).
+
+FINAL VERSION
+  1.0.0  (first public production release; no git tag created yet).
 
 REPO PATH
   c:\Alexis\Test\browser\keyboard-extension\keywise-web
@@ -44,131 +46,120 @@ GITHUB REPOSITORY URL
   Remote: origin -> https://github.com/atj393/easy-web-navigation.git
 
 PUSH STATUS
-  Phase 1A-UX-Visibility-Fix committed and pushed to origin/main.
+  Phase 1C committed and pushed to origin/main.
 
-ROOT CAUSE
-  computeTabPath built the keyboard path from collectFocusableElements ->
-  sortFocusableElementsForTabOrder. The shared hidden test (isHidden) only
-  covered input[type=hidden], the hidden attribute, aria-hidden=true,
-  display:none, and visibility:hidden|collapse. A closed application sidebar
-  (e.g. ChatGPT) stays in the DOM and focusable while being collapsed via
-  zero size, content-visibility:hidden, clipping by an overflow ancestor, or a
-  full off-canvas translate. None of those were detected, so hidden sidebar
-  controls still received numbered markers.
+BRAND ICON MIGRATION (summary)
+  Replaced the old generated icon artwork (a synthesized focus-ring + tab-path
+  motif) with the OFFICIAL user-provided icon (blue double-arrow navigation
+  mark on white). The user's original lives in Downloads and was NOT modified.
+  A byte-identical copy is the canonical in-repo source. All runtime and
+  store/GitHub artwork is now DOWNSCALED from that one source by pure-Node
+  scripts (no dependencies). Deleted the obsolete apps/extension/icon-source.svg.
+  The old generate scripts can no longer resurrect old artwork - they read the
+  official source only.
 
-VISIBILITY-FILTER DECISION
-  Added a dedicated, site-independent predicate in @easy-web-navigation/
-  dom-scanner: isVisuallyAvailableForKeyboardPath(ctx, el). The scanner's
-  focusability semantics (isFocusable/isHidden) were intentionally NOT changed.
-  computeTabPath now filters the sorted tab order through this predicate BEFORE
-  computing totalDetected and applying the 100/250/500 marker cap, so the
-  summary total and the overlay both reflect only visible controls. The filter
-  is read-only and never alters the page or its tab order.
+CANONICAL ICON SOURCE PATH (in repo)
+  assets/brand/easy-web-navigation-icon-source.png   (3200x3200, 8-bit RGB)
+  Provenance note: assets/brand/README.md
+  Shared pure-Node PNG codec: scripts/lib/png.mjs (decode + area-downscale + encode)
 
-  The predicate excludes a control when it (or an ancestor) is hidden /
-  aria-hidden / display:none / visibility:hidden|collapse, disabled, inside an
-  [inert] subtree, or content-visibility:hidden; or, when real layout is
-  available, when it has no rendered client rects, no meaningful size, is fully
-  off-canvas HORIZONTALLY, or is fully clipped by a non-document
-  overflow:hidden|clip ancestor. Pure geometry helpers (hasMeaningfulSize,
-  isFullyOffCanvasHorizontally, isClippedAwayBy) are exported and unit-tested
-  with mocked rectangles. Geometry runs only when isLayoutAvailable(ctx) is
-  true, so jsdom/headless falls back to DOM/style signals instead of hiding
-  everything; the predicate never throws on exotic/detached nodes (defaults to
-  keeping the control). It is generic - no class/id/text/product heuristics and
-  no ChatGPT-specific checks. The same filter applies to manual activation,
-  popup-reopen reapply, This website / All websites automatic checking, and SPA
-  route refresh, because they all flow through computeTabPath.
+RUNTIME ICON PATHS (downscaled from the source; committed)
+  apps/extension/public/icon-16.png
+  apps/extension/public/icon-32.png
+  apps/extension/public/icon-48.png
+  apps/extension/public/icon-128.png
+  Generator: apps/extension/scripts/generate-icons.mjs  (pnpm -C apps/extension icons)
 
-EXPLICIT: NORMAL VERTICALLY OFF-SCREEN CONTROLS REMAIN INCLUDED
-  Controls above or below the current viewport on a normal long page are NOT
-  excluded. Only HORIZONTAL full off-canvas (the drawer/sidebar pattern) is a
-  reason to exclude. Controls inside normal scrollable areas (overflow:auto|
-  scroll) are kept; html/body are never treated as clipping ancestors.
+STORE / GITHUB ASSET PATHS (downscaled from the source; committed)
+  docs/store/assets/edge-logo-300x300.png            (Edge Add-ons logo = icon)
+  docs/store/assets/chrome-small-promo-440x280.png   (clean white tile: real icon
+                                                      + "EASY WEB / NAVIGATION")
+  docs/assets/easy-web-navigation-icon.png           (512x512 README/GitHub icon)
+  Generator: scripts/generate-store-assets.mjs
+  Still a placeholder (NOT a screenshot): docs/store/assets/screenshot-placeholder-1280x800.svg
 
-EXPLICIT: OPACITY ALONE IS NOT TREATED AS HIDDEN
-  opacity:0 is never a reason to exclude a control - some real, keyboard-
-  focusable controls intentionally use opacity:0.
+README / LICENSE / CLAUDE.md / SUPPORT.md STATUS
+  README.md   - REWRITTEN as the public product home: icon header, "Coming soon"
+                store status (honest; not yet published), 3-step how-it-works,
+                feature list, "useful for", privacy-first, what-it-does-not-do,
+                browser support, help/feedback (with no-private-data note),
+                MIT license + plain-English commercial-use note, and a compact
+                "For developers" section (setup, scripts, layout, permissions,
+                icon, releases, docs links).
+  LICENSE     - MIT terms unchanged; copyright line -> "Copyright (c) 2026
+                Alexis Toby Johnson". No custom/commercial license, no trademark.
+  CLAUDE.md   - CREATED. Product, version 1.0.0, layout, non-negotiable product
+                rules, permissions, release commands, store paths, icon-source
+                rule, commit identity (no Co-Authored-By/assistant attribution),
+                HANDOVER update requirement, manual store submission is user-owned.
+  SUPPORT.md  - UPDATED: added OS field, expected/actual wording, and a "Protect
+                your privacy when reporting" section (no passwords/tokens/personal/
+                confidential data; prefer the bundled demo pages).
 
-FILES CHANGED
-  packages/dom-scanner/src/index.ts        (VisRect; hasMeaningfulSize;
-                                            isFullyOffCanvasHorizontally;
-                                            isClippedAwayBy; isInert;
-                                            content-visibility + layout/geometry
-                                            helpers; isVisuallyAvailableForKeyboardPath)
-  packages/dom-scanner/src/index.test.ts   (geometry-helper + predicate tests)
-  packages/keyboard-engine/src/index.ts    (filter wired into computeTabPath)
-  packages/keyboard-engine/src/index.test.ts (visibility-filter integration tests)
-  packages/shared-types/src/index.ts       (TabPathSummary.totalDetected doc note)
-  CHANGELOG.md, HANDOVER.txt
-  docs/architecture.md, docs/limitations.md,
-  docs/store/manual-qa-before-submit.md,
-  docs/store/reviewer-test-instructions.md
+MANIFEST (generated by WXT from apps/extension/package.json + wxt.config.ts)
+  name: Easy Web Navigation
+  version: 1.0.0
+  description: "A keyboard accessibility companion for inspecting focus, keyboard
+               path, and navigation issues on web pages."  (was "tab order")
+  permissions (required): activeTab, scripting, storage
+  optional_host_permissions: http://*/*, https://*/*
+  host_permissions (required): NONE (WXT hook strips the runtime content-script host)
+  content_scripts: []  (registered at runtime; injected via activeTab + scripting)
+  No remote code, no analytics, no external network calls.
+
+RELEASE ZIP PATHS (git-ignored; regenerate with `pnpm release:all`)
+  artifacts/chrome/easy-web-navigation-chrome-v1.0.0.zip   (manifest at root: YES)
+  artifacts/edge/easy-web-navigation-edge-v1.0.0.zip       (manifest at root: YES)
 
 COMMANDS RUN
-  git status/branch/log; node v24.13.0; pnpm 9.15.9
-  pnpm typecheck -> PASS; pnpm lint -> PASS; pnpm test -> PASS (9 files, 142)
-  pnpm build + build:firefox -> PASS; pnpm run ci -> PASS; pnpm release:all -> PASS
-  manifest inspect -> permissions unchanged
-  rg focused search (isHidden/isVisible/collectFocusableElements/computeTabPath/
-    content-visibility/overflow/inert/getClientRects/getBoundingClientRect)
+  git status/branch/log/remote; node v24.13.0; pnpm 9.15.9
+  copied + sha256-verified the icon source; node generate-icons.mjs;
+  node generate-store-assets.mjs; visual verification of icons + promo
+  pnpm install; pnpm typecheck -> PASS; pnpm lint -> PASS; pnpm test -> PASS
+  pnpm build + build:firefox -> PASS; pnpm run ci -> PASS
+  pnpm release:all + release:inspect -> PASS (both ZIPs, manifest at root)
+  manifest validation (name/version/desc/icons/permissions/host/content_scripts)
+  ZIP content inspection; production audits (console.log / KeyWise / overclaim /
+  http(s) URL scans)
 
 TEST RESULTS
-  142 tests across 9 files, all passing (was 125; +17 new). New: dom-scanner
-  geometry-helper tests (hasMeaningfulSize, isFullyOffCanvasHorizontally,
-  isClippedAwayBy) and predicate tests (visible included; hidden/display:none
-  excluded; hidden-ancestor descendant excluded; inert excluded;
-  content-visibility:hidden excluded; opacity:0 NOT excluded; collapsed
-  width:0/overflow:hidden sidebar excluded; off-canvas drawer excluded;
-  partially visible kept; below/above viewport kept; jsdom layout-less
-  fallback keeps controls). keyboard-engine integration: content-visibility
-  sidebar dropped from path + total; 342 visible + 30 hidden reports
-  totalDetected 342 with 100/500 limits applied after filtering. All existing
-  keyboard-order, scanner, overlay, monitoring, marker-limit, SPA, and report
-  tests still pass.
+  142 tests across 9 files, all passing. No test changes this phase (release prep
+  only: icons, version, docs). Builds, CI, and packaging all pass.
 
-MANUAL CHATGPT SIDEBAR VERIFICATION STEPS
-  1. Open ChatGPT. 2. Close its sidebar. 3. Open Easy Web Navigation.
-  4. Choose "Show keyboard path." 5. Expected: NO markers for closed-sidebar
-  controls. 6. Open the sidebar. 7. Refresh/re-enable keyboard path.
-  8. Expected: visible sidebar controls can appear. 9. Scroll a long page.
-  10. Expected: controls below the initial viewport are still included.
-  11. Test 100/250/500 marker limits. 12. Confirm no console errors and no page
-  elements modified. (Cannot be reproduced in jsdom unit tests - browser-only;
-  see docs/store/manual-qa-before-submit.md "Keyboard path - collapsed/hidden
-  controls".)
-
-PERMISSION CHANGES
-  NONE. Required: activeTab, scripting, storage. optional_host_permissions:
-  http://*/*, https://*/*. No required host permissions.
-
-RELEASE ARTIFACT STATUS
-  Regenerated via `pnpm release:all` (git-ignored):
-  artifacts/chrome/easy-web-navigation-chrome-v0.1.0.zip  (manifest at root: YES)
-  artifacts/edge/easy-web-navigation-edge-v0.1.0.zip      (manifest at root: YES)
+STORE-READINESS DECISIONS
+  - Version 1.0.0 is consistent across root + extension + 6 packages + demo-sites,
+    the generated manifest, store docs, release notes, and ZIP filenames.
+  - README does NOT claim store availability; both stores show "Coming soon".
+  - Promo tile is honest brand artwork (icon + product name), not a fake screenshot.
+  - Real product screenshots are still required before submission (placeholder kept).
+  - No new permissions; no analytics/AI/speech/remote/auto-fix/page-mutation/
+    compliance claims added.
 
 KNOWN LIMITATIONS
-  - Geometry checks (size/off-canvas/clipping) require a real browser; jsdom and
-    other layout-less environments fall back to DOM/style signals only.
-  - Clipping detection considers non-scrolling overflow:hidden|clip ancestors;
-    unusual transform/scale/filter-based hiding may not be perfectly modeled.
-  - A collapsed area that becomes visible again needs a refresh/re-enable (or a
-    monitoring refresh) before its controls reappear - markers are a snapshot.
-  - "This page only" automatic checking still does not continue across
-    navigation (intended browser-permission behavior; explained in the popup).
-  - Real product screenshots still pending; manual cross-browser QA still
-    required before store submission. Local folder still keywise-web.
+  - Real product screenshots not yet captured (1280x800 placeholder remains; see
+    docs/store/screenshot-plan.md). Must be captured + placeholder removed before
+    store submission.
+  - Manual cross-browser QA (Chrome + Edge) not yet performed in this phase.
+  - Firefox: development build only; published Firefox support is planned, not shipped.
+  - Local repo folder is still named "keywise-web" (cosmetic only).
+  - Geometry-based keyboard-path visibility checks require a real browser (jsdom
+    falls back to DOM/style signals) - unchanged from 1A-UX-Visibility-Fix.
 
-WHAT WAS INTENTIONALLY NOT IMPLEMENTED
-  - No new permissions; no scanner-rule change; no AI/speech/analytics/remote/
-    auto-fix/tracking; no ARIA injection; no page mutation; no tab-order change.
-  - No site-specific (ChatGPT or other) selectors or class/id/text heuristics.
-  - 100/250/500 marker-limit feature kept unchanged; off-viewport page controls
-    still included. No store submission.
+MANUAL TASKS STILL REQUIRED BEFORE STORE SUBMISSION
+  1. Load artifacts/chrome ZIP unpacked in Chrome; load the same build in Edge.
+  2. Verify: Check this page; keyboard focus highlight; keyboard path at 100/250/
+     500; collapsed-sidebar filtering; Show this problem; Copy results; Download
+     results; This page only / This website / All websites wording; a restricted
+     browser-internal page; the new toolbar icon is clear and recognisable.
+  3. Capture real screenshots per docs/store/screenshot-plan.md and replace the
+     placeholder before submission. Do not fake screenshots.
+  4. (Optional) Upload a GitHub social-preview image in repo settings.
+  5. Confirm Chrome Web Store + Microsoft Partner Center accounts.
+  6. Upload the ZIPs manually only after QA passes. Then (and only then) create the
+     v1.0.0 git tag and a GitHub Release.
 
 NEXT RECOMMENDED PHASE
-  Phase 1B - capture real popup screenshots, run manual-qa-before-submit.md in
-  Chrome and Edge (including the new collapsed-sidebar keyboard-path checks),
-  then tag v0.1.0 + GitHub Release attaching the artifacts/chrome and
-  artifacts/edge ZIPs. Keep store submission manual; no code/feature/permission
-  changes. Commits authored by atj393 (no Co-Authored-By).
+  Phase 1D - manual cross-browser QA + real screenshot capture, then (user-owned)
+  store submission. After approval: add store links to the README, create the
+  v1.0.0 git tag, and publish a GitHub Release attaching artifacts/chrome and
+  artifacts/edge ZIPs. No code/feature/permission changes expected.

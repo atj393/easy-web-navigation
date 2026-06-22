@@ -1,8 +1,8 @@
 {
   "name": "easy-web-navigation",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
-  "description": "WCAG 2.2 keyboard accessibility companion browser extension (inspection / assistive browsing tool).",
+  "description": "Privacy-first, read-only keyboard accessibility companion browser extension (inspection / assistive browsing tool).",
   "license": "MIT",
   "author": "atj393",
   "type": "module",
