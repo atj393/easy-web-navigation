@@ -77,8 +77,8 @@ web accessibility
 - **activeTab** — Inspect the page in the active tab only after the user invokes the extension.
 - **scripting** — Inject the read-only inspection content script into the active tab on demand.
 - **storage** — Persist user preferences (helper toggles, monitoring scope) locally.
-- **optional_host_permissions (http://_/\*, https://_/\*)** — Requested only when the user opts into
-  "This site" or "All supported websites" monitoring; enables re-applying helpers across pages.
+- **optional*host_permissions (http://*/\*, https://\_/\*)** — Requested only when the user opts into
+  "This site" or "All websites" monitoring; enables re-applying helpers across pages.
 
 See `permission-justifications.md` for the full per-permission detail.
 

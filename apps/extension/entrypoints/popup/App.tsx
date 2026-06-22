@@ -4,14 +4,15 @@ import { generateMarkdownReport } from "@easy-web-navigation/report-generator";
 import { copyTextToClipboard } from "../../lib/clipboard";
 import { monitoringItem } from "../../lib/settings";
 import {
+  automaticCheckingStatusLabel,
   createApplyMonitoringPayload,
   hostPermissionsForScope,
-  scopeLabel,
+  scopeChoiceLabel,
+  scopeExplanation,
   scopeNeedsPermission,
 } from "../../lib/monitoring";
 import {
   PRODUCT_NAME,
-  PRODUCT_TAGLINE,
   type ExtensionMessage,
   type IssueSeverity,
   type MonitoringScope,
@@ -21,20 +22,26 @@ import {
 } from "@easy-web-navigation/shared-types";
 
 /**
- * Popup UI (Phase 0G).
+ * Popup UI.
  *
- * Manual: "Scan current page", focus-helper / tab-path toggles, per-issue
- * "Locate", and Copy / Download report. Monitoring: an explicit, user-started
- * mode that re-applies the remembered visual helpers and auto-scans supported
- * pages (within the granted permission scope). Nothing modifies the page; no
- * page content is uploaded.
+ * Plain-language wording for everyday users (Phase 1A-UX). The underlying
+ * behavior is unchanged: a read-only check of the current page, optional
+ * visual guides (keyboard focus highlight / keyboard path), automatic checking
+ * within a user-chosen scope, and copy/download of results. Internal scope
+ * values and persisted keys are unchanged; only the visible text differs.
  */
+const TAGLINE = "Check whether a page is easy to use with a keyboard.";
+
 const DISCLAIMER =
-  "Easy Web Navigation inspects keyboard accessibility at runtime. It does not certify legal " +
-  "compliance, and a clean report is not a compliance pass.";
+  "This tool checks for possible keyboard-access problems. It does not change the website or " +
+  "confirm legal compliance.";
 
 const PERMISSION_DENIED_MSG =
-  "Permission was not granted. Monitoring is limited to the current active tab session.";
+  "We couldn’t get permission, so checking will stay on this page only.";
+
+const ENABLED_NOTE =
+  "Your keyboard focus and keyboard path choices will be shown again on supported pages where " +
+  "permission allows.";
 
 const SEVERITY_LEGEND: { key: IssueSeverity; label: string }[] = [
   { key: "critical", label: "Critical" },
@@ -43,11 +50,7 @@ const SEVERITY_LEGEND: { key: IssueSeverity; label: string }[] = [
   { key: "minor", label: "Minor" },
 ];
 
-const SCOPE_OPTIONS: { value: MonitoringScope; label: string }[] = [
-  { value: "current-tab", label: "Current tab session" },
-  { value: "site", label: "This site" },
-  { value: "all-sites", label: "All supported websites" },
-];
+const SCOPE_VALUES: MonitoringScope[] = ["current-tab", "site", "all-sites"];
 
 type Phase = "idle" | "scanning" | "done" | "error";
 
@@ -348,7 +351,7 @@ export function App() {
 
   function downloadReport() {
     if (!result) {
-      setReportStatus("Run a scan before exporting a report.");
+      setReportStatus("Check this page before saving results.");
       return;
     }
     const blob = new Blob([buildReport()], { type: "text/markdown" });
@@ -358,18 +361,16 @@ export function App() {
     anchor.download = "easy-web-navigation-report.md";
     anchor.click();
     URL.revokeObjectURL(url);
-    setReportStatus("Report downloaded.");
+    setReportStatus("Results downloaded.");
   }
 
   async function copyReport() {
     if (!result) {
-      setReportStatus("Run a scan before exporting a report.");
+      setReportStatus("Check this page before saving results.");
       return;
     }
     const ok = await copyTextToClipboard(buildReport());
-    setReportStatus(
-      ok ? "Report copied to clipboard." : "Could not copy report. Download is still available.",
-    );
+    setReportStatus(ok ? "Results copied." : "Couldn’t copy. You can still download the results.");
   }
 
   const summary = result?.summary;
@@ -379,19 +380,19 @@ export function App() {
 
   const statusText =
     phase === "scanning"
-      ? "Scanning the active page…"
+      ? "Checking this page…"
       : phase === "done" && result
-        ? `${result.summary.total} issue(s) · ${result.focusableCount} focusable element(s)`
-        : "Ready — scan the current page to begin.";
+        ? `${result.summary.total} problem(s) found`
+        : "Ready to check this page.";
 
   return (
     <main className="popup">
       <header className="popup__header">
         <div className="brand">
-          <img className="brand__icon" src="/icon-48.png" alt="" width={32} height={32} />
+          <img className="brand__icon" src="/icon-48.png" alt="" width={36} height={36} />
           <div>
             <h1 className="popup__title">{PRODUCT_NAME}</h1>
-            <p className="popup__tagline">{PRODUCT_TAGLINE}</p>
+            <p className="popup__tagline">{TAGLINE}</p>
           </div>
         </div>
         {phase !== "error" && (
@@ -412,7 +413,7 @@ export function App() {
         onClick={runScan}
         disabled={phase === "scanning"}
       >
-        {phase === "scanning" ? "Scanning…" : "Scan current page"}
+        {phase === "scanning" ? "Checking…" : "Check this page"}
       </button>
 
       {phase === "error" && (
@@ -421,104 +422,125 @@ export function App() {
         </p>
       )}
 
-      <section className="monitor" aria-label="Monitoring">
-        <p className="monitor__state">
-          Monitoring: <strong>{scopeLabel(monitoringScope, monitoringEnabled)}</strong>
+      <section className="block" aria-labelledby="guides-heading">
+        <h2 id="guides-heading" className="block__heading">
+          Show on this page
+        </h2>
+        <p className="block__sub">
+          Use these guides to see how a keyboard user moves through the page.
         </p>
-        {monitoringEnabled && (
-          <p className="monitor__spa">Active · SPA route changes refresh automatically.</p>
+
+        <div className="guide">
+          <div className="guide__text">
+            <p className="guide__title">Keyboard focus highlight</p>
+            <p className="guide__desc">
+              Shows a clear outline around the item selected with the Tab key.
+            </p>
+          </div>
+          <button
+            type="button"
+            className={`btn btn--toggle${focusHelperOn ? " btn--on" : ""}`}
+            onClick={toggleFocusHelper}
+            aria-pressed={focusHelperOn}
+          >
+            {focusHelperOn ? "Hide keyboard focus" : "Show keyboard focus"}
+          </button>
+        </div>
+
+        <div className="guide">
+          <div className="guide__text">
+            <p className="guide__title">Keyboard path</p>
+            <p className="guide__desc">
+              Shows numbered markers in the order the Tab key moves through the page.
+            </p>
+          </div>
+          <button
+            type="button"
+            className={`btn btn--toggle${tabPathOn ? " btn--on" : ""}`}
+            onClick={toggleTabPath}
+            aria-pressed={tabPathOn}
+          >
+            {tabPathOn ? "Hide keyboard path" : "Show keyboard path"}
+          </button>
+        </div>
+
+        {tabPathOn && tabSummary && (
+          <p className="popup__tabsummary" role="status">
+            Keyboard path: showing {tabSummary.shown} of {tabSummary.totalDetected} item(s)
+            {tabSummary.capped && (
+              <span className="popup__warn"> · showing the first {tabSummary.shown} for speed</span>
+            )}
+          </p>
         )}
-        <label className="monitor__scope">
-          <span>Scope</span>
+      </section>
+
+      <section className="block" aria-labelledby="auto-heading">
+        <h2 id="auto-heading" className="block__heading">
+          Keep checking as you browse
+        </h2>
+        <p className="block__sub">
+          Choose where {PRODUCT_NAME} should continue checking while you browse.
+        </p>
+        <p className="block__status" role="status">
+          Automatic checking:{" "}
+          <strong>{automaticCheckingStatusLabel(monitoringScope, monitoringEnabled)}</strong>
+        </p>
+
+        <label className="field">
+          <span className="field__label">Where should I keep checking?</span>
           <select
+            className="field__select"
             value={monitoringScope}
             disabled={monitoringEnabled}
             onChange={(e) => setMonitoringScope(e.target.value as MonitoringScope)}
           >
-            {SCOPE_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
+            {SCOPE_VALUES.map((value) => (
+              <option key={value} value={value}>
+                {scopeChoiceLabel(value)}
               </option>
             ))}
           </select>
         </label>
+
+        <p className="block__hint">{scopeExplanation(monitoringScope)}</p>
+        {monitoringScope === "all-sites" && !monitoringEnabled && (
+          <p className="block__hint">
+            Your browser will ask for permission before checking all websites.
+          </p>
+        )}
+
         {monitoringEnabled ? (
           <button type="button" className="btn btn--on btn--toggle" onClick={stopMonitoring}>
-            Stop monitoring
+            Stop automatic checking
           </button>
         ) : (
           <button type="button" className="btn btn--primary btn--toggle" onClick={startMonitoring}>
-            Start monitoring
+            Start automatic checking
           </button>
         )}
-        <p className="monitor__desc">
-          Monitoring remembers your Focus helper and Tab path choices and re-applies them on
-          supported pages where permission allows. It does not upload page content or change the
-          website.
-        </p>
-        {monitoringScope === "current-tab" && (
-          <p className="monitor__desc">
-            Current tab session may stop after cross-origin navigation. Choose This site or All
-            supported websites for automatic scanning across more pages.
-          </p>
-        )}
-        {monitoringScope === "all-sites" && !monitoringEnabled && (
-          <p className="monitor__desc">
-            “All supported websites” asks for permission to inspect every http/https page; once
-            granted, helpers auto-apply while monitoring is on.
-          </p>
-        )}
+
+        {monitoringEnabled && <p className="block__hint">{ENABLED_NOTE}</p>}
         {monitoringMsg && (
-          <p className="monitor__msg" role="status">
+          <p className="block__msg" role="status">
             {monitoringMsg}
           </p>
         )}
       </section>
 
-      <div className="popup__tools">
-        <button
-          type="button"
-          className={`btn btn--toggle${focusHelperOn ? " btn--on" : ""}`}
-          onClick={toggleFocusHelper}
-          aria-pressed={focusHelperOn}
-        >
-          {focusHelperOn ? "Hide focus helper" : "Show focus helper"}
-        </button>
-        <button
-          type="button"
-          className={`btn btn--toggle${tabPathOn ? " btn--on" : ""}`}
-          onClick={toggleTabPath}
-          aria-pressed={tabPathOn}
-        >
-          {tabPathOn ? "Hide tab path" : "Show tab path"}
-        </button>
-      </div>
+      <section className="block" aria-labelledby="results-heading">
+        <h2 id="results-heading" className="block__heading">
+          What we checked
+        </h2>
 
-      {tabPathOn && tabSummary && (
-        <p className="popup__tabsummary" role="status">
-          Tab path: {tabSummary.shown} of {tabSummary.totalDetected} focusable item(s)
-          {tabSummary.capped && (
-            <span className="popup__warn"> · capped at {tabSummary.shown} for performance</span>
-          )}
-        </p>
-      )}
+        <div className="cards" aria-label="Summary">
+          <SummaryCard label="Keyboard use" count={keyboardIssues} />
+          <SummaryCard label="Moving around the page" count={navigationIssues} />
+          <SummaryCard label="Names and labels" count={labelIssues} />
+        </div>
 
-      {locateStatus && (
-        <p className="popup__locate" role="status">
-          {locateStatus}
-        </p>
-      )}
-
-      <section aria-label="Issue summary" className="cards">
-        <SummaryCard label="Keyboard" count={keyboardIssues} />
-        <SummaryCard label="Navigation" count={navigationIssues} />
-        <SummaryCard label="Labels" count={labelIssues} />
-      </section>
-
-      <section aria-label="Issues" className="issues">
         <div className="issues__head">
-          <h2 className="section__title">Issues</h2>
-          <ul className="legend" aria-label="Severity legend">
+          <h3 className="section__title">Problems found</h3>
+          <ul className="legend" aria-label="How serious">
             {SEVERITY_LEGEND.map(({ key, label }) => (
               <li key={key} className="legend__item">
                 <span className={`legend__dot legend__dot--${key}`} aria-hidden="true" />
@@ -528,15 +550,21 @@ export function App() {
           </ul>
         </div>
 
+        {locateStatus && (
+          <p className="popup__locate" role="status">
+            {locateStatus}
+          </p>
+        )}
+
         {!result && (
           <p className="issues__empty">
-            No scan yet. Click <strong>Scan current page</strong> to inspect keyboard accessibility,
-            focus, tab order, and accessible names.
+            Nothing checked yet. Select <strong>Check this page</strong> to review keyboard use,
+            movement order, and names and labels.
           </p>
         )}
         {result && result.issues.length === 0 && (
           <p className="issues__empty">
-            No issues found by the implemented rules. This is not a guarantee of accessibility.
+            No problems were found by these checks. This does not mean the page is fully accessible.
           </p>
         )}
         {result && result.issues.length > 0 && (
@@ -557,7 +585,7 @@ export function App() {
                   className="btn btn--small"
                   onClick={() => locate(issue.selector)}
                 >
-                  Locate on page
+                  Show this problem
                 </button>
               </li>
             ))}
@@ -567,10 +595,10 @@ export function App() {
 
       <div className="popup__actions">
         <button type="button" className="btn" onClick={copyReport} disabled={!result}>
-          Copy Markdown report
+          Copy results
         </button>
         <button type="button" className="btn" onClick={downloadReport} disabled={!result}>
-          Download Markdown report
+          Download results
         </button>
       </div>
 

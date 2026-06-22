@@ -31,20 +31,20 @@ visible, and open the demo pages from `http://localhost:4321`.
 browsing tool — it does **not** certify compliance and it never changes the page."
 
 **0:10–0:20 — Scan a broken page.**
-Open `fake-buttons-page`, click the toolbar icon, then **Scan current page**. Point at the summary
+Open `fake-buttons-page`, click the toolbar icon, then **Check this page**. Point at the summary
 cards (Keyboard / Navigation / Labels) and the issue list with severity badges and WCAG references.
 
-**0:20–0:35 — Locate + focus helper.**
-On an issue card, click **Locate on page** — a temporary highlight appears on the offending element.
-Then click **Show focus helper** and press Tab a few times; a focus rectangle tracks the focused
+**0:20–0:35 — Show a problem + keyboard focus.**
+On an issue card, click **Show this problem** — a temporary highlight appears on the offending element.
+Then click **Show keyboard focus** and press Tab a few times; a focus rectangle tracks the focused
 element in real time.
 
-**0:35–0:45 — Tab path.**
-Click **Show tab path**. Numbered markers appear in the computed keyboard tab order; note that
+**0:35–0:45 — Keyboard path.**
+Click **Show keyboard path**. Numbered markers appear in the computed keyboard tab order; note that
 positive `tabindex` elements come first. The popup shows the count (and a cap notice on large pages).
 
 **0:45–0:55 — Developer report.**
-Click **Copy Markdown report** (or **Download Markdown report**). Paste it into an editor: clean
+Click **Copy results** (or **Download results**). Paste it into an editor: clean
 sections, per-issue WCAG refs and recommendations, and a prominent disclaimer.
 
 **0:55–0:60 — Honest close.**
@@ -72,6 +72,6 @@ issues visible fast — it doesn't claim to make a site compliant."
 
 - Do not say it makes a site "accessible" or "compliant".
 - Do not say a clean report means the page passes WCAG.
-- Do not present the tab-path summary as an audit metric — it's a runtime visual aid.
+- Do not present the keyboard-path summary as an audit metric — it's a runtime visual aid.
 
 See [assets/README.md](assets/README.md) for where screenshots and a demo GIF will live.

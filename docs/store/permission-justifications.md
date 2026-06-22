@@ -32,7 +32,7 @@ Easy Web Navigation requests the minimum permissions needed and no broad require
 - **Does data leave the device:** No. Uses local extension storage only.
 - **Risk mitigation:** Stores only small preference values — no page content, no history.
 
-## optional_host_permissions: http://_/_, https://_/_ (optional)
+## optional*host_permissions: http://*/_, https://_/\_ (optional)
 
 - **Why:** For the "This site" and "All supported websites" monitoring scopes, so the extension can
   re-apply the chosen visual helpers and scan as the user navigates across pages.

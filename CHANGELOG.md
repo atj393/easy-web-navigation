@@ -6,6 +6,19 @@ All notable changes to Easy Web Navigation are documented here. The format is ba
 
 ## [Unreleased]
 
+### Changed — Phase 1A-UX: clearer popup for everyday users
+
+- Simplified popup wording, grouped actions by purpose, enlarged the popup, and added plain-language
+  guidance for keyboard focus, keyboard path, and automatic checking.
+- Plain-language labels now replace technical ones in the popup UI: "Check this page" (was "Scan
+  current page"), "Show/Hide keyboard focus" (was focus helper), "Show/Hide keyboard path" (was tab
+  path), "Show this problem" (was Locate), "Copy/Download results", and "Keep checking as you
+  browse" / "This page only / This website / All websites" (was Monitoring / scope). The popup is
+  ~420px wide with larger text and ≥44px primary buttons; light/dark behavior preserved.
+- Added popup-only display helpers (`scopeChoiceLabel`, `automaticCheckingStatusLabel`,
+  `scopeExplanation`) in `lib/monitoring.ts`; internal scope values and persisted keys are unchanged.
+- No scanner, monitoring, permissions, or page-modification behavior changed.
+
 ### Changed — Phase 1A: production release-candidate hardening (store readiness)
 
 - Prepared the extension as a production release candidate for the Chrome Web Store and Microsoft

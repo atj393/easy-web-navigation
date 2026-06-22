@@ -42,7 +42,7 @@ account. Settings are stored locally; reports are generated locally.
 - Read-only keyboard accessibility scan
 - Visual focus helper
 - Tab-path visualization
-- Per-issue "Locate on page"
+- Per-issue "Show this problem"
 - Markdown report (copy / download)
 - User-controlled monitoring mode (current tab / this site / all supported websites)
 
@@ -65,14 +65,14 @@ generated locally and only copied/downloaded by user action. See `privacy-policy
 To verify behavior:
 
 1. Load the extension and open any normal http/https web page (or a bundled demo page).
-2. Click the toolbar icon, then **Scan current page** — issues appear with severity + WCAG refs.
-3. Toggle **Show focus helper**; press Tab — a rectangle tracks the focused element.
-4. Toggle **Show tab path** — numbered markers appear in tab order.
-5. Click **Locate on page** on an issue — the element is briefly highlighted.
+2. Click the toolbar icon, then **Check this page** — issues appear with severity + WCAG refs.
+3. Toggle **Show keyboard focus**; press Tab — a rectangle tracks the focused element.
+4. Toggle **Show keyboard path** — numbered markers appear in tab order.
+5. Click **Show this problem** on an issue — the element is briefly highlighted.
 6. **Copy / Download** the Markdown report.
-7. **Start monitoring** (Current tab session needs no extra permission). "This site" / "All
-   supported websites" request an optional host permission first — only after the user chooses them.
-8. **Stop monitoring** — overlays are removed.
+7. **Start automatic checking** (This page only needs no extra permission). "This website" / "All
+   websites" request an optional host permission first — only after the user chooses them.
+8. **Stop automatic checking** — overlays are removed.
 9. On a browser-internal page (e.g. `edge://settings`) the extension shows a friendly "can't act on
    this page" message rather than failing.
 

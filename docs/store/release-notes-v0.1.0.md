@@ -8,12 +8,12 @@ companion for Chrome, Edge, and Firefox.
 - **Read-only scan** of the current page for deterministic WCAG 2.2 keyboard-profile checks:
   `clickable-not-focusable`, `unlabeled-control`, `unlabeled-form-input`, `positive-tabindex`,
   `missing-main-landmark`, `missing-skip-link`.
-- **Focus helper** — a visual rectangle that tracks the keyboard-focused element.
-- **Tab-path visualization** — numbered markers in the computed keyboard tab order.
-- **Locate on page** — highlight the element behind any finding.
+- **Keyboard focus highlight** — a visual rectangle that tracks the keyboard-focused element.
+- **Keyboard path** — numbered markers in the computed keyboard tab order.
+- **Show this problem** — highlight the element behind any finding.
 - **Developer report** — copy or download a clean Markdown report (stable JSON shape available).
-- **Monitoring mode** — explicit, user-started; re-applies your chosen helpers and scans supported
-  pages within a scope you control (current tab / this site / all supported websites), including SPA
+- **Automatic checking** — explicit, user-started; re-applies your chosen guides and scans supported
+  pages within a scope you control (this page only / this website / all websites), including SPA
   route changes. Optional host permissions are requested only for the broader scopes.
 
 ## Privacy & security

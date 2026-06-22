@@ -25,22 +25,24 @@ open, e.g., `fake-buttons-page.html` or `form-labels-page.html`.
 
 ## Core flows
 
-1. **Manual scan** — click the toolbar icon, then **Scan current page**. Findings appear with
+1. **Manual scan** — click the toolbar icon, then **Check this page**. Findings appear with
    severity badges and WCAG references.
-2. **Focus helper** — click **Show focus helper**, press Tab a few times. A rectangle tracks the
-   keyboard-focused element. Click **Hide focus helper** to remove it.
-3. **Tab path** — click **Show tab path**. Numbered markers appear in the computed keyboard tab
-   order (positive `tabindex` first). Hide to remove.
-4. **Locate** — on any issue card, click **Locate on page**. The element is briefly highlighted.
-5. **Copy report** — click **Copy Markdown report**, paste into an editor. A clean report with a
+2. **Keyboard focus** — click **Show keyboard focus**, press Tab a few times. A rectangle tracks the
+   keyboard-focused element. Click **Hide keyboard focus** to remove it.
+3. **Keyboard path** — click **Show keyboard path**. Numbered markers appear in the computed keyboard
+   tab order (positive `tabindex` first). Hide to remove.
+4. **Locate** — on any issue card, click **Show this problem**. The element is briefly highlighted.
+5. **Copy report** — click **Copy results**, paste into an editor. A clean report with a
    non-compliance disclaimer appears.
-6. **Download report** — click **Download Markdown report** to save `easy-web-navigation-report.md`.
-7. **Monitoring — current tab** — choose **Current tab session**, click **Start monitoring**; the
-   page scans and your enabled helpers re-apply. No extra permission is requested for this scope.
-8. **Monitoring — this site** — choose **This site**, click **Start monitoring**; the browser shows
-   an optional host-permission prompt for the current origin. Granting enables auto re-apply across
-   that site; denying falls back to the current-tab session with a friendly message.
-9. **Stop monitoring** — overlays are removed.
+6. **Download report** — click **Download results** to save `easy-web-navigation-report.md`.
+7. **Automatic checking — this page** — choose **This page only**, click **Start automatic
+   checking**; the page is checked and your enabled guides re-apply. No extra permission is requested
+   for this scope.
+8. **Automatic checking — this website** — choose **This website**, click **Start automatic
+   checking**; the browser shows an optional host-permission prompt for the current origin. Granting
+   enables auto re-apply across that site; denying falls back to this-page-only with a friendly
+   message.
+9. **Stop automatic checking** — overlays are removed.
 10. **Restricted page** — open a browser-internal page (e.g. `chrome://settings` / `edge://settings`)
     and click Scan: the extension shows a friendly "can't act on this page" message (it does not
     crash and cannot script privileged pages).
@@ -50,6 +52,6 @@ open, e.g., `fake-buttons-page.html` or `form-labels-page.html`.
 - The extension **does not modify page source**. The only DOM insertion is an extension-owned
   overlay container used for visual highlighting; it is removed when not in use.
 - **All analysis happens locally.** No remote API calls, no analytics, no AI, no page-content upload.
-- **Optional host permissions** are requested only after the user chooses "This site" or "All
-  supported websites" monitoring — never at install time and never for manual scanning.
+- **Optional host permissions** are requested only after the user chooses "This website" or "All
+  websites" automatic checking — never at install time and never for manual checking.
 - There is **no remote code** (no `eval`, no `new Function`, no externally hosted scripts).

@@ -16,7 +16,7 @@ extension-owned overlay and can generate a Markdown/JSON report that you copy or
 ## Data processed locally
 
 - The **DOM of the page you choose to scan** is read in your browser to compute findings. This
-  happens only when you act (click "Scan current page", toggle a helper, or run monitoring).
+  happens only when you act (click "Check this page", toggle a guide, or run automatic checking).
 - Processing is entirely **on-device**. The page content is **not** sent anywhere.
 
 ## Data stored locally
@@ -46,7 +46,7 @@ extension-owned overlay and can generate a Markdown/JSON report that you copy or
 
 ## Clipboard behavior
 
-The extension only writes to the clipboard when you click "Copy Markdown report". It never reads the
+The extension only writes to the clipboard when you click "Copy results". It never reads the
 clipboard.
 
 ## Monitoring behavior

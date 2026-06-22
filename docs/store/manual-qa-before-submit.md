@@ -11,36 +11,36 @@ For each item, mark Pass/Fail.
 
 ## Manual scan
 
-- [ ] Open `fake-buttons-page`, click **Scan current page** → issues appear with severities + WCAG refs.
+- [ ] Open `fake-buttons-page`, click **Check this page** → issues appear with severities + WCAG refs.
 - [ ] `semantic-good-page` → few/no issues; honest "not a guarantee" wording shown.
 
-## Focus helper
+## Keyboard focus highlight
 
-- [ ] **Show focus helper** on `broken-keyboard-page`; press Tab/Shift+Tab → rectangle tracks focus.
-- [ ] **Hide focus helper** → rectangle removed.
+- [ ] **Show keyboard focus** on `broken-keyboard-page`; press Tab/Shift+Tab → rectangle tracks focus.
+- [ ] **Hide keyboard focus** → rectangle removed.
 
-## Tab path
+## Keyboard path
 
-- [ ] **Show tab path** → numbered markers in tab order (positive `tabindex` first).
-- [ ] **Hide tab path** → markers removed.
+- [ ] **Show keyboard path** → numbered markers in tab order (positive `tabindex` first).
+- [ ] **Hide keyboard path** → markers removed.
 
-## Locate
+## Show this problem
 
-- [ ] **Locate on page** on an issue → element briefly highlighted; "no longer on the page" message
+- [ ] **Show this problem** on an issue → element briefly highlighted; "no longer on the page" message
       if it was removed.
 
-## Report
+## Results
 
-- [ ] **Copy Markdown report** → paste shows clean report + disclaimer.
-- [ ] **Download Markdown report** → file downloads and opens correctly.
+- [ ] **Copy results** → paste shows clean report + disclaimer.
+- [ ] **Download results** → file downloads and opens correctly.
 
-## Monitoring
+## Automatic checking
 
-- [ ] **Current tab session** → Start; page scans and enabled helpers apply. No extra permission prompt.
-- [ ] Navigate / trigger an SPA route change → helpers re-apply (throttled).
-- [ ] **This site** → Start triggers an optional host-permission prompt; granting enables cross-page
-      auto re-apply; denying falls back to current tab with a friendly message.
-- [ ] **Stop monitoring** → overlays removed; preferences remembered on next Start.
+- [ ] **This page only** → Start; page is checked and enabled guides apply. No extra permission prompt.
+- [ ] Navigate / trigger an in-page (single-page-app) navigation → guides re-apply (throttled).
+- [ ] **This website** → Start triggers an optional host-permission prompt; granting enables cross-page
+      auto re-apply; denying falls back to this-page-only with a friendly message.
+- [ ] **Stop automatic checking** → overlays removed; preferences remembered on next Start.
 
 ## Restricted pages
 
@@ -54,7 +54,7 @@ For each item, mark Pass/Fail.
 
 ## Result
 
-- [ ] Chrome QA passed (date / version): ****\_\_****
-- [ ] Edge QA passed (date / version): ****\_\_****
+- [ ] Chrome QA passed (date / version): \***\*\_\_\*\***
+- [ ] Edge QA passed (date / version): \***\*\_\_\*\***
 
 Do not submit until the relevant browser's QA passes.

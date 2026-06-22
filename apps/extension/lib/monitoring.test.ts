@@ -6,6 +6,9 @@ import {
   hostPermissionsForScope,
   scopeNeedsPermission,
   scopeLabel,
+  scopeChoiceLabel,
+  automaticCheckingStatusLabel,
+  scopeExplanation,
   mergeMonitoringSettings,
   updateMonitoringHelperPreference,
   createApplyMonitoringPayload,
@@ -93,6 +96,43 @@ describe("scopeLabel", () => {
     expect(scopeLabel("current-tab", true)).toBe("Current tab");
     expect(scopeLabel("site", true)).toBe("This site");
     expect(scopeLabel("all-sites", true)).toBe("All supported websites");
+  });
+});
+
+describe("popup display labels (plain language)", () => {
+  it("scopeChoiceLabel maps internal scopes to friendly option text", () => {
+    expect(scopeChoiceLabel("current-tab")).toBe("This page only");
+    expect(scopeChoiceLabel("site")).toBe("This website");
+    expect(scopeChoiceLabel("all-sites")).toBe("All websites");
+  });
+
+  it("automaticCheckingStatusLabel is friendly and reflects enabled state", () => {
+    expect(automaticCheckingStatusLabel("current-tab", false)).toBe("Off");
+    expect(automaticCheckingStatusLabel("off", true)).toBe("Off");
+    expect(automaticCheckingStatusLabel("current-tab", true)).toBe("On for this page");
+    expect(automaticCheckingStatusLabel("site", true)).toBe("On for this website");
+    expect(automaticCheckingStatusLabel("all-sites", true)).toBe("On for all websites");
+  });
+
+  it("scopeExplanation gives one plain description per scope", () => {
+    expect(scopeExplanation("site")).toContain("pages you open on this website");
+    expect(scopeExplanation("all-sites")).toContain("normal websites you visit");
+    expect(scopeExplanation("current-tab")).toContain("may stop when you move to another website");
+  });
+
+  it("display labels never leak technical terms", () => {
+    const all = [
+      scopeChoiceLabel("current-tab"),
+      scopeChoiceLabel("site"),
+      scopeChoiceLabel("all-sites"),
+      automaticCheckingStatusLabel("current-tab", true),
+      automaticCheckingStatusLabel("site", true),
+      automaticCheckingStatusLabel("all-sites", true),
+      scopeExplanation("current-tab"),
+      scopeExplanation("site"),
+      scopeExplanation("all-sites"),
+    ].join(" ");
+    expect(all).not.toMatch(/monitor|scope|SPA|cross-origin|activeTab|host permission/i);
   });
 });
 

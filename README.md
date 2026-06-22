@@ -59,29 +59,30 @@ developer-friendly report export, and an explicit, user-controlled monitoring mo
 ### What v0 does
 
 - Establishes a pnpm + TypeScript monorepo with a WXT + React + Manifest V3 extension.
-- Runs a **read-only DOM scan** of the active tab (on the popup's "Scan current page" button) and
+- Runs a **read-only DOM scan** of the active tab (on the popup's "Check this page" button) and
   reports real issues for six deterministic WCAG keyboard-profile rules:
   `clickable-not-focusable`, `unlabeled-control`, `unlabeled-form-input`, `positive-tabindex`,
   `missing-main-landmark`, and `missing-skip-link`.
 - Displays a summary and an issue list (severity, WCAG references, selector, recommendation).
-- Offers a **developer-friendly report**: **Copy Markdown report** (clipboard, with a textarea
-  fallback) and **Download Markdown report**, plus a stable JSON report shape. Reports carry a
+- Offers a **developer-friendly report**: **Copy results** (clipboard, with a textarea
+  fallback) and **Download results**, plus a stable JSON report shape. Reports carry a
   prominent non-compliance disclaimer and can optionally include the tab-path summary, clearly
   labeled as a runtime visual aid (not an audit metric).
-- Offers a **read-only focus helper**: toggle it on and a rectangle tracks the keyboard-focused
-  element as you Tab. Each issue has a **"Locate on page"** action that temporarily highlights its
-  element. The overlay is extension-owned, isolated, and never modifies the page.
-- Offers a **read-only tab-path visualization**: toggle "Show tab path" to draw numbered markers in
+- Offers a **read-only keyboard focus highlight**: toggle it on and a rectangle tracks the
+  keyboard-focused element as you Tab. Each issue has a **"Show this problem"** action that
+  temporarily highlights its element. The overlay is extension-owned, isolated, and never modifies
+  the page.
+- Offers a **read-only keyboard path view**: toggle "Show keyboard path" to draw numbered markers in
   the computed keyboard tab order (positive `tabindex` first, then DOM order), with a summary and a
   performance cap (default 100 items).
-- Offers an explicit, user-started **monitoring mode**: click **Start monitoring** and Easy Web
-  Navigation scans supported pages automatically and re-applies the visual helpers you enabled,
-  within the scope you choose — _current tab session_ (no new permission), _this site_, or _all
-  supported websites_ (the latter two request an **optional** host permission first, only on your
-  action). While monitoring is on it also detects **single-page-app route changes** (History API,
-  `popstate`, `hashchange`) and refreshes the scan/helpers in a throttled, read-only way. **Stop
-  monitoring** turns it off and clears overlays. Monitoring never uploads page content or changes
-  the website.
+- Offers an explicit, user-started **automatic checking** mode (in the popup, "Keep checking as you
+  browse"): click **Start automatic checking** and Easy Web Navigation checks supported pages
+  automatically and re-applies the visual guides you enabled, within the scope you choose —
+  _this page only_ (no new permission), _this website_, or _all websites_ (the latter two request an
+  **optional** host permission first, only on your action). While it is on it also detects
+  **single-page-app route changes** (History API, `popstate`, `hashchange`) and refreshes in a
+  throttled, read-only way. **Stop automatic checking** turns it off and clears overlays. It never
+  uploads page content or changes the website.
 - Includes static demo pages, documentation, tests (jsdom), and CI.
 
 ### What v0 does NOT do
@@ -89,8 +90,8 @@ developer-friendly report export, and an explicit, user-controlled monitoring mo
 - No DOM mutation of inspected nodes, no auto-fix, no ARIA injection (strictly read-only; the only
   DOM it creates is its own isolated overlay container, fully removed when nothing needs it).
 - No assist mode yet (no changing tab order, focus, or keyboard behavior).
-- No `missing-visible-focus` detection yet (kept as deferred metadata): the focus helper shows where
-  focus goes, but does not score whether the page's own focus indicator is sufficient.
+- No `missing-visible-focus` detection yet (kept as deferred metadata): the keyboard focus highlight
+  shows where focus goes, but does not score whether the page's own focus indicator is sufficient.
 - No AI. No speech. Not an accessibility overlay product.
 - No legal compliance claims of any kind. A clean scan is **not** a pass.
 - No broad host permissions (`<all_urls>` is **not** requested).
@@ -177,7 +178,7 @@ Easy Web Navigation requests the **minimum** permissions needed and **no broad h
 
 No broad host permissions are **required**. For automatic monitoring of a whole site or all
 websites, Easy Web Navigation declares **optional** host permissions (`http://*/*`, `https://*/*`)
-that are requested **only when you choose that scope and click Start monitoring** — never at
+that are requested **only when you choose that scope and click Start automatic checking** — never at
 install time, and never as a requirement for manual scanning. The content script is registered at
 runtime and injected only into the active tab (or, while monitoring with a granted scope, into
 matching tabs you navigate to).

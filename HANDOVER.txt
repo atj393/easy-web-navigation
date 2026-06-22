@@ -9,29 +9,28 @@ PROJECT NAME
   companion browser extension for Chrome, Edge, and Firefox. Inspection /
   assistive browsing tool. NOT an overlay product, NOT an auto-fixer, NOT a
   legal compliance certifier.
-  Tagline: A keyboard accessibility companion for the web.
+  Tagline (popup): Check whether a page is easy to use with a keyboard.
 
 CURRENT PHASE
-  Phase 1A - production release-candidate hardening for Chrome Web Store and
-  Microsoft Edge Add-ons (code audit + cleanup + store-submission package).
-  No product behavior changes.
+  Phase 1A-UX - simplify + enlarge the popup for non-technical users.
+  UI wording + visual hierarchy only. No behavior change.
 
 CURRENT BRANCH
   main
 
 LATEST COMMIT HASH
-  (Run `git log -1 --pretty=fuller`. The Phase 1A commit message is:
-   "chore: prepare store release candidate".
-   Prior baselines: 0H-Fix = be0956e, 0H = 2f81470, 0G = 5629d66, 0F = c27a543,
-   0P = 7f8cfed, 0E = 17b9e02, 0N rename = 7e7dd28, 0D = 54d3651, 0C = 8cd154d,
-   0B = 1890b49, 0A = 54dcba4.)
+  (Run `git log -1 --pretty=fuller`. The Phase 1A-UX commit message is:
+   "feat: simplify popup guidance for everyday users".
+   Prior baselines: 1A = 2f62d78, 0H-Fix = be0956e, 0H = 2f81470, 0G = 5629d66,
+   0F = c27a543, 0P = 7f8cfed, 0E = 17b9e02, 0N rename = 7e7dd28, 0D = 54d3651,
+   0C = 8cd154d, 0B = 1890b49, 0A = 54dcba4.)
 
 COMMIT AUTHOR
   atj393 <alexistoby393@gmail.com>  (local git identity set for this repo)
   No Co-Authored-By. No generated-by trailers. No assistant attribution.
 
 DATE/TIME OF UPDATE
-  2026-06-18 (Phase 1A).
+  2026-06-20 (Phase 1A-UX).
 
 REPO PATH
   c:\Alexis\Test\browser\keyboard-extension\keywise-web
@@ -42,119 +41,104 @@ GITHUB REPOSITORY URL
   Remote: origin -> https://github.com/atj393/easy-web-navigation.git
 
 PUSH STATUS
-  Phase 1A committed and pushed to origin/main.
+  Phase 1A-UX committed and pushed to origin/main.
 
-PERMISSION CHANGES
-  NONE. Required: activeTab, scripting, storage. optional_host_permissions:
-  http://*/*, https://*/* (unchanged). No required host_permissions. No CSP
-  override. content_scripts: [] (runtime-registered).
+SUMMARY OF WHAT CHANGED (popup wording + layout only)
+  Popup wording (apps/extension/entrypoints/popup/App.tsx):
+  - Tagline -> "Check whether a page is easy to use with a keyboard."
+  - Status: "Ready to check this page." / "Checking this page…" / "N problem(s) found".
+  - Main action: "Scan current page" -> "Check this page".
+  - New "Show on this page" section with two guides:
+    * "Keyboard focus highlight" + buttons "Show/Hide keyboard focus" (was Focus helper).
+    * "Keyboard path" + buttons "Show/Hide keyboard path" (was Tab path).
+  - New "Keep checking as you browse" section (was Monitoring):
+    * "Automatic checking: <Off | On for this page | On for this website | On for all websites>".
+    * "Where should I keep checking?" select with options
+      "This page only / This website / All websites" (internal values unchanged:
+      current-tab / site / all-sites).
+    * One dynamic explanation per scope; all-sites shows a permission heads-up before start;
+      enabled note about keyboard focus/path re-applying.
+    * Buttons "Start/Stop automatic checking".
+  - Results: heading "What we checked"; cards "Keyboard use / Moving around the page /
+    Names and labels"; "Problems found"; "Show this problem" (was Locate on page);
+    "Copy results" / "Download results"; plain empty/zero-problem text; new status messages.
+  - Footer disclaimer: "This tool checks for possible keyboard-access problems. It does not
+    change the website or confirm legal compliance."
+  Popup sizing/readability (style.css):
+  - width min(420px, calc(100vw - 32px)); padding 20px; section gap 16px.
+  - body 13px / controls 14px / descriptions line-height ~1.5; primary buttons >=44px.
+  - clear 3px focus outlines; restrained section dividers (no heavy floating cards);
+    light/dark preserved. Removed obsolete .monitor*/.popup__tools CSS; added
+    .block/.guide/.field classes.
+  Display helpers (apps/extension/lib/monitoring.ts):
+  - Added scopeChoiceLabel, automaticCheckingStatusLabel, scopeExplanation (pure, popup-only).
+    scopeLabel kept for back-compat. No business-logic change.
+  Docs: README, reviewer-test-instructions, manual-qa-before-submit, screenshot-plan,
+  edge-add-ons-listing, chrome-web-store-listing, demo-plan updated to the new labels.
 
-SUMMARY OF WHAT CHANGED
-  Part 1 (code audit + cleanup):
-  - Audited runtime code: no console.log/debug, no debugger, no dead code, no
-    remote code (no eval/new Function), no analytics, no external network calls,
-    no disallowed permissions. (The only console.log is in the dev-only
-    generate-icons.mjs build script, which is NOT bundled.)
-  - Relocated icon-source.svg from apps/extension/public/ to the package root so
-    it no longer ships in the store ZIP (17 zip entries now, SVG excluded).
-  - Set a clean store ZIP base name ("easy-web-navigation") in wxt.config.
-  Part 2 (store docs) under docs/store/:
-  - chrome-web-store-listing.md, edge-add-ons-listing.md, privacy-policy.md,
-    privacy-disclosure.md, permission-justifications.md,
-    reviewer-test-instructions.md, release-checklist.md, release-notes-v0.1.0.md,
-    screenshot-plan.md, manual-qa-before-submit.md, assets/README.md.
-  - Top-level docs/privacy-policy.md pointer.
-  Part 3 (assets):
-  - Generated REAL brand artwork: docs/store/assets/chrome-small-promo-440x280.png
-    and edge-logo-300x300.png (scripts/generate-store-assets.mjs, pure Node).
-  - Screenshots: labeled placeholder (screenshot-placeholder-1280x800.svg) +
-    screenshot-plan.md. NOT faked; real captures required before submission.
-  Part 4 (release artifacts):
-  - scripts/create-store-zips.mjs + pnpm release:all / release:inspect.
-  - artifacts/ is git-ignored.
-  Docs: README (release section + scripts), CHANGELOG (1A), roadmap (1A),
-  architecture (release packaging), HANDOVER.
-
-FILES AND FOLDERS CHANGED
-  apps/extension/wxt.config.ts (zip.name)
-  apps/extension/scripts/generate-icons.mjs (svg -> package root)
-  apps/extension/public/icon-source.svg  -> removed (git rm)
-  apps/extension/icon-source.svg          -> added (regenerated)
-  scripts/create-store-zips.mjs           (new)
-  scripts/generate-store-assets.mjs       (new)
-  package.json (release:* scripts)
-  .gitignore (artifacts/)
-  docs/store/*.md (10 files) + docs/store/assets/{README.md,
-    chrome-small-promo-440x280.png, edge-logo-300x300.png,
-    screenshot-placeholder-1280x800.svg}
-  docs/privacy-policy.md (pointer)
-  README.md, CHANGELOG.md, docs/roadmap.md, docs/architecture.md, docs/assets/README.md
+FILES CHANGED
+  apps/extension/entrypoints/popup/App.tsx
+  apps/extension/entrypoints/popup/style.css
+  apps/extension/lib/monitoring.ts
+  apps/extension/lib/monitoring.test.ts
+  README.md, CHANGELOG.md, HANDOVER.txt
+  docs/demo-plan.md, docs/store/reviewer-test-instructions.md,
+  docs/store/manual-qa-before-submit.md, docs/store/screenshot-plan.md,
+  docs/store/edge-add-ons-listing.md, docs/store/chrome-web-store-listing.md
 
 COMMANDS RUN
   git status/branch/log; node v24.13.0; pnpm 9.15.9
-  audits: rg console/debug, TODO/FIXME, old names, attribution, external URLs,
-    overclaiming -> clean (only allowed CHANGELOG/HANDOVER history + w3.org data)
-  pnpm lint -> PASS; pnpm typecheck -> PASS; pnpm test -> PASS (9 files, 109)
-  pnpm build + build:firefox -> PASS
-  pnpm release:all -> built + validated zips (manifest.json at ROOT in both)
-  manifest inspect -> name/version 0.1.0/desc(103 chars)/icons/perms verified
-  (final) pnpm run ci -> PASS
+  pnpm typecheck -> PASS; pnpm lint -> PASS; pnpm test -> PASS (9 files, 113)
+  pnpm build + build:firefox -> PASS; pnpm run ci -> PASS; pnpm release:all -> PASS
+  manifest inspect -> permissions unchanged
+  rg old-wording audit (see below)
 
 TEST RESULTS
-  109 tests across 9 files, all passing (unchanged by this phase).
+  113 tests across 9 files, all passing. New: 4 popup-display-label tests in
+  monitoring.test.ts (scopeChoiceLabel, automaticCheckingStatusLabel,
+  scopeExplanation, no-technical-terms). Existing monitoring/scanner/overlay/
+  tab-path/report/clipboard/spa tests unchanged and passing.
 
-PRODUCTION READINESS DECISIONS
-  - Version 0.1.0 is the release-candidate version (root + extension + manifest).
-  - No dependencies removed (all are used: eslint/ts/vitest/jsdom/wxt/react etc.).
-  - Kept the dev-only console.log in generate-icons.mjs (build tool, not shipped).
-  - icon-source.svg moved out of public/ to keep the store package clean.
+EXPLICIT BEHAVIOR NOTE
+  No scanner, monitoring, permissions, overlays, or page behavior changed. Only
+  user-facing popup text + layout/styling + popup-only display helpers. Internal
+  scope values (current-tab/site/all-sites) and persisted keys
+  (focusHelperEnabled/tabPathEnabled/monitoringEnabled/monitoringScope) unchanged.
 
-STORE READINESS DECISIONS
-  - Edge package = the Chrome MV3 zip (Edge Add-ons accepts MV3); documented.
-  - Privacy: no data collected/transmitted; remote code = No; analytics = none.
-  - blank issues disabled; reviewer notes + manual-QA checklist provided.
+PERMISSION CHANGES
+  NONE. Required: activeTab, scripting, storage. optional_host_permissions:
+  http://*/*, https://*/*. No required host permissions.
 
-RELEASE ARTIFACT PATHS (generated by `pnpm release:all`; git-ignored)
+RELEASE ARTIFACT STATUS
+  Regenerated via `pnpm release:all` (git-ignored):
   artifacts/chrome/easy-web-navigation-chrome-v0.1.0.zip  (manifest at root: YES)
   artifacts/edge/easy-web-navigation-edge-v0.1.0.zip      (manifest at root: YES)
 
-ASSETS: REAL OR PLACEHOLDER
-  - Toolbar icons 16/32/48/128: REAL.
-  - chrome-small-promo-440x280.png, edge-logo-300x300.png: REAL brand artwork.
-  - Product screenshots: PLACEHOLDER (SVG) + plan only; capture real ones first.
+OLD-WORDING SEARCH
+  No old popup labels visible in the popup UI. "Focus helper" / "tab path" /
+  "Monitoring" / "scope" do not appear in active popup UI text. Remaining mentions
+  are internal code identifiers/comments and historical CHANGELOG/HANDOVER notes,
+  which is acceptable.
 
 KNOWN LIMITATIONS
-  - Release ZIPs are generated, not committed (artifacts/ git-ignored).
-  - Real product screenshots must be captured manually before submission.
-  - Manual cross-browser QA (docs/store/manual-qa-before-submit.md) is REQUIRED
-    before submitting (cannot be automated here).
-  - SPA refresh best-effort; missing-visible-focus still deferred; Firefox MV2.
+  - Real product screenshots still pending (placeholder + plan in docs/store).
+  - Manual cross-browser QA still required before store submission.
+  - SPA refresh best-effort; missing-visible-focus deferred; Firefox MV2.
   - Local folder still keywise-web.
 
 WHAT WAS INTENTIONALLY NOT IMPLEMENTED
-  - No store upload/submission (manual, user-owned).
-  - No new features, no permission changes, no AI/speech/auto-fix/analytics/
-    remote calls/ARIA injection/page mutation.
-  - No dependency additions.
-
-MANUAL TASKS BEFORE STORE SUBMISSION
-  - Confirm Chrome Web Store + Microsoft Partner Center (Edge) developer accounts.
-  - Review privacy policy; host it at a public URL if the store requires one.
-  - Capture real screenshots (screenshot-plan.md); replace the placeholder.
-  - Run manual-qa-before-submit.md in Chrome and Edge.
-  - Upload artifacts/chrome ZIP + paste chrome-web-store-listing.md + privacy
-    disclosure + reviewer notes.
-  - Upload artifacts/edge ZIP + paste edge-add-ons-listing.md + privacy/cert notes.
-  - Submit only after QA passes; tag v0.1.0 after submission.
+  - No new features, no scanner-rule/monitoring/permission changes.
+  - No AI/speech/analytics/remote calls/auto-fix/ARIA injection/page mutation.
+  - No store submission.
 
 NEXT RECOMMENDED PHASE
-  Phase 1B - after manual QA + real screenshots: tag v0.1.0, optionally add a
-  GitHub Release with the ZIPs attached, and (manually) submit to the stores;
-  then triage first-run feedback.
+  Phase 1B - capture real screenshots into docs/store/assets, run manual
+  cross-browser QA, then tag v0.1.0 + GitHub Release; store submission stays manual.
 
 NEXT RECOMMENDED PROMPT SUMMARY
-  "Phase 1B: After manual cross-browser QA passes and real screenshots are
-   captured into docs/store/assets, create a git tag v0.1.0 and a GitHub Release
-   (attach the artifacts/chrome and artifacts/edge ZIPs) using gh release; keep
-   store submission manual. Update HANDOVER.txt and CHANGELOG.md. No code/feature
-   changes, no new permissions. Commits authored by atj393 (no Co-Authored-By)."
+  "Phase 1B: Capture real popup screenshots (new plain-language UI) into
+   docs/store/assets per screenshot-plan.md, run manual-qa-before-submit.md in
+   Chrome and Edge, then create git tag v0.1.0 and a GitHub Release attaching the
+   artifacts/chrome and artifacts/edge ZIPs (gh release). Keep store submission
+   manual; no code/feature/permission changes. Commits authored by atj393 (no
+   Co-Authored-By). Update HANDOVER.txt and CHANGELOG.md; push to origin."

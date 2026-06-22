@@ -107,7 +107,7 @@ export function shouldAutoApplyHelpers(settings: MonitoringSettings): boolean {
   return settings.enabled && (settings.focusHelperEnabled || settings.tabPathEnabled);
 }
 
-/** Human-readable monitoring status label for the popup. */
+/** Human-readable monitoring status label (internal/legacy). */
 export function scopeLabel(scope: MonitoringScope, enabled: boolean): string {
   if (!enabled || scope === "off") return "Off";
   switch (scope) {
@@ -119,5 +119,49 @@ export function scopeLabel(scope: MonitoringScope, enabled: boolean): string {
       return "All supported websites";
     default:
       return "Off";
+  }
+}
+
+/* ---- Popup-only display labels (plain language for everyday users) ----
+ * These map the unchanged internal scope values to friendly wording. They do
+ * not affect monitoring behavior, persisted keys, or permissions.            */
+
+/** Friendly label for the automatic-checking scope <select> options. */
+export function scopeChoiceLabel(scope: MonitoringScope): string {
+  switch (scope) {
+    case "site":
+      return "This website";
+    case "all-sites":
+      return "All websites";
+    case "current-tab":
+    default:
+      return "This page only";
+  }
+}
+
+/** Friendly "Automatic checking: …" status for the popup. */
+export function automaticCheckingStatusLabel(scope: MonitoringScope, enabled: boolean): string {
+  if (!enabled || scope === "off") return "Off";
+  switch (scope) {
+    case "site":
+      return "On for this website";
+    case "all-sites":
+      return "On for all websites";
+    case "current-tab":
+    default:
+      return "On for this page";
+  }
+}
+
+/** One plain-language explanation of the selected automatic-checking scope. */
+export function scopeExplanation(scope: MonitoringScope): string {
+  switch (scope) {
+    case "site":
+      return "Keeps checking pages you open on this website after you allow access.";
+    case "all-sites":
+      return "Keeps checking normal websites you visit after you allow access.";
+    case "current-tab":
+    default:
+      return "This page only may stop when you move to another website. Choose This website to keep checking pages there.";
   }
 }
