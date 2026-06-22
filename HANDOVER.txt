@@ -12,154 +12,114 @@ PROJECT NAME
   Tagline (popup): Check whether a page is easy to use with a keyboard.
 
 CURRENT PHASE
-  Phase 1C - Final production-release preparation for Chrome and Microsoft Edge.
-  Build/package/document/commit/push only. No store submission, no git tag, no
-  GitHub Release in this phase.
+  Phase 1C-Icon-Refresh - narrow asset refresh: replaced the final brand icon
+  with a newly supplied official icon and regenerated all derived production /
+  store / GitHub assets. No functionality, UI, permission, or version change.
+
+VERSION
+  1.0.0 (unchanged; no git tag created).
 
 CURRENT BRANCH
   main
 
 LATEST COMMIT HASH
-  (Run `git log -1 --pretty=fuller`. The Phase 1C commit message is:
-   "chore: prepare v1.0.0 production release".
-   Prior baselines: 1A-UX-Visibility-Fix = 7c2a3a8, 1A-UX-Follow-up = 0443910,
-   1A-UX = 29217d3, 1A = 2f62d78, 0H-Fix = be0956e, 0H = 2f81470, 0G = 5629d66,
-   0F = c27a543, 0P = 7f8cfed, 0E = 17b9e02, 0N rename = 7e7dd28, 0D = 54d3651,
-   0C = 8cd154d, 0B = 1890b49, 0A = 54dcba4.)
+  (Run `git log -1 --pretty=fuller`. The Phase 1C-Icon-Refresh commit message is:
+   "chore: refresh production brand icon".
+   Prior baselines: 1C (v1.0.0 prep) = 8d94392, 1A-UX-Visibility-Fix = 7c2a3a8,
+   1A-UX-Follow-up = 0443910, 1A-UX = 29217d3, 1A = 2f62d78, 0H-Fix = be0956e,
+   0H = 2f81470, 0G = 5629d66, 0F = c27a543, 0P = 7f8cfed, 0E = 17b9e02,
+   0N rename = 7e7dd28, 0D = 54d3651, 0C = 8cd154d, 0B = 1890b49, 0A = 54dcba4.)
 
 COMMIT AUTHOR
   atj393 <alexistoby393@gmail.com>  (local git identity set for this repo)
   No Co-Authored-By. No generated-by trailers. No assistant attribution.
 
 DATE/TIME OF UPDATE
-  2026-06-22 (Phase 1C).
+  2026-06-22 (Phase 1C-Icon-Refresh).
 
-FINAL VERSION
-  1.0.0  (first public production release; no git tag created yet).
+NEW ICON
+  The newly supplied user-provided icon is now the official FINAL Easy Web
+  Navigation artwork. A stylised blue stepped "key" mark with black diagonal
+  dashes on a white background. All runtime, store, and GitHub assets are
+  derived (downscaled) from it by the existing pure-Node scripts. It replaced
+  the previous official icon (the blue double-arrow mark).
 
-REPO PATH
-  c:\Alexis\Test\browser\keyboard-extension\keywise-web
-  NOTE: local root folder still named "keywise-web" (not renamed).
+NEW CANONICAL ICON SOURCE PATH (in repo)
+  assets/brand/easy-web-navigation-icon-source.png
+  (byte-identical copy of the Windows source below; 3200x3200, 8-bit RGB)
 
-GITHUB REPOSITORY URL
-  https://github.com/atj393/easy-web-navigation  (PUBLIC)
-  Remote: origin -> https://github.com/atj393/easy-web-navigation.git
+ORIGINAL WINDOWS SOURCE PATH
+  C:\Users\johnson\Downloads\Easy Web Navigation - Icon (1).png
+  (NOT modified; SHA-256 verified byte-identical to the in-repo canonical copy:
+   53917d524ad19571c28abc0a01c0f63ff25651810b2ca65b3c3d514af8fe0fd6)
 
-PUSH STATUS
-  Phase 1C committed and pushed to origin/main.
-
-BRAND ICON MIGRATION (summary)
-  Replaced the old generated icon artwork (a synthesized focus-ring + tab-path
-  motif) with the OFFICIAL user-provided icon (blue double-arrow navigation
-  mark on white). The user's original lives in Downloads and was NOT modified.
-  A byte-identical copy is the canonical in-repo source. All runtime and
-  store/GitHub artwork is now DOWNSCALED from that one source by pure-Node
-  scripts (no dependencies). Deleted the obsolete apps/extension/icon-source.svg.
-  The old generate scripts can no longer resurrect old artwork - they read the
-  official source only.
-
-CANONICAL ICON SOURCE PATH (in repo)
-  assets/brand/easy-web-navigation-icon-source.png   (3200x3200, 8-bit RGB)
-  Provenance note: assets/brand/README.md
-  Shared pure-Node PNG codec: scripts/lib/png.mjs (decode + area-downscale + encode)
-
-RUNTIME ICON PATHS (downscaled from the source; committed)
+RUNTIME ICON PATHS (regenerated; committed)
   apps/extension/public/icon-16.png
   apps/extension/public/icon-32.png
   apps/extension/public/icon-48.png
   apps/extension/public/icon-128.png
-  Generator: apps/extension/scripts/generate-icons.mjs  (pnpm -C apps/extension icons)
+  Generator: apps/extension/scripts/generate-icons.mjs (pnpm -C apps/extension icons)
+  Shared pure-Node PNG codec: scripts/lib/png.mjs (decode + area-downscale + encode)
 
-STORE / GITHUB ASSET PATHS (downscaled from the source; committed)
+STORE / GITHUB ASSET PATHS (regenerated; committed)
   docs/store/assets/edge-logo-300x300.png            (Edge Add-ons logo = icon)
-  docs/store/assets/chrome-small-promo-440x280.png   (clean white tile: real icon
+  docs/store/assets/chrome-small-promo-440x280.png   (clean white tile: new icon
                                                       + "EASY WEB / NAVIGATION")
   docs/assets/easy-web-navigation-icon.png           (512x512 README/GitHub icon)
   Generator: scripts/generate-store-assets.mjs
-  Still a placeholder (NOT a screenshot): docs/store/assets/screenshot-placeholder-1280x800.svg
+  Untouched placeholder (NOT a screenshot): docs/store/assets/screenshot-placeholder-1280x800.svg
 
-README / LICENSE / CLAUDE.md / SUPPORT.md STATUS
-  README.md   - REWRITTEN as the public product home: icon header, "Coming soon"
-                store status (honest; not yet published), 3-step how-it-works,
-                feature list, "useful for", privacy-first, what-it-does-not-do,
-                browser support, help/feedback (with no-private-data note),
-                MIT license + plain-English commercial-use note, and a compact
-                "For developers" section (setup, scripts, layout, permissions,
-                icon, releases, docs links).
-  LICENSE     - MIT terms unchanged; copyright line -> "Copyright (c) 2026
-                Alexis Toby Johnson". No custom/commercial license, no trademark.
-  CLAUDE.md   - CREATED. Product, version 1.0.0, layout, non-negotiable product
-                rules, permissions, release commands, store paths, icon-source
-                rule, commit identity (no Co-Authored-By/assistant attribution),
-                HANDOVER update requirement, manual store submission is user-owned.
-  SUPPORT.md  - UPDATED: added OS field, expected/actual wording, and a "Protect
-                your privacy when reporting" section (no passwords/tokens/personal/
-                confidential data; prefer the bundled demo pages).
-
-MANIFEST (generated by WXT from apps/extension/package.json + wxt.config.ts)
-  name: Easy Web Navigation
-  version: 1.0.0
-  description: "A keyboard accessibility companion for inspecting focus, keyboard
-               path, and navigation issues on web pages."  (was "tab order")
-  permissions (required): activeTab, scripting, storage
-  optional_host_permissions: http://*/*, https://*/*
-  host_permissions (required): NONE (WXT hook strips the runtime content-script host)
-  content_scripts: []  (registered at runtime; injected via activeTab + scripting)
-  No remote code, no analytics, no external network calls.
-
-RELEASE ZIP PATHS (git-ignored; regenerate with `pnpm release:all`)
-  artifacts/chrome/easy-web-navigation-chrome-v1.0.0.zip   (manifest at root: YES)
-  artifacts/edge/easy-web-navigation-edge-v1.0.0.zip       (manifest at root: YES)
+ICON VALIDATION RESULTS
+  Source: valid PNG, 3200x3200, 8-bit RGB, non-interlaced, 127,041 bytes.
+  All outputs are valid PNGs at exact dimensions:
+    icon-16 16x16, icon-32 32x32, icon-48 48x48, icon-128 128x128 (RGBA),
+    edge-logo 300x300, chrome promo 440x280, docs icon 512x512.
+  Aspect ratio preserved (square source -> square icons; no cropping).
+  Recognisable at 16px; visually verified 16/128 + promo. Brand blue auto-
+  detected from the source: rgb(0, 101, 203).
 
 COMMANDS RUN
-  git status/branch/log/remote; node v24.13.0; pnpm 9.15.9
-  copied + sha256-verified the icon source; node generate-icons.mjs;
-  node generate-store-assets.mjs; visual verification of icons + promo
-  pnpm install; pnpm typecheck -> PASS; pnpm lint -> PASS; pnpm test -> PASS
+  git status/branch/log; node v24.13.0; pnpm 9.15.9
+  verified new source exists + is PNG; sha256 byte-identical copy to canonical
+  node generate-icons.mjs; node generate-store-assets.mjs; visual verification
+  pnpm typecheck -> PASS; pnpm lint -> PASS; pnpm test -> PASS (9 files, 142)
   pnpm build + build:firefox -> PASS; pnpm run ci -> PASS
   pnpm release:all + release:inspect -> PASS (both ZIPs, manifest at root)
-  manifest validation (name/version/desc/icons/permissions/host/content_scripts)
-  ZIP content inspection; production audits (console.log / KeyWise / overclaim /
-  http(s) URL scans)
+  manifest validation; Chrome ZIP content inspection
 
-TEST RESULTS
-  142 tests across 9 files, all passing. No test changes this phase (release prep
-  only: icons, version, docs). Builds, CI, and packaging all pass.
+TEST / BUILD RESULTS
+  142 tests across 9 files, all passing (no test changes - asset refresh only).
+  Chrome + Firefox builds, CI, and release packaging all pass. Runtime PNG icons
+  present in the Chrome build/ZIP; no source PNG and no old SVG artwork in the ZIP.
 
-STORE-READINESS DECISIONS
-  - Version 1.0.0 is consistent across root + extension + 6 packages + demo-sites,
-    the generated manifest, store docs, release notes, and ZIP filenames.
-  - README does NOT claim store availability; both stores show "Coming soon".
-  - Promo tile is honest brand artwork (icon + product name), not a fake screenshot.
-  - Real product screenshots are still required before submission (placeholder kept).
-  - No new permissions; no analytics/AI/speech/remote/auto-fix/page-mutation/
-    compliance claims added.
+NO BEHAVIOR / PERMISSION CHANGES (explicit confirmation)
+  No product functionality, popup UI, scanner, monitoring, keyboard-path, or
+  overlay behavior changed. No dependencies added. No AI/speech/analytics/
+  tracking/remote-calls/auto-fix/ARIA. Manifest unchanged:
+    name: Easy Web Navigation; version: 1.0.0
+    required permissions: activeTab, scripting, storage
+    optional_host_permissions: http://*/*, https://*/*
+    required host permissions: none; content_scripts: []
+  Only brand image bytes + CHANGELOG/HANDOVER text changed.
+
+RELEASE ZIP STATUS (git-ignored; regenerate with `pnpm release:all`)
+  artifacts/chrome/easy-web-navigation-chrome-v1.0.0.zip  (manifest at root: YES)
+  artifacts/edge/easy-web-navigation-edge-v1.0.0.zip      (manifest at root: YES)
+  ZIP names remain v1.0.0. Nothing uploaded to any store.
+
+PUSH STATUS
+  Phase 1C-Icon-Refresh committed and pushed to origin/main.
 
 KNOWN LIMITATIONS
-  - Real product screenshots not yet captured (1280x800 placeholder remains; see
-    docs/store/screenshot-plan.md). Must be captured + placeholder removed before
-    store submission.
-  - Manual cross-browser QA (Chrome + Edge) not yet performed in this phase.
-  - Firefox: development build only; published Firefox support is planned, not shipped.
+  - Real product screenshots still not captured (1280x800 placeholder remains;
+    see docs/store/screenshot-plan.md) - required before store submission.
+  - Manual cross-browser QA (Chrome + Edge) still pending.
+  - Firefox: development build only; published Firefox support is planned.
   - Local repo folder is still named "keywise-web" (cosmetic only).
-  - Geometry-based keyboard-path visibility checks require a real browser (jsdom
-    falls back to DOM/style signals) - unchanged from 1A-UX-Visibility-Fix.
-
-MANUAL TASKS STILL REQUIRED BEFORE STORE SUBMISSION
-  1. Load artifacts/chrome ZIP unpacked in Chrome; load the same build in Edge.
-  2. Verify: Check this page; keyboard focus highlight; keyboard path at 100/250/
-     500; collapsed-sidebar filtering; Show this problem; Copy results; Download
-     results; This page only / This website / All websites wording; a restricted
-     browser-internal page; the new toolbar icon is clear and recognisable.
-  3. Capture real screenshots per docs/store/screenshot-plan.md and replace the
-     placeholder before submission. Do not fake screenshots.
-  4. (Optional) Upload a GitHub social-preview image in repo settings.
-  5. Confirm Chrome Web Store + Microsoft Partner Center accounts.
-  6. Upload the ZIPs manually only after QA passes. Then (and only then) create the
-     v1.0.0 git tag and a GitHub Release.
 
 NEXT RECOMMENDED PHASE
-  Phase 1D - manual cross-browser QA + real screenshot capture, then (user-owned)
-  store submission. After approval: add store links to the README, create the
-  v1.0.0 git tag, and publish a GitHub Release attaching artifacts/chrome and
-  artifacts/edge ZIPs. No code/feature/permission changes expected.
+  Phase 1D - manual cross-browser QA + real screenshot capture (confirm the new
+  toolbar icon reads well in the browser), then user-owned store submission.
+  After approval: add store links to the README, create the v1.0.0 git tag, and
+  publish a GitHub Release attaching the artifacts/chrome and artifacts/edge ZIPs.
+  No code/feature/permission changes expected.

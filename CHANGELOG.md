@@ -6,7 +6,9 @@ All notable changes to Easy Web Navigation are documented here. The format is ba
 
 ## [Unreleased]
 
-_Nothing yet._
+### Changed
+
+- Replaced the Easy Web Navigation production icon with the final user-provided brand artwork and regenerated all runtime, store, and GitHub asset variants.
 
 ## [1.0.0] — 2026-06-22
 
