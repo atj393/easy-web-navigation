@@ -204,6 +204,12 @@ body {
   outline-offset: 2px;
 }
 
+.field__hint {
+  font-size: 12.5px;
+  line-height: 1.5;
+  opacity: 0.8;
+}
+
 /* Summary cards */
 .cards {
   display: grid;
@@ -381,6 +387,17 @@ body {
   font-size: 12.5px;
   line-height: 1.5;
   opacity: 0.85;
+}
+
+/* Keyboard-path summary: a line + optional "choose a higher limit" hint. */
+.popup__tabsummary {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.popup__tabsummary p {
+  margin: 0;
 }
 
 .popup__warn {

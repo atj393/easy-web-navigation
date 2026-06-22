@@ -30,14 +30,19 @@ open, e.g., `fake-buttons-page.html` or `form-labels-page.html`.
 2. **Keyboard focus** — click **Show keyboard focus**, press Tab a few times. A rectangle tracks the
    keyboard-focused element. Click **Hide keyboard focus** to remove it.
 3. **Keyboard path** — click **Show keyboard path**. Numbered markers appear in the computed keyboard
-   tab order (positive `tabindex` first). Hide to remove.
+   tab order (positive `tabindex` first). The summary reports the real number of keyboard items (e.g.
+   "Showing all 78 keyboard items." or "Showing the first 100 of 342 keyboard items."). Use **Number
+   of keyboard path markers** to choose 100 (recommended), 250, or 500 — while the path is visible the
+   markers redraw immediately, with no need to toggle off and on. Hide to remove.
 4. **Locate** — on any issue card, click **Show this problem**. The element is briefly highlighted.
 5. **Copy report** — click **Copy results**, paste into an editor. A clean report with a
    non-compliance disclaimer appears.
 6. **Download report** — click **Download results** to save `easy-web-navigation-report.md`.
 7. **Automatic checking — this page** — choose **This page only**, click **Start automatic
    checking**; the page is checked and your enabled guides re-apply. No extra permission is requested
-   for this scope.
+   for this scope. The popup clearly states that this choice checks the page you started on and that
+   you may need to open the extension again after navigating to another page (it does not promise
+   automatic checking across pages in this scope).
 8. **Automatic checking — this website** — choose **This website**, click **Start automatic
    checking**; the browser shows an optional host-permission prompt for the current origin. Granting
    enables auto re-apply across that site; denying falls back to this-page-only with a friendly

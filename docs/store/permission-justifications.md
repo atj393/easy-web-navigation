@@ -34,11 +34,11 @@ Easy Web Navigation requests the minimum permissions needed and no broad require
 
 ## optional*host_permissions: http://*/_, https://_/\_ (optional)
 
-- **Why:** For the "This site" and "All supported websites" monitoring scopes, so the extension can
+- **Why:** For the "This website" and "All websites" automatic-checking scopes, so the extension can
   re-apply the chosen visual helpers and scan as the user navigates across pages.
-- **When used:** Requested **only** at the moment the user starts monitoring with one of those
-  scopes — never at install time, never by default. Manual scanning and "Current tab session"
-  monitoring do not request them.
+- **When used:** Requested **only** at the moment the user starts automatic checking with one of
+  those scopes — never at install time, never by default. Manual checking and "This page only"
+  automatic checking do not request them.
 - **User-triggered:** Yes (explicit Start action + the browser's own permission prompt).
 - **Does data leave the device:** No. Even with these granted, all analysis remains local.
 - **Risk mitigation:** Optional and revocable in the browser's extension settings at any time. If

@@ -72,8 +72,17 @@ Monitoring is an explicit, user-started mode that re-applies the remembered visu
 auto-scans supported pages within a chosen scope. It is **off by default**.
 
 - **State** lives in typed storage (`local:monitoring`): `{ enabled, scope, focusHelperEnabled,
-tabPathEnabled }`. `MonitoringScope` is `off | current-tab | site | all-sites`. The popup is the
-  writer; the content script and background read it. No page content is ever stored.
+tabPathEnabled, tabPathMaxItems }`. `MonitoringScope` is `off | current-tab | site | all-sites`;
+  `tabPathMaxItems` is the user-chosen keyboard-path marker limit (`100 | 250 | 500`, default 100).
+  Old stored settings without `tabPathMaxItems` are coerced to 100 on read via
+  `normalizeTabPathMaxItems`, so existing users are never broken. The popup is the writer; the
+  content script and background read it. No page content is ever stored.
+- **Keyboard-path marker limit** is threaded through `createApplyMonitoringPayload` →
+  `APPLY_MONITORING` (and `TOGGLE_TAB_PATH` for manual use) into `computeTabPath`'s `maxItems`, so
+  the chosen limit applies to manual activation, immediate redraws when the limit changes while the
+  path is visible, automatic-checking re-application after navigation, and SPA route refreshes.
+  `totalDetected` always reflects the real detected count before the limit, so the popup can show
+  "Showing all N keyboard items." or "Showing the first L of N keyboard items.".
 - **Popup** owns the UX: Start/Stop, the scope selector, and the status label. On Start it persists
   `enabled`/`scope` only (the remembered helper preferences are preserved), requests an optional host
   permission when the scope needs one (from the click gesture), scans the active tab, and applies the

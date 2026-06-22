@@ -2,7 +2,15 @@
  * Pure, browser-API-free helpers for monitoring mode. Kept side-effect-free so
  * they are unit-testable without a real extension environment.
  */
-import type { MonitoringScope, MonitoringSettings } from "@easy-web-navigation/shared-types";
+import {
+  DEFAULT_TAB_PATH_MAX_ITEMS,
+  PRODUCT_NAME,
+  TAB_PATH_MAX_ITEMS_VALUES,
+  type MonitoringScope,
+  type MonitoringSettings,
+  type TabPathMaxItems,
+  type TabPathSummary,
+} from "@easy-web-navigation/shared-types";
 
 /** Broad optional host patterns used by the "all-sites" scope. */
 export const ALL_SITES_ORIGINS = ["http://*/*", "https://*/*"];
@@ -94,12 +102,28 @@ export function updateMonitoringHelperPreference(
     : { ...current, tabPathEnabled: enabled };
 }
 
+/**
+ * Coerce any stored/incoming value to a valid keyboard-path marker limit.
+ * Old stored settings (no `tabPathMaxItems`) and any out-of-range or
+ * non-numeric value safely fall back to the default (100). Capped at 500.
+ */
+export function normalizeTabPathMaxItems(value: unknown): TabPathMaxItems {
+  return TAB_PATH_MAX_ITEMS_VALUES.includes(value as TabPathMaxItems)
+    ? (value as TabPathMaxItems)
+    : DEFAULT_TAB_PATH_MAX_ITEMS;
+}
+
 /** The APPLY_MONITORING payload derived from the remembered preferences. */
 export function createApplyMonitoringPayload(settings: MonitoringSettings): {
   focusHelper: boolean;
   tabPath: boolean;
+  tabPathMaxItems: TabPathMaxItems;
 } {
-  return { focusHelper: settings.focusHelperEnabled, tabPath: settings.tabPathEnabled };
+  return {
+    focusHelper: settings.focusHelperEnabled,
+    tabPath: settings.tabPathEnabled,
+    tabPathMaxItems: normalizeTabPathMaxItems(settings.tabPathMaxItems),
+  };
 }
 
 /** Whether monitoring should auto-apply at least one visual helper. */
@@ -153,15 +177,42 @@ export function automaticCheckingStatusLabel(scope: MonitoringScope, enabled: bo
   }
 }
 
-/** One plain-language explanation of the selected automatic-checking scope. */
+/**
+ * One plain-language explanation of the selected automatic-checking scope.
+ * Shown directly under the status line, before and after checking starts, so
+ * the "This page only" limitation is never hidden. No technical terms.
+ */
 export function scopeExplanation(scope: MonitoringScope): string {
   switch (scope) {
     case "site":
-      return "Keeps checking pages you open on this website after you allow access.";
+      return `${PRODUCT_NAME} can check other pages on this website after you allow browser access.`;
     case "all-sites":
-      return "Keeps checking normal websites you visit after you allow access.";
+      return `${PRODUCT_NAME} can check normal websites as you browse after you allow browser access.`;
     case "current-tab":
     default:
-      return "This page only may stop when you move to another website. Choose This website to keep checking pages there.";
+      return `This choice checks the page you started on. When you open another page, you may need to open ${PRODUCT_NAME} again.`;
   }
+}
+
+/**
+ * Extra guidance shown only for "This page only" (before starting): how to get
+ * continuous checking across pages instead.
+ */
+export const CURRENT_TAB_KEEP_CHECKING_HINT =
+  "To keep checking pages as you browse, choose This website or All websites before starting " +
+  "automatic checking.";
+
+/**
+ * Plain-language keyboard-path summary for the popup. Uses "keyboard items"
+ * (never "focusable items") and reports the real detected total. When the list
+ * is limited it adds a hint to choose a higher limit.
+ */
+export function keyboardPathSummaryText(summary: TabPathSummary): { line: string; hint?: string } {
+  if (!summary.capped) {
+    return { line: `Showing all ${summary.totalDetected} keyboard items.` };
+  }
+  return {
+    line: `Showing the first ${summary.shown} of ${summary.totalDetected} keyboard items.`,
+    hint: "Choose a higher limit to show more.",
+  };
 }

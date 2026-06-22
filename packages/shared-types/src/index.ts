@@ -140,6 +140,19 @@ export interface TabPathItem {
   rect?: { x: number; y: number; width: number; height: number };
 }
 
+/**
+ * Allowed values for the user-chosen keyboard-path marker limit. Kept a small
+ * closed set (no free numeric input) so very large pages cannot be asked to
+ * render an unbounded number of markers. Capped at 500 by design in this phase.
+ */
+export type TabPathMaxItems = 100 | 250 | 500;
+
+/** The selectable keyboard-path marker limits, in display order. */
+export const TAB_PATH_MAX_ITEMS_VALUES: TabPathMaxItems[] = [100, 250, 500];
+
+/** Default (and recommended) keyboard-path marker limit. Protects performance. */
+export const DEFAULT_TAB_PATH_MAX_ITEMS: TabPathMaxItems = 100;
+
 /** Summary of a tab-path computation. */
 export interface TabPathSummary {
   /** Number of items returned/rendered (after any cap). */
@@ -190,6 +203,13 @@ export interface MonitoringSettings {
   focusHelperEnabled: boolean;
   /** Remembered preference: re-apply the tab path while monitoring. */
   tabPathEnabled: boolean;
+  /**
+   * Remembered preference: how many keyboard-path markers to draw (100 | 250 |
+   * 500; default 100). Applied to manual activation and to automatic checking
+   * re-application. Old stored settings without this key fall back to 100 via
+   * `normalizeTabPathMaxItems`.
+   */
+  tabPathMaxItems: TabPathMaxItems;
 }
 
 /** Why a monitoring refresh ran. `spa-route` is a detected SPA route change. */
@@ -215,6 +235,7 @@ export const DEFAULT_MONITORING: MonitoringSettings = {
   scope: "current-tab",
   focusHelperEnabled: false,
   tabPathEnabled: false,
+  tabPathMaxItems: DEFAULT_TAB_PATH_MAX_ITEMS,
 };
 
 /**
@@ -239,7 +260,12 @@ export type ExtensionMessage =
   | { type: "GET_TAB_PATH_STATE" }
   | { type: "TAB_PATH_RESULT"; payload: { enabled: boolean; summary: TabPathSummary | null } }
   // Monitoring: apply/clear the remembered visual helpers (read-only).
-  | { type: "APPLY_MONITORING"; payload: { focusHelper: boolean; tabPath: boolean } }
+  // `tabPathMaxItems` carries the user-chosen keyboard-path marker limit; when
+  // omitted the content script falls back to the default (100).
+  | {
+      type: "APPLY_MONITORING";
+      payload: { focusHelper: boolean; tabPath: boolean; tabPathMaxItems?: TabPathMaxItems };
+    }
   | {
       type: "MONITORING_APPLIED";
       payload: { focusHelper: boolean; tabPath: boolean; tabPathSummary: TabPathSummary | null };

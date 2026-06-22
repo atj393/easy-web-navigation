@@ -6,6 +6,13 @@ All notable changes to Easy Web Navigation are documented here. The format is ba
 
 ## [Unreleased]
 
+### Changed — Phase 1A-UX-Follow-up: clearer automatic checking and adjustable keyboard path
+
+- Clarified that "This page only" may require reopening the extension after navigation.
+- Added a locally saved keyboard-path marker limit with 100, 250, and 500 marker choices.
+- Kept 100 markers as the recommended default to protect performance.
+- No scanner rules, permissions, page changes, or automatic-fix behavior changed.
+
 ### Changed — Phase 1A-UX: clearer popup for everyday users
 
 - Simplified popup wording, grouped actions by purpose, enlarged the popup, and added plain-language

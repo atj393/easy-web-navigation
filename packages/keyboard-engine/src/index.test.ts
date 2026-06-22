@@ -122,4 +122,24 @@ describe("computeTabPath", () => {
     expect(summary.totalDetected).toBe(DEFAULT_TAB_PATH_CAP + 5);
     expect(summary.capped).toBe(true);
   });
+
+  // User-selectable marker limit (100 | 250 | 500): totalDetected must always
+  // reflect the REAL detected count, never the applied limit.
+  it("a 342-item page with a 100 limit shows 100 of 342 (capped)", () => {
+    document.body.innerHTML = Array.from({ length: 342 }, (_, i) => `<button>${i}</button>`).join(
+      "",
+    );
+    const { items, summary } = computeTabPath(document, { maxItems: 100 });
+    expect(items).toHaveLength(100);
+    expect(summary).toEqual({ shown: 100, totalDetected: 342, capped: true });
+  });
+
+  it("a 342-item page with a 500 limit shows all 342 (not capped)", () => {
+    document.body.innerHTML = Array.from({ length: 342 }, (_, i) => `<button>${i}</button>`).join(
+      "",
+    );
+    const { items, summary } = computeTabPath(document, { maxItems: 500 });
+    expect(items).toHaveLength(342);
+    expect(summary).toEqual({ shown: 342, totalDetected: 342, capped: false });
+  });
 });

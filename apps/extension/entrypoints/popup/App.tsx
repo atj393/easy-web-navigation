@@ -6,18 +6,24 @@ import { monitoringItem } from "../../lib/settings";
 import {
   automaticCheckingStatusLabel,
   createApplyMonitoringPayload,
+  CURRENT_TAB_KEEP_CHECKING_HINT,
   hostPermissionsForScope,
+  keyboardPathSummaryText,
+  normalizeTabPathMaxItems,
   scopeChoiceLabel,
   scopeExplanation,
   scopeNeedsPermission,
 } from "../../lib/monitoring";
 import {
+  DEFAULT_TAB_PATH_MAX_ITEMS,
   PRODUCT_NAME,
+  TAB_PATH_MAX_ITEMS_VALUES,
   type ExtensionMessage,
   type IssueSeverity,
   type MonitoringScope,
   type MonitoringSettings,
   type ScanResult,
+  type TabPathMaxItems,
   type TabPathSummary,
 } from "@easy-web-navigation/shared-types";
 
@@ -104,6 +110,9 @@ export function App() {
   const [error, setError] = useState<string | null>(null);
   const [focusHelperOn, setFocusHelperOn] = useState(false);
   const [tabPathOn, setTabPathOn] = useState(false);
+  const [tabPathMaxItems, setTabPathMaxItems] = useState<TabPathMaxItems>(
+    DEFAULT_TAB_PATH_MAX_ITEMS,
+  );
   const [tabSummary, setTabSummary] = useState<TabPathSummary | null>(null);
   const [locateStatus, setLocateStatus] = useState<string | null>(null);
   const [reportStatus, setReportStatus] = useState<string | null>(null);
@@ -122,6 +131,7 @@ export function App() {
         settings = await monitoringItem.getValue();
         setMonitoringEnabled(settings.enabled);
         setMonitoringScope(settings.scope === "off" ? "current-tab" : settings.scope);
+        setTabPathMaxItems(normalizeTabPathMaxItems(settings.tabPathMaxItems));
       } catch {
         /* storage unavailable — defaults stand */
       }
@@ -231,12 +241,39 @@ export function App() {
       const next = !tabPathOn;
       const response = await send(tab.id, {
         type: "TOGGLE_TAB_PATH",
-        payload: { enabled: next },
+        payload: { enabled: next, options: { maxItems: tabPathMaxItems } },
       });
       if (response?.type === "TAB_PATH_RESULT") {
         setTabPathOn(response.payload.enabled);
         setTabSummary(response.payload.summary);
         await saveMonitoring({ tabPathEnabled: response.payload.enabled });
+      }
+    } catch (e) {
+      setLocateStatus(humanizeError(e instanceof Error ? e.message : String(e)));
+    }
+  }
+
+  /**
+   * Change the keyboard-path marker limit. Always saves the new value so it is
+   * remembered (and reused during automatic checking). If the keyboard path is
+   * already visible, redraw it immediately on the current page — no need to
+   * toggle it off and on again.
+   */
+  async function changeTabPathMaxItems(next: TabPathMaxItems) {
+    setTabPathMaxItems(next);
+    await saveMonitoring({ tabPathMaxItems: next });
+    if (!tabPathOn) return;
+    setLocateStatus(null);
+    try {
+      const tab = await getActiveTab();
+      await ensureInjected(tab.id);
+      const response = await send(tab.id, {
+        type: "TOGGLE_TAB_PATH",
+        payload: { enabled: true, options: { maxItems: next } },
+      });
+      if (response?.type === "TAB_PATH_RESULT") {
+        setTabPathOn(response.payload.enabled);
+        setTabSummary(response.payload.summary);
       }
     } catch (e) {
       setLocateStatus(humanizeError(e instanceof Error ? e.message : String(e)));
@@ -373,6 +410,8 @@ export function App() {
     setReportStatus(ok ? "Results copied." : "Couldn’t copy. You can still download the results.");
   }
 
+  const tabPathText = tabSummary ? keyboardPathSummaryText(tabSummary) : null;
+
   const summary = result?.summary;
   const labelIssues = summary ? summary.byCategory.forms + summary.byCategory.naming : "–";
   const keyboardIssues = summary ? summary.byCategory.keyboard + summary.byCategory.focus : "–";
@@ -462,15 +501,33 @@ export function App() {
           >
             {tabPathOn ? "Hide keyboard path" : "Show keyboard path"}
           </button>
+
+          <label className="field">
+            <span className="field__label">Number of keyboard path markers</span>
+            <select
+              className="field__select"
+              value={tabPathMaxItems}
+              onChange={(e) => changeTabPathMaxItems(Number(e.target.value) as TabPathMaxItems)}
+            >
+              {TAB_PATH_MAX_ITEMS_VALUES.map((value) => (
+                <option key={value} value={value}>
+                  {value === DEFAULT_TAB_PATH_MAX_ITEMS
+                    ? `${value} markers (recommended)`
+                    : `${value} markers`}
+                </option>
+              ))}
+            </select>
+            <span className="field__hint">
+              More markers can make very large pages slower and harder to read.
+            </span>
+          </label>
         </div>
 
-        {tabPathOn && tabSummary && (
-          <p className="popup__tabsummary" role="status">
-            Keyboard path: showing {tabSummary.shown} of {tabSummary.totalDetected} item(s)
-            {tabSummary.capped && (
-              <span className="popup__warn"> · showing the first {tabSummary.shown} for speed</span>
-            )}
-          </p>
+        {tabPathOn && tabPathText && (
+          <div className="popup__tabsummary" role="status">
+            <p className="popup__tabsummary-line">{tabPathText.line}</p>
+            {tabPathText.hint && <p className="popup__warn">{tabPathText.hint}</p>}
+          </div>
         )}
       </section>
 
@@ -485,6 +542,14 @@ export function App() {
           Automatic checking:{" "}
           <strong>{automaticCheckingStatusLabel(monitoringScope, monitoringEnabled)}</strong>
         </p>
+
+        {/* Plain-language explanation directly under the status — shown before
+            and after checking starts, so the "This page only" limitation is
+            never hidden in a tooltip or help icon. */}
+        <p className="block__hint">{scopeExplanation(monitoringScope)}</p>
+        {monitoringScope === "current-tab" && !monitoringEnabled && (
+          <p className="block__hint">{CURRENT_TAB_KEEP_CHECKING_HINT}</p>
+        )}
 
         <label className="field">
           <span className="field__label">Where should I keep checking?</span>
@@ -502,7 +567,6 @@ export function App() {
           </select>
         </label>
 
-        <p className="block__hint">{scopeExplanation(monitoringScope)}</p>
         {monitoringScope === "all-sites" && !monitoringEnabled && (
           <p className="block__hint">
             Your browser will ask for permission before checking all websites.

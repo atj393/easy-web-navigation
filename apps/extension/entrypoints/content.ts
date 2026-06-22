@@ -4,6 +4,7 @@ import { computeTabPath } from "@easy-web-navigation/keyboard-engine";
 import { FocusOverlayController } from "@easy-web-navigation/focus-overlay";
 import type { ExtensionMessage, TabPathSummary } from "@easy-web-navigation/shared-types";
 import { monitoringItem } from "../lib/settings";
+import { normalizeTabPathMaxItems } from "../lib/monitoring";
 import { createSpaRouteMonitor, type SpaRouteMonitor } from "../lib/spa-monitoring";
 
 /**
@@ -83,11 +84,14 @@ export default defineContentScript({
       if (!focusHelperEnabled && !overlay.hasContent()) overlay.unmount();
     }
 
-    /** Apply (or clear) the remembered visual helpers. Read-only. */
-    function applyMonitoring(focusHelper: boolean, tabPath: boolean): void {
+    /**
+     * Apply (or clear) the remembered visual helpers. Read-only. `maxItems` is
+     * the user-chosen keyboard-path marker limit (defaults to 100 when absent).
+     */
+    function applyMonitoring(focusHelper: boolean, tabPath: boolean, maxItems?: number): void {
       if (focusHelper) enableFocusHelper();
       else disableFocusHelper();
-      if (tabPath) enableTabPath();
+      if (tabPath) enableTabPath({ maxItems: normalizeTabPathMaxItems(maxItems) });
       else disableTabPath();
     }
 
@@ -104,16 +108,18 @@ export default defineContentScript({
       // Use the LATEST saved preferences, not stale in-memory values.
       let wantFocus = focusHelperEnabled;
       let wantTab = tabPathEnabled;
+      let maxItems = normalizeTabPathMaxItems(undefined);
       try {
         const monitoring = await monitoringItem.getValue();
         if (!monitoring.enabled) return; // monitoring turned off — nothing to refresh
         wantFocus = monitoring.focusHelperEnabled;
         wantTab = monitoring.tabPathEnabled;
+        maxItems = normalizeTabPathMaxItems(monitoring.tabPathMaxItems);
       } catch {
         /* storage unavailable — fall back to current in-memory prefs */
       }
       applyMonitoring(false, false);
-      applyMonitoring(wantFocus, wantTab);
+      applyMonitoring(wantFocus, wantTab, maxItems);
       try {
         scanDocument(document);
       } catch {
@@ -224,7 +230,11 @@ export default defineContentScript({
           return false;
         }
         case "APPLY_MONITORING": {
-          applyMonitoring(message.payload.focusHelper, message.payload.tabPath);
+          applyMonitoring(
+            message.payload.focusHelper,
+            message.payload.tabPath,
+            normalizeTabPathMaxItems(message.payload.tabPathMaxItems),
+          );
           sendResponse({
             type: "MONITORING_APPLIED",
             payload: {
@@ -248,7 +258,11 @@ export default defineContentScript({
       try {
         const monitoring = await monitoringItem.getValue();
         if (!monitoring.enabled) return;
-        applyMonitoring(monitoring.focusHelperEnabled, monitoring.tabPathEnabled);
+        applyMonitoring(
+          monitoring.focusHelperEnabled,
+          monitoring.tabPathEnabled,
+          normalizeTabPathMaxItems(monitoring.tabPathMaxItems),
+        );
         scanDocument(document);
         startSpaMonitor();
       } catch {
@@ -263,7 +277,11 @@ export default defineContentScript({
       monitoringItem.watch((next, prev) => {
         const wasEnabled = prev?.enabled ?? false;
         if (next.enabled && !wasEnabled) {
-          applyMonitoring(next.focusHelperEnabled, next.tabPathEnabled);
+          applyMonitoring(
+            next.focusHelperEnabled,
+            next.tabPathEnabled,
+            normalizeTabPathMaxItems(next.tabPathMaxItems),
+          );
           try {
             scanDocument(document);
           } catch {

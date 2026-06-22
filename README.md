@@ -73,8 +73,11 @@ developer-friendly report export, and an explicit, user-controlled monitoring mo
   temporarily highlights its element. The overlay is extension-owned, isolated, and never modifies
   the page.
 - Offers a **read-only keyboard path view**: toggle "Show keyboard path" to draw numbered markers in
-  the computed keyboard tab order (positive `tabindex` first, then DOM order), with a summary and a
-  performance cap (default 100 items).
+  the computed keyboard tab order (positive `tabindex` first, then DOM order), with a summary that
+  reports the real number of keyboard items detected. A simple **Number of keyboard path markers**
+  control lets you choose 100 (recommended), 250, or 500 markers; the choice is saved, redraws an
+  already-visible path immediately, and is reused during automatic checking. 100 stays the default to
+  protect performance, and the limit is capped at 500.
 - Offers an explicit, user-started **automatic checking** mode (in the popup, "Keep checking as you
   browse"): click **Start automatic checking** and Easy Web Navigation checks supported pages
   automatically and re-applies the visual guides you enabled, within the scope you choose —

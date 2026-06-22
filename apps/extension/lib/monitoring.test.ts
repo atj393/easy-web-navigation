@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { DEFAULT_MONITORING, type MonitoringSettings } from "@easy-web-navigation/shared-types";
+import {
+  DEFAULT_MONITORING,
+  DEFAULT_TAB_PATH_MAX_ITEMS,
+  TAB_PATH_MAX_ITEMS_VALUES,
+  type MonitoringSettings,
+  type TabPathSummary,
+} from "@easy-web-navigation/shared-types";
 import {
   isSupportedPageUrl,
   originPatternFromUrl,
@@ -9,6 +15,9 @@ import {
   scopeChoiceLabel,
   automaticCheckingStatusLabel,
   scopeExplanation,
+  CURRENT_TAB_KEEP_CHECKING_HINT,
+  keyboardPathSummaryText,
+  normalizeTabPathMaxItems,
   mergeMonitoringSettings,
   updateMonitoringHelperPreference,
   createApplyMonitoringPayload,
@@ -115,9 +124,17 @@ describe("popup display labels (plain language)", () => {
   });
 
   it("scopeExplanation gives one plain description per scope", () => {
-    expect(scopeExplanation("site")).toContain("pages you open on this website");
-    expect(scopeExplanation("all-sites")).toContain("normal websites you visit");
-    expect(scopeExplanation("current-tab")).toContain("may stop when you move to another website");
+    expect(scopeExplanation("site")).toContain("other pages on this website");
+    expect(scopeExplanation("all-sites")).toContain("normal websites as you browse");
+    // "This page only" must clearly warn the user they may need to reopen the
+    // extension after navigating to another page.
+    expect(scopeExplanation("current-tab")).toContain("open another page");
+    expect(scopeExplanation("current-tab")).toContain("may need to open Easy Web Navigation again");
+  });
+
+  it("current-tab keep-checking hint points to the broader scopes", () => {
+    expect(CURRENT_TAB_KEEP_CHECKING_HINT).toContain("This website");
+    expect(CURRENT_TAB_KEEP_CHECKING_HINT).toContain("All websites");
   });
 
   it("display labels never leak technical terms", () => {
@@ -137,13 +154,19 @@ describe("popup display labels (plain language)", () => {
 });
 
 describe("DEFAULT_MONITORING", () => {
-  it("is off, current-tab, helpers off", () => {
+  it("is off, current-tab, helpers off, 100 markers", () => {
     expect(DEFAULT_MONITORING).toEqual({
       enabled: false,
       scope: "current-tab",
       focusHelperEnabled: false,
       tabPathEnabled: false,
+      tabPathMaxItems: 100,
     });
+  });
+
+  it("defaults the keyboard-path marker limit to 100", () => {
+    expect(DEFAULT_TAB_PATH_MAX_ITEMS).toBe(100);
+    expect(DEFAULT_MONITORING.tabPathMaxItems).toBe(100);
   });
 });
 
@@ -152,6 +175,7 @@ const SETTINGS: MonitoringSettings = {
   scope: "site",
   focusHelperEnabled: true,
   tabPathEnabled: false,
+  tabPathMaxItems: 100,
 };
 
 describe("mergeMonitoringSettings", () => {
@@ -161,6 +185,7 @@ describe("mergeMonitoringSettings", () => {
       scope: "site",
       focusHelperEnabled: true,
       tabPathEnabled: false,
+      tabPathMaxItems: 100,
     });
   });
 
@@ -168,6 +193,73 @@ describe("mergeMonitoringSettings", () => {
     const copy = { ...SETTINGS };
     mergeMonitoringSettings(SETTINGS, { scope: "all-sites" });
     expect(SETTINGS).toEqual(copy);
+  });
+
+  it("changing the marker limit preserves scope, enabled, and helper prefs", () => {
+    const next = mergeMonitoringSettings(SETTINGS, { tabPathMaxItems: 500 });
+    expect(next.tabPathMaxItems).toBe(500);
+    expect(next.enabled).toBe(SETTINGS.enabled);
+    expect(next.scope).toBe(SETTINGS.scope);
+    expect(next.focusHelperEnabled).toBe(SETTINGS.focusHelperEnabled);
+    expect(next.tabPathEnabled).toBe(SETTINGS.tabPathEnabled);
+  });
+
+  it("stopping then starting automatic checking preserves the marker limit", () => {
+    const chosen: MonitoringSettings = { ...SETTINGS, tabPathMaxItems: 250 };
+    const stopped = mergeMonitoringSettings(chosen, { enabled: false });
+    const started = mergeMonitoringSettings(stopped, { enabled: true, scope: "current-tab" });
+    expect(stopped.tabPathMaxItems).toBe(250);
+    expect(started.tabPathMaxItems).toBe(250);
+  });
+});
+
+describe("normalizeTabPathMaxItems", () => {
+  it("accepts exactly 100, 250, and 500", () => {
+    expect(TAB_PATH_MAX_ITEMS_VALUES).toEqual([100, 250, 500]);
+    expect(normalizeTabPathMaxItems(100)).toBe(100);
+    expect(normalizeTabPathMaxItems(250)).toBe(250);
+    expect(normalizeTabPathMaxItems(500)).toBe(500);
+  });
+
+  it("falls back to 100 for old/missing/invalid values", () => {
+    expect(normalizeTabPathMaxItems(undefined)).toBe(100); // old stored settings
+    expect(normalizeTabPathMaxItems(null)).toBe(100);
+    expect(normalizeTabPathMaxItems(0)).toBe(100);
+    expect(normalizeTabPathMaxItems(999)).toBe(100); // never exceeds 500
+    expect(normalizeTabPathMaxItems(1000)).toBe(100);
+    expect(normalizeTabPathMaxItems("250")).toBe(100); // strings are not valid
+    expect(normalizeTabPathMaxItems({})).toBe(100);
+  });
+});
+
+describe("keyboardPathSummaryText", () => {
+  const make = (shown: number, totalDetected: number, capped: boolean): TabPathSummary => ({
+    shown,
+    totalDetected,
+    capped,
+  });
+
+  it("shows the real total when nothing is limited (uses 'keyboard items')", () => {
+    expect(keyboardPathSummaryText(make(78, 78, false))).toEqual({
+      line: "Showing all 78 keyboard items.",
+    });
+  });
+
+  it("shows first-of-total and a higher-limit hint when limited", () => {
+    expect(keyboardPathSummaryText(make(100, 342, true))).toEqual({
+      line: "Showing the first 100 of 342 keyboard items.",
+      hint: "Choose a higher limit to show more.",
+    });
+  });
+
+  it("never uses the phrase 'focusable items' in the popup wording", () => {
+    const all = [
+      keyboardPathSummaryText(make(78, 78, false)),
+      keyboardPathSummaryText(make(100, 342, true)),
+    ]
+      .flatMap((r) => [r.line, r.hint ?? ""])
+      .join(" ");
+    expect(all).not.toMatch(/focusable item/i);
   });
 });
 
@@ -194,8 +286,17 @@ describe("updateMonitoringHelperPreference", () => {
 });
 
 describe("createApplyMonitoringPayload", () => {
-  it("maps remembered preferences to the apply payload", () => {
-    expect(createApplyMonitoringPayload(SETTINGS)).toEqual({ focusHelper: true, tabPath: false });
+  it("maps remembered preferences (incl. the marker limit) to the apply payload", () => {
+    expect(createApplyMonitoringPayload({ ...SETTINGS, tabPathMaxItems: 250 })).toEqual({
+      focusHelper: true,
+      tabPath: false,
+      tabPathMaxItems: 250,
+    });
+  });
+
+  it("normalizes an old/invalid stored marker limit to 100", () => {
+    const legacy = { ...SETTINGS, tabPathMaxItems: undefined as unknown as 100 };
+    expect(createApplyMonitoringPayload(legacy).tabPathMaxItems).toBe(100);
   });
 });
 

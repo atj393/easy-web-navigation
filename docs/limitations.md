@@ -108,8 +108,12 @@ The tab-path visualization is a read-only approximation:
   scroll-container, or custom-widget focus management).
 - **Snapshot in time.** Markers reflect the page when you toggled the tab path on. If the page
   changes afterward, toggle it off and on again to recompute (no `MutationObserver` in this phase).
-- **Capped for performance.** Large pages are capped (default 100 items); the popup shows how many
-  of the total detected items are displayed. The cap avoids rendering hundreds of markers.
+- **Capped for performance, your choice.** The number of markers is limited to protect performance.
+  You can choose 100 (recommended), 250, or 500 markers via **Number of keyboard path markers**; the
+  choice is saved locally, redraws an already-visible path immediately, and is reused during
+  automatic checking. The limit is capped at 500 by design. The popup always reports the real number
+  of keyboard items detected (e.g. "Showing the first 100 of 342 keyboard items."), never the limit
+  as if it were the total.
 - **Open shadow DOM / cross-origin iframes.** Elements inside closed shadow roots or cross-origin
   iframes are not included; open shadow roots are traversed best-effort and may not interleave in
   perfect document order.
