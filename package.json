@@ -1,6 +1,6 @@
 {
   "name": "easy-web-navigation",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Privacy-first, read-only keyboard accessibility companion browser extension (inspection / assistive browsing tool).",
   "license": "MIT",

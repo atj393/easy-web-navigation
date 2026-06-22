@@ -5,11 +5,11 @@ submitted automatically.
 
 ## Extension name
 
-Easy Web Navigation
+Easy Web Navigation - Keyboard Access Check
 
 ## Short description (≤ 132 characters)
 
-A keyboard accessibility companion for inspecting focus, keyboard path, and navigation issues on web pages.
+Check keyboard focus, keyboard paths, and navigation on web pages.
 
 ## Category
 

@@ -244,6 +244,94 @@ const GLYPHS = {
       })(),
     ],
   },
+  K: {
+    w: 0.6,
+    s: [
+      [
+        [0, 0],
+        [0, 1],
+      ],
+      [
+        [0.56, 0],
+        [0, 0.5],
+      ],
+      [
+        [0, 0.5],
+        [0.58, 1],
+      ],
+    ],
+  },
+  R: {
+    w: 0.6,
+    s: [
+      [
+        [0, 1],
+        [0, 0],
+      ],
+      [
+        [0, 0],
+        [0.46, 0],
+        [0.6, 0.13],
+        [0.6, 0.32],
+        [0.46, 0.48],
+        [0, 0.48],
+      ],
+      [
+        [0.26, 0.48],
+        [0.6, 1],
+      ],
+    ],
+  },
+  D: {
+    w: 0.64,
+    s: [
+      [
+        [0, 0],
+        [0, 1],
+      ],
+      [
+        [0, 0],
+        [0.34, 0],
+        [0.6, 0.22],
+        [0.6, 0.78],
+        [0.34, 1],
+        [0, 1],
+      ],
+    ],
+  },
+  C: {
+    w: 0.64,
+    s: [
+      [
+        [0.6, 0.2],
+        [0.46, 0.04],
+        [0.26, 0.02],
+        [0.09, 0.16],
+        [0.03, 0.4],
+        [0.05, 0.64],
+        [0.2, 0.9],
+        [0.42, 0.99],
+        [0.6, 0.85],
+      ],
+    ],
+  },
+  H: {
+    w: 0.62,
+    s: [
+      [
+        [0, 0],
+        [0, 1],
+      ],
+      [
+        [0.62, 0],
+        [0.62, 1],
+      ],
+      [
+        [0, 0.5],
+        [0.62, 0.5],
+      ],
+    ],
+  },
 };
 
 const LETTER_SPACING = 0.14; // in cap-height units
@@ -381,20 +469,36 @@ writeFileSync(
 console.log("wrote easy-web-navigation-icon.png");
 
 // 3) Chrome small promo tile — clean white tile: real icon + product name.
+//    Visual hierarchy: "EASY WEB" / "NAVIGATION" (brand) above a smaller
+//    "KEYBOARD ACCESS CHECK" descriptor, so the full store identity reads clearly
+//    without cramming the hyphenated name onto one line.
 {
   const W = 440;
   const H = 280;
+  const GREY = [70, 78, 92];
   const buf = solidCanvas(W, H, WHITE);
   const iconSize = 168;
   const iconRgba = resizeRGBA(src.data, src.width, src.height, iconSize, iconSize);
   blit(buf, W, iconRgba, iconSize, iconSize, 26, Math.round((H - iconSize) / 2));
   const textCenterX = 26 + iconSize + 14 + (W - (26 + iconSize + 14) - 18) / 2;
-  const cap = 30;
-  const gap = 16;
-  const totalTextH = cap * 2 + gap;
+  const cap = 28;
+  const gap = 12;
+  const subCap = 12;
+  const subGap = 16;
+  const totalTextH = cap * 2 + gap + subGap + subCap;
   const top1 = Math.round((H - totalTextH) / 2);
   drawText(buf, W, H, "EASY WEB", textCenterX, top1, cap, BLUE);
   drawText(buf, W, H, "NAVIGATION", textCenterX, top1 + cap + gap, cap, BLUE);
+  drawText(
+    buf,
+    W,
+    H,
+    "KEYBOARD ACCESS CHECK",
+    textCenterX,
+    top1 + cap * 2 + gap + subGap,
+    subCap,
+    GREY,
+  );
   writeFileSync(join(STORE, "chrome-small-promo-440x280.png"), encodePNG(W, H, buf));
   console.log("wrote chrome-small-promo-440x280.png");
 }

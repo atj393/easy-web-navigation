@@ -10,7 +10,10 @@ keyboard: check a page for possible keyboard-access problems, see where keyboard
 keyboard path through visible controls, and copy/download results. It is an inspection and assistive
 browsing tool — not an overlay, not an auto-fixer, not a compliance certifier.
 
-- **Current production version:** 1.0.0
+- **Store / manifest name:** `Easy Web Navigation - Keyboard Access Check` (manifest `short_name`:
+  `Easy Web Nav`). The compact toolbar/popup brand stays **Easy Web Navigation** (`PRODUCT_NAME` in
+  code). Use the short brand in prose; do not rename packages, the repo slug, or ZIP base names.
+- **Current production version:** 1.0.1
 - **Repository:** https://github.com/atj393/easy-web-navigation
 - **Default branch:** main
 - Read [HANDOVER.txt](HANDOVER.txt) at the start of every session for current state.

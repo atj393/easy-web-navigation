@@ -1,6 +1,6 @@
 {
   "name": "@easy-web-navigation/demo-sites",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Static demo pages for exercising Easy Web Navigation keyboard inspection (no build step).",
   "scripts": {

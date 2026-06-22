@@ -36,7 +36,7 @@ import {
  * within a user-chosen scope, and copy/download of results. Internal scope
  * values and persisted keys are unchanged; only the visible text differs.
  */
-const TAGLINE = "Check whether a page is easy to use with a keyboard.";
+const TAGLINE = "Check how a website works with a keyboard.";
 
 const DISCLAIMER =
   "This tool checks for possible keyboard-access problems. It does not change the website or " +

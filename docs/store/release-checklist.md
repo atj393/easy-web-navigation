@@ -9,7 +9,7 @@ Work top to bottom. Nothing here is automated — submission stays with the main
 - [ ] `pnpm build:firefox` passes (optional Firefox target).
 - [ ] `pnpm release:all` produces `artifacts/chrome/...` and `artifacts/edge/...` ZIPs.
 - [ ] `pnpm release:inspect` confirms `manifest.json` is at each ZIP root.
-- [ ] Manifest version is correct (currently **1.0.0**) and matches both packages.
+- [ ] Manifest version is correct (currently **1.0.1**) and matches both packages.
 - [ ] Manifest permissions are exactly `activeTab`, `scripting`, `storage`; optional host
       permissions are `http://*/*`, `https://*/*`; no required broad host permissions.
 
@@ -35,7 +35,7 @@ Work top to bottom. Nothing here is automated — submission stays with the main
 
 ## Chrome submission
 
-- [ ] Upload `artifacts/chrome/easy-web-navigation-chrome-v1.0.0.zip`.
+- [ ] Upload `artifacts/chrome/easy-web-navigation-chrome-v1.0.1.zip`.
 - [ ] Paste listing text from `chrome-web-store-listing.md`.
 - [ ] Set category (Accessibility), language (English), search terms.
 - [ ] Complete the Privacy practices tab using `privacy-disclosure.md` (remote code = No;
@@ -45,7 +45,7 @@ Work top to bottom. Nothing here is automated — submission stays with the main
 
 ## Edge submission
 
-- [ ] Upload `artifacts/edge/easy-web-navigation-edge-v1.0.0.zip`.
+- [ ] Upload `artifacts/edge/easy-web-navigation-edge-v1.0.1.zip`.
 - [ ] Paste listing text from `edge-add-ons-listing.md`.
 - [ ] Complete privacy/data fields using `privacy-disclosure.md`.
 - [ ] Paste certification/testing notes from `edge-add-ons-listing.md`.
@@ -55,4 +55,4 @@ Work top to bottom. Nothing here is automated — submission stays with the main
 
 - [ ] Submit Chrome only after Chrome QA passes.
 - [ ] Submit Edge only after Edge QA passes.
-- [ ] Tag the release in git after submission (e.g. `v1.0.0`).
+- [ ] Tag the release in git after submission (e.g. `v1.0.1`).

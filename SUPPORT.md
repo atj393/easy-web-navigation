@@ -1,6 +1,7 @@
 # Support
 
-Thanks for using Easy Web Navigation. Here is how to get help.
+Thanks for using Easy Web Navigation - Keyboard Access Check ("Easy Web Navigation"). Here is how to
+get help.
 
 ## Bugs and feature requests
 

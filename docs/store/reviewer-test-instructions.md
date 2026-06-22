@@ -1,12 +1,12 @@
 # Reviewer test instructions (Chrome & Edge)
 
-These steps let a store reviewer verify Easy Web Navigation end-to-end. The extension is read-only
-and runs entirely locally.
+These steps let a store reviewer verify Easy Web Navigation - Keyboard Access Check ("Easy Web
+Navigation") end-to-end. The extension is read-only and runs entirely locally.
 
 ## Build artifact
 
-- Chrome: `artifacts/chrome/easy-web-navigation-chrome-v1.0.0.zip`
-- Edge: `artifacts/edge/easy-web-navigation-edge-v1.0.0.zip` (identical Chromium MV3 package)
+- Chrome: `artifacts/chrome/easy-web-navigation-chrome-v1.0.1.zip`
+- Edge: `artifacts/edge/easy-web-navigation-edge-v1.0.1.zip` (identical Chromium MV3 package)
 
 Each ZIP has `manifest.json` at its root.
 

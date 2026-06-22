@@ -1,7 +1,7 @@
-# Release notes — v1.0.0 (first public production release)
+# Release notes — Easy Web Navigation - Keyboard Access Check v1.0.1
 
-First public production release of **Easy Web Navigation**, a privacy-first, read-only keyboard
-accessibility companion for Chrome, Edge, and Firefox.
+Production release of **Easy Web Navigation - Keyboard Access Check** ("Easy Web Navigation"), a
+privacy-first, read-only keyboard accessibility companion for Chrome, Edge, and Firefox.
 
 > Not yet live in any store. These notes accompany the production build prepared for manual
 > submission to the Chrome Web Store and Microsoft Edge Add-ons. Store links will be added after each
@@ -22,14 +22,13 @@ accessibility companion for Chrome, Edge, and Firefox.
   pages within a scope you control (this page only / this website / all websites), including SPA route
   changes. Optional host permissions are requested only for the broader scopes, only on your action.
 
-## What changed since v0.1.0
+## What changed in v1.0.1
 
-- Prepared the first public **production** release (v1.0.0) for the Chrome Web Store and Microsoft
-  Edge Add-ons.
-- Replaced the generated placeholder icon with the **official Easy Web Navigation icon**; all runtime
-  and store/GitHub artwork is now downscaled from that single canonical source.
-- Rewrote the README as an end-user product home, refreshed store copy and release documentation, and
-  added a repository guide (`CLAUDE.md`) and clearer support guidance (`SUPPORT.md`).
+- Finalized the public **store / manifest name**: `Easy Web Navigation - Keyboard Access Check`.
+- Kept **Easy Web Navigation** as the compact toolbar and popup brand (manifest `short_name`:
+  `Easy Web Nav`).
+- Regenerated the production ZIP artifacts with the updated manifest name.
+- No functionality, permissions, privacy behavior, or accessibility claims changed.
 
 ## Privacy & security
 
@@ -38,8 +37,6 @@ accessibility companion for Chrome, Edge, and Firefox.
 - Minimal permissions: `activeTab`, `scripting`, `storage`. Optional host permissions
   (`http://*/*`, `https://*/*`) are requested only when you opt into this-website / all-websites
   automatic checking.
-- No permissions, tracking, page mutation, automatic fixes, or compliance claims were added in this
-  release.
 
 ## Honest limitations
 
@@ -52,8 +49,8 @@ accessibility companion for Chrome, Edge, and Firefox.
 
 ## Packages
 
-- Chrome Web Store: `artifacts/chrome/easy-web-navigation-chrome-v1.0.0.zip`
-- Microsoft Edge Add-ons: `artifacts/edge/easy-web-navigation-edge-v1.0.0.zip` (same Chromium MV3 build)
+- Chrome Web Store: `artifacts/chrome/easy-web-navigation-chrome-v1.0.1.zip`
+- Microsoft Edge Add-ons: `artifacts/edge/easy-web-navigation-edge-v1.0.1.zip` (same Chromium MV3 build)
 
 Generate with `pnpm release:all`. Submission is manual — see `release-checklist.md`. Real product
 screenshots must be captured per `screenshot-plan.md` before submission.

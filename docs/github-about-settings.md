@@ -5,6 +5,18 @@ Canonical record of the GitHub **About** metadata for
 applied with the GitHub CLI; this file is the source of truth if they ever need to be re-applied
 manually.
 
+## Product name vs. About description
+
+The GitHub **About** description is intentionally short and benefit-first. It is **not** the store
+name. For reference:
+
+- **Store / manifest name:** `Easy Web Navigation - Keyboard Access Check`
+- **Compact toolbar/popup brand:** `Easy Web Navigation`
+- **GitHub About description:** the concise sentence below (keep as-is)
+
+Do not put the full hyphenated store name in the About description, and do not add
+"Make Every Site Accessible", "certified", "compliant", or "automatic fixer".
+
 ## Description (exact)
 
 ```

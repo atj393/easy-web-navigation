@@ -6,6 +6,17 @@ All notable changes to Easy Web Navigation are documented here. The format is ba
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [1.0.1] — 2026-06-22
+
+### Changed — Final product name
+
+- Updated the public Chrome and Edge store name to "Easy Web Navigation - Keyboard Access Check".
+- Kept "Easy Web Navigation" as the compact toolbar and popup brand.
+- Regenerated final production ZIP artifacts with the updated manifest name.
+- No functionality, permissions, privacy behavior, or accessibility claims changed.
+
 ### Changed
 
 - Replaced the Easy Web Navigation production icon with the final user-provided brand artwork and regenerated all runtime, store, and GitHub asset variants.

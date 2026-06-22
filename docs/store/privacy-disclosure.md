@@ -4,8 +4,8 @@ Copy-paste answers aligned with Chrome Web Store and Microsoft Edge privacy/data
 
 ## Single purpose
 
-Easy Web Navigation helps users and developers inspect keyboard accessibility issues on web pages
-using local, read-only scanning and optional visual helpers.
+Easy Web Navigation - Keyboard Access Check helps users and developers inspect keyboard accessibility
+issues on web pages using local, read-only scanning and optional visual helpers.
 
 ## Permission justifications
 

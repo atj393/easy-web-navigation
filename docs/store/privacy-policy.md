@@ -2,9 +2,9 @@
 
 _Last updated: 2026-06-18_
 
-Easy Web Navigation is a browser extension that helps users and developers inspect keyboard
-accessibility on web pages. This policy explains what the extension does with data. In short: it
-processes pages **locally** and **collects nothing**.
+Easy Web Navigation - Keyboard Access Check ("Easy Web Navigation") is a browser extension that helps
+users and developers inspect keyboard accessibility on web pages. This policy explains what the
+extension does with data. In short: it processes pages **locally** and **collects nothing**.
 
 ## What the extension does
 

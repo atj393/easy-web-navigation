@@ -5,139 +5,129 @@ This file is plain-text memory for continuing in a fresh session. Keep it
 updated at the end of every prompt iteration.
 
 PROJECT NAME
-  Easy Web Navigation (formerly "KeyWise Web") - a privacy-first, read-only
-  keyboard accessibility companion browser extension for Chrome, Edge, and
-  Firefox. Inspection / assistive browsing tool. NOT an overlay product, NOT an
-  auto-fixer, NOT a legal compliance certifier.
-  Tagline (popup): Check whether a page is easy to use with a keyboard.
+  Store / manifest name: Easy Web Navigation - Keyboard Access Check
+  Short manifest name (short_name): Easy Web Nav
+  Compact toolbar/popup brand: Easy Web Navigation
+  Toolbar tooltip (action.default_title): Easy Web Navigation - Keyboard Access Check
+  Tagline: Check how a website works with a keyboard.
+  A privacy-first, read-only keyboard accessibility companion browser extension
+  for Chrome, Edge, and Firefox. Inspection / assistive browsing tool. NOT an
+  overlay, NOT an auto-fixer, NOT a legal compliance certifier.
 
 CURRENT PHASE
-  Phase 1C-GitHub-Profile - align the GitHub presentation (README layout +
-  repository About) with the polished style of the creator's Re-Phraser repo,
-  while keeping Easy Web Navigation's own identity and accurate claims.
-  Documentation/presentation only. No code, behavior, permission, or version change.
+  Phase 1C-Product-Name - apply the final public product-name hierarchy across
+  the manifest, store materials, README/GitHub presentation, and release ZIPs.
 
 VERSION
-  1.0.0 (unchanged; no git tag created).
+  1.0.1  (bumped from 1.0.0 at the user's request because the prior v1.0.0 ZIP
+  was already used; this is a name/metadata-only change, so a patch bump.)
+  No git tag created.
 
 CURRENT BRANCH
   main
 
 LATEST COMMIT HASH
-  (Run `git log -1 --pretty=fuller`. The Phase 1C-GitHub-Profile commit message
-   is: "docs: align GitHub product presentation".
-   Prior baselines: 1C-Icon-Refresh = 36750ec, 1C (v1.0.0 prep) = 8d94392,
-   1A-UX-Visibility-Fix = 7c2a3a8, 1A-UX-Follow-up = 0443910, 1A-UX = 29217d3,
-   1A = 2f62d78, 0H-Fix = be0956e, 0H = 2f81470, 0G = 5629d66, 0F = c27a543,
-   0P = 7f8cfed, 0E = 17b9e02, 0N rename = 7e7dd28, 0D = 54d3651, 0C = 8cd154d,
-   0B = 1890b49, 0A = 54dcba4.)
+  (Run `git log -1 --pretty=fuller`. The Phase 1C-Product-Name commit message is:
+   "chore: finalize product name".
+   Prior baselines: 1C-GitHub-Profile = e65144a, 1C-Icon-Refresh = 36750ec,
+   1C (v1.0.0 prep) = 8d94392, 1A-UX-Visibility-Fix = 7c2a3a8,
+   1A-UX-Follow-up = 0443910, 1A-UX = 29217d3, 1A = 2f62d78, 0H-Fix = be0956e,
+   0H = 2f81470, 0G = 5629d66, 0F = c27a543, 0P = 7f8cfed, 0E = 17b9e02,
+   0N rename = 7e7dd28, 0D = 54d3651, 0C = 8cd154d, 0B = 1890b49, 0A = 54dcba4.)
 
 COMMIT AUTHOR
   atj393 <alexistoby393@gmail.com>  (local git identity set for this repo)
   No Co-Authored-By. No generated-by trailers. No assistant attribution.
 
 DATE/TIME OF UPDATE
-  2026-06-22 (Phase 1C-GitHub-Profile).
+  2026-06-22 (Phase 1C-Product-Name).
 
-RE-PHRASER LAYOUT REFERENCES ADOPTED (style only)
-  - Centred header block: <div align="center"> + 96px product icon + H1 + bold
-    one-line tagline + a short benefit-first product sentence + a compact badge
-    row, closed by </div> and a horizontal divider (---).
-  - Compact, professional badge row (shields.io with logos) limited to relevant
-    badges: CI status, MIT License, Chrome Manifest V3, "tracking: none".
-  - A short table-of-contents bullet list with anchor links near the top.
-  - Small two-column tables for Privacy (Information | What happens) and
-    Permissions (Permission | Why it is needed), mirroring Re-Phraser's table
-    style.
-  - End-user-first ordering; technical/developer content kept lower.
+FINAL PRODUCT-NAME HIERARCHY
+  Full store/manifest name : Easy Web Navigation - Keyboard Access Check
+  Short manifest name      : Easy Web Nav
+  Popup brand name         : Easy Web Navigation
+  Toolbar tooltip          : Easy Web Navigation - Keyboard Access Check
+  Store short description   : Check keyboard focus, keyboard paths, and navigation on web pages.
+  Rejected name (NOT used) : "Easy Web Navigation - Make Every Site Accessible" (over-claims).
 
-NO RE-PHRASER WORDING OR PRODUCT CLAIMS COPIED (explicit)
-  Only the visual LAYOUT/structure conventions were mirrored. No Re-Phraser text,
-  taglines, feature descriptions, AI claims, or permissions were copied. Easy Web
-  Navigation's docs never mention Re-Phraser, AI, AI chat tabs, text rewriting, or
-  clipboard automation. The read-only keyboard-accessibility positioning is
-  preserved and accurate.
+FILES CHANGED
+  apps/extension/wxt.config.ts            (manifest name + short_name + action.default_title)
+  apps/extension/entrypoints/popup/App.tsx (popup TAGLINE aligned to canonical tagline)
+  package.json + apps/extension + apps/demo-sites + packages/*/package.json (version 1.0.0 -> 1.0.1)
+  README.md                               (header: full name + "Keyboard Access Check" + store-name line)
+  CLAUDE.md                               (name hierarchy + version 1.0.1)
+  SUPPORT.md                              (full-name first mention)
+  docs/github-about-settings.md           (product-name vs About description note)
+  docs/store/chrome-web-store-listing.md  (Extension name + short description)
+  docs/store/edge-add-ons-listing.md      (Extension name + short description)
+  docs/store/privacy-policy.md            (full-name first mention)
+  docs/store/privacy-disclosure.md        (full-name first mention)
+  docs/store/reviewer-test-instructions.md (full name + v1.0.1 ZIP refs)
+  docs/store/release-checklist.md         (v1.0.1 refs + manifest version note + tag example)
+  docs/store/release-notes-v1.0.1.md      (renamed from v1.0.0; title=full name; v1.0.1; name note)
+  docs/store/assets/chrome-small-promo-440x280.png (regenerated: + "KEYBOARD ACCESS CHECK" line)
+  scripts/generate-store-assets.mjs       (added K/R/D/C/H glyphs + 3-line promo layout)
+  CHANGELOG.md                            ([1.0.1] "Final product name")
+  HANDOVER.txt                            (this file)
+  Note: PRODUCT_NAME ("Easy Web Navigation") in shared-types/report-generator is
+  UNCHANGED (compact brand, asserted by tests). zip.name stays "easy-web-navigation".
+  Package names, repo slug, and artifact folder names unchanged.
 
-README CHANGES
-  README.md fully restructured to the required end-user-first order:
-  Quick start (honest "Coming soon" store table + unpacked-build testing; Node
-  only for the build path) -> How it works (3 steps) -> What it helps you check
-  -> What it is not (+ "clean result is not a guarantee") -> Privacy (table) ->
-  Permissions (table + optional-host note) -> Browser support (Chrome/Edge/
-  Firefox dev; stores coming soon) -> Known limitations (+ link to
-  docs/limitations.md) -> Help and feedback (Issues, SUPPORT.md, no-private-data
-  warning, SECURITY.md) -> For developers (architecture blurb, setup, scripts
-  table, doc links) -> License (MIT + plain-English commercial-use note). New
-  header with 96px icon, 4-badge row, intro sentence, and a ToC.
+MANIFEST VALIDATION RESULT (generated chrome-mv3/manifest.json)
+  name: Easy Web Navigation - Keyboard Access Check
+  short_name: Easy Web Nav
+  description: A keyboard accessibility companion for inspecting focus, keyboard
+              path, and navigation issues on web pages. (unchanged)
+  version: 1.0.1
+  permissions (required): activeTab, scripting, storage
+  optional_host_permissions: http://*/*, https://*/*
+  host_permissions (required): NONE
+  icons: 16/32/48/128 present
 
-GITHUB ABOUT METADATA UPDATE STATUS
-  APPLIED LIVE via `gh repo edit` (gh authenticated as atj393, repo scope).
-  Description set to exactly:
-    "A privacy-first browser extension for checking keyboard navigation, focus,
-     and visible keyboard paths."
-  Homepage left as-is (repo README anchor; no store/marketing URL added).
-  Canonical record + manual re-apply steps saved at docs/github-about-settings.md.
-
-GITHUB TOPICS
-  All 8 required topics present: accessibility, web-accessibility,
-  keyboard-navigation, a11y, browser-extension, chrome-extension, microsoft-edge,
-  wcag. Added web-accessibility + microsoft-edge; removed `vite` (inaccurate -
-  this is a WXT/pnpm project) and `tab-order` (superseded by keyboard-navigation)
-  to stay within GitHub's 20-topic cap. No forbidden topics (compliance,
-  certified, ai, overlay, auto-fix).
-
-DOCUMENTATION CHANGES
-  - README.md (restructured).
-  - CHANGELOG.md ("### Changed — GitHub product presentation" under [Unreleased]).
-  - HANDOVER.txt (this file).
-  - docs/github-about-settings.md (NEW - canonical About record + manual steps).
-  - Reviewed but UNCHANGED (already consistent/accurate): docs/store/
-    chrome-web-store-listing.md, edge-add-ons-listing.md, privacy-policy.md,
-    privacy-disclosure.md, reviewer-test-instructions.md, docs/limitations.md,
-    SUPPORT.md. No false store-live claims; privacy/permissions wording matches.
+RELEASE ZIP PATHS (git-ignored; regenerate with `pnpm release:all`)
+  artifacts/chrome/easy-web-navigation-chrome-v1.0.1.zip  (manifest at root: YES)
+  artifacts/edge/easy-web-navigation-edge-v1.0.1.zip      (manifest at root: YES)
+  ZIP base name unchanged (easy-web-navigation); only the version suffix moved to 1.0.1.
+  Manifest inside uses the final full product name. Nothing uploaded to any store.
 
 COMMANDS RUN
-  git status/branch/log/remote; gh auth status (authed atj393, repo scope)
-  gh repo view re-phraser (read-only reference); WebFetch re-phraser README (style)
-  gh repo edit atj393/easy-web-navigation (description + topics) -> applied
+  git status/branch/log; node v24.13.0; pnpm 9.15.9; gh auth status (authed atj393)
+  bumped 9 package.json versions; node generate-store-assets.mjs; visual promo verify
   pnpm typecheck -> PASS; pnpm lint -> PASS; pnpm test -> PASS (9 files, 142)
-  pnpm build -> PASS; pnpm release:inspect -> PASS (both ZIPs, manifest at root)
-  overclaim + Re-Phraser/AI wording audits (rg) -> clean
+  pnpm build + build:firefox -> PASS; pnpm run ci -> PASS
+  pnpm release:all + release:inspect -> PASS (v1.0.1 ZIPs, manifest at root)
+  manifest inspect (name/short_name/version/permissions); ZIP content check; wording audits
 
-VALIDATION RESULT
-  typecheck/lint/test/build/release:inspect all PASS (142 tests). Audits clean:
-  no legal-compliance overclaiming, no Re-Phraser/AI/ChatGPT/Claude/Gemini/
-  rewrite wording in Easy Web Navigation docs, no "store is live" claims.
+TEST RESULTS
+  142 tests across 9 files, all passing. No test changes (name/metadata only).
+  Builds, CI, and packaging all pass.
 
-PERMISSION CHANGES
-  NONE. Manifest unchanged: name Easy Web Navigation; version 1.0.0; required
-  permissions activeTab, scripting, storage; optional_host_permissions
-  http://*/*, https://*/*; required host permissions none; content_scripts [].
+NO BEHAVIOR / PERMISSION / PRIVACY CHANGES (explicit confirmation)
+  No scanner, monitoring, keyboard-path, overlay, or UI behavior changed (the
+  popup tagline is a copy/wording change only). No permissions changed. No
+  privacy behavior changed. No dependencies added. No AI/speech/analytics/
+  tracking/remote-calls/auto-fix/ARIA. No legal-compliance claims. The extension
+  does NOT claim to make every site accessible.
 
-CODE CHANGES
-  NONE. No extension code, scanner, monitoring, keyboard-path, overlay, runtime
-  asset, dependency, or version change. Documentation + GitHub metadata only.
-
-RELEASE ARTIFACT STATUS
-  Unchanged. ZIPs (git-ignored; regenerate with `pnpm release:all`):
-  artifacts/chrome/easy-web-navigation-chrome-v1.0.0.zip (manifest at root: YES)
-  artifacts/edge/easy-web-navigation-edge-v1.0.0.zip     (manifest at root: YES)
-  Nothing uploaded to any store. No tag, no GitHub Release.
+GITHUB ABOUT
+  Description unchanged and still accurate (verified via gh):
+  "A privacy-first browser extension for checking keyboard navigation, focus, and
+   visible keyboard paths." Topics unchanged. No homepage/store URL added.
 
 PUSH STATUS
-  Phase 1C-GitHub-Profile committed and pushed to origin/main.
+  Phase 1C-Product-Name committed and pushed to origin/main.
 
 KNOWN LIMITATIONS
-  - Real product screenshots still not captured (1280x800 placeholder remains;
-    see docs/store/screenshot-plan.md) - required before store submission.
-  - Manual cross-browser QA (Chrome + Edge) still pending.
+  - Real product screenshots still not captured (1280x800 placeholder remains).
+  - Manual cross-browser QA (Chrome + Edge) still pending - confirm the store
+    name + short_name display correctly in the toolbar and store preview.
   - Firefox: development build only; published Firefox support is planned.
-  - Stores not live; README and About reflect "coming soon".
+  - Stores not live; README + About reflect "coming soon".
   - Local repo folder is still named "keywise-web" (cosmetic only).
 
 NEXT RECOMMENDED PHASE
   Phase 1D - manual cross-browser QA + real screenshot capture, then user-owned
-  store submission. After approval: add the live store links to the README and
-  GitHub About, create the v1.0.0 git tag, and publish a GitHub Release attaching
-  the artifacts/chrome and artifacts/edge ZIPs. No code/feature/permission changes
+  store submission. After approval: add live store links to the README and GitHub
+  About, create the v1.0.1 git tag, and publish a GitHub Release attaching the
+  artifacts/chrome and artifacts/edge ZIPs. No code/feature/permission changes
   expected.

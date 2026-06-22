@@ -4,7 +4,9 @@
 
 # Easy Web Navigation
 
-**Check how a website works with a keyboard.**
+**Keyboard Access Check**
+
+Check how a website works with a keyboard.
 
 A privacy-first browser extension for checking keyboard navigation, focus, and visible keyboard paths.
 
@@ -16,6 +18,8 @@ A privacy-first browser extension for checking keyboard navigation, focus, and v
 </div>
 
 ---
+
+**Store name:** Easy Web Navigation - Keyboard Access Check
 
 Easy Web Navigation helps you find possible keyboard-access problems, see where keyboard focus goes,
 and understand the path through a page's visible controls — then copy or download the results to share

@@ -18,7 +18,10 @@ export default defineConfig({
     },
   },
   manifest: {
-    name: "Easy Web Navigation",
+    // Full descriptive store/manifest name. The compact toolbar/popup brand
+    // ("Easy Web Navigation") is provided by `short_name` and the in-product UI.
+    name: "Easy Web Navigation - Keyboard Access Check",
+    short_name: "Easy Web Nav",
     description:
       "A keyboard accessibility companion for inspecting focus, keyboard path, and navigation issues on web pages.",
     // Runtime PNG icons live in public/ — downscaled from the official brand
@@ -31,7 +34,7 @@ export default defineConfig({
       128: "icon-128.png",
     },
     action: {
-      default_title: "Easy Web Navigation",
+      default_title: "Easy Web Navigation - Keyboard Access Check",
       default_icon: {
         16: "icon-16.png",
         32: "icon-32.png",
