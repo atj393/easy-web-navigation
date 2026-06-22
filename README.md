@@ -1,33 +1,59 @@
-<p align="center">
-  <img src="docs/assets/easy-web-navigation-icon.png" alt="Easy Web Navigation icon" width="120" height="120" />
-</p>
+<div align="center">
 
-<h1 align="center">Easy Web Navigation</h1>
+<img src="docs/assets/easy-web-navigation-icon.png" alt="Easy Web Navigation icon" width="96" />
 
-<p align="center"><strong>Check how a website works with a keyboard.</strong></p>
+# Easy Web Navigation
 
-<p align="center">
-Easy Web Navigation helps you find possible keyboard-access problems, see keyboard focus, and
-understand the path through visible controls.
-</p>
+**Check how a website works with a keyboard.**
 
-<p align="center">
-  <a href="https://github.com/atj393/easy-web-navigation/actions/workflows/ci.yml"><img src="https://github.com/atj393/easy-web-navigation/actions/workflows/ci.yml/badge.svg" alt="CI status" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT" /></a>
-</p>
+A privacy-first browser extension for checking keyboard navigation, focus, and visible keyboard paths.
+
+[![CI](https://github.com/atj393/easy-web-navigation/actions/workflows/ci.yml/badge.svg)](https://github.com/atj393/easy-web-navigation/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Chrome MV3](https://img.shields.io/badge/Chrome-Manifest%20V3-4285F4?logo=googlechrome&logoColor=white)](https://developer.chrome.com/docs/extensions/mv3/)
+[![No tracking](https://img.shields.io/badge/tracking-none-lightgrey)](#privacy)
+
+</div>
 
 ---
 
-## Where to get it
+Easy Web Navigation helps you find possible keyboard-access problems, see where keyboard focus goes,
+and understand the path through a page's visible controls — then copy or download the results to share
+with developers or testers. It runs locally and never changes the website.
 
-| Store                      | Status      |
-| -------------------------- | ----------- |
-| **Chrome Web Store**       | Coming soon |
-| **Microsoft Edge Add-ons** | Coming soon |
+- [Quick start](#quick-start)
+- [How it works](#how-it-works)
+- [What it helps you check](#what-it-helps-you-check)
+- [What it is not](#what-it-is-not)
+- [Privacy](#privacy)
+- [Permissions](#permissions)
+- [Browser support](#browser-support)
+- [Known limitations](#known-limitations)
+- [Help and feedback](#help-and-feedback)
+- [For developers](#for-developers)
+- [License](#license)
 
-Easy Web Navigation is not published yet. Direct install links will be added here once each store
-has approved the listing. Until then it can be loaded as an unpacked development build (see
-[For developers](#for-developers)).
+---
+
+## Quick start
+
+Easy Web Navigation is not in the browser stores yet. Store links will be added here once each listing
+is approved.
+
+| Store                  | Status      |
+| ---------------------- | ----------- |
+| Chrome Web Store       | Coming soon |
+| Microsoft Edge Add-ons | Coming soon |
+
+In the meantime you can try it by loading a production build **unpacked**:
+
+1. Build the extension (see [For developers](#for-developers)) or use a build you already have in
+   `apps/extension/.output/chrome-mv3/`.
+2. Open `chrome://extensions` (or `edge://extensions`) and turn on **Developer mode**.
+3. Click **Load unpacked** and select the build folder.
+4. Pin **Easy Web Navigation** and open any website to start.
+
+> Everyday use does not require Node.js — that is only needed for the build step above.
 
 ## How it works
 
@@ -35,51 +61,74 @@ has approved the listing. Until then it can be loaded as an unpacked development
 2. **Select “Check this page”.**
 3. **Review** possible problems, keyboard focus, and the keyboard path.
 
-Everything runs locally in your browser. The extension never changes the website.
+Everything runs locally in your browser. Easy Web Navigation does not change the website.
 
 ## What it helps you check
 
-- **Keyboard use** — controls that can be used with a keyboard.
+- **Keyboard use** — controls that can be operated with a keyboard.
 - **Keyboard focus** — a clear highlight showing where focus is right now.
 - **Keyboard path** — numbered markers showing the order the Tab key moves through visible controls.
 - **Navigation** — page structure that helps people move around (landmarks, skip links).
 - **Names and labels** — whether buttons, links, and form fields have understandable names.
-- **Clear results** — a readable summary you can **copy** or **download** to share with developers or
-  testers.
+- **Results you can copy or download** — a readable summary to share with developers or testers.
 
-## Useful for
+## What it is not
 
-- Website owners
-- Front-end developers
-- QA teams
-- Accessibility testers
-- Keyboard-only users
-- Organisations reviewing their websites
+- It does not change a website.
+- It does not fix a website automatically.
+- It does not replace manual accessibility testing.
+- It does not certify legal compliance.
 
-## Privacy first
-
-- **Runs locally** in your browser.
-- **No account** required.
-- **No analytics or tracking.**
-- **No page content is uploaded.**
-- **No AI and no remote processing.**
-- **Reports stay on your device** unless you choose to share them.
-
-## What it does not do
-
-- It does **not** change a website.
-- It does **not** fix a website automatically.
-- It does **not** replace manual accessibility testing.
-- It does **not** certify legal compliance.
-
-A clean result means only that these checks found nothing — it is not a guarantee that a website is
+A clean result means only that these checks found nothing. It does not guarantee that a website is
 accessible.
+
+## Privacy
+
+Easy Web Navigation is private by design — it runs locally and uploads nothing.
+
+| Information            | What happens                                     |
+| ---------------------- | ------------------------------------------------ |
+| Website content        | Processed locally in your browser; not uploaded. |
+| Your preferences       | Stored locally in browser extension storage.     |
+| Results                | Copied or downloaded only when you choose.       |
+| Analytics and tracking | None.                                            |
+| Remote processing      | None.                                            |
+| AI                     | None.                                            |
+
+There is no account, no sign-in, and no remote server. See [SECURITY.md](SECURITY.md) for the security
+policy.
+
+## Permissions
+
+| Permission  | Why it is needed                                  |
+| ----------- | ------------------------------------------------- |
+| `activeTab` | Check the page you choose.                        |
+| `scripting` | Run the read-only checker on the page you choose. |
+| `storage`   | Remember your preferences locally.                |
+
+- No broad host permissions are required for normal page checking.
+- Optional browser access (`http://*/*`, `https://*/*`) is requested **only** when you choose
+  automatic checking for “This website” or “All websites” — never at install time and never for a
+  single page check.
+- No permission is used for analytics, advertising, tracking, or remote processing.
 
 ## Browser support
 
 - **Google Chrome** (Manifest V3)
 - **Microsoft Edge** (Manifest V3, same package as Chrome)
 - **Mozilla Firefox** — a development build exists today; published Firefox support is planned.
+- Store availability is **coming soon** (see [Quick start](#quick-start)).
+
+## Known limitations
+
+- Browser-internal pages (for example `chrome://` or `edge://`) cannot be checked.
+- A clean result is not a compliance certificate.
+- “This page only” automatic checking may require opening the extension again after you move to
+  another page.
+- The keyboard path is a visual snapshot and may need refreshing after the page changes.
+- It does not replace manual testing with real users and assistive technologies.
+
+See [docs/limitations.md](docs/limitations.md) for the full, honest list.
 
 ## Help and feedback
 
@@ -87,22 +136,10 @@ Found a problem or have an idea? Please open an issue:
 
 - **Issues:** https://github.com/atj393/easy-web-navigation/issues
 - **How to report well:** see [SUPPORT.md](SUPPORT.md).
+- **Security concerns:** follow the [Security Policy](SECURITY.md) and report privately.
 
-> When sharing a report or screenshot, please **remove any private information** first — do not include
-> passwords, customer data, personal data, tokens, or confidential page content.
-
-For security concerns, please follow the [Security Policy](SECURITY.md) and report privately rather
-than opening a public issue.
-
-## License
-
-Easy Web Navigation is released under the **MIT License**.
-
-Commercial use, modification, and distribution are allowed under the MIT License, provided that the
-license and copyright notice are retained. The software is provided without warranty. See
-[LICENSE](LICENSE).
-
----
+> When sharing a report or screenshot, please **remove anything private first** — do not post
+> passwords, private documents, customer data, tokens, or confidential website content.
 
 ## For developers
 
@@ -111,7 +148,7 @@ packages. The extension is strictly **read-only**: it never mutates inspected pa
 order, or injects ARIA — the only DOM it creates is its own isolated, extension-owned overlay
 container.
 
-### Quick start
+### Setup
 
 ```bash
 pnpm install
@@ -138,70 +175,19 @@ Then load the unpacked build from `apps/extension/.output/` in your browser's ex
 
 > Use `pnpm run ci` (not `pnpm ci` — `ci` is a reserved pnpm command).
 
-### Repository layout
-
-```
-apps/
-  extension/        WXT + React + MV3 extension (popup, options, background, content)
-  demo-sites/       Static HTML pages for manual keyboard testing
-packages/
-  shared-types/     Framework-agnostic type contracts and message types
-  wcag-rules/       WCAG criteria + rule metadata and deterministic rule evaluators
-  dom-scanner/      Read-only DOM inspection that produces a ScanResult
-  keyboard-engine/  Read-only tab-order computation + keyboard-path visibility filter
-  focus-overlay/    Read-only visual overlay (focus helper, issue locator, path markers)
-  report-generator/ Markdown + JSON report output
-assets/brand/       Canonical brand icon source (downscaled to runtime/store icons)
-```
-
-### Permissions
-
-Easy Web Navigation requests the **minimum** permissions and **no broad host permissions**:
-
-| Permission  | Why                                                                |
-| ----------- | ------------------------------------------------------------------ |
-| `activeTab` | Inspect the current tab only when you invoke the extension.        |
-| `scripting` | Inject the read-only content script into the active tab on demand. |
-| `storage`   | Persist your preferences locally.                                  |
-
-Optional host permissions (`http://*/*`, `https://*/*`) are requested **only** when you choose
-“This website” or “All websites” automatic checking — never at install time and never for manual
-checking. The content script is registered at runtime and injected only into the active tab (or, while
-automatic checking with a granted scope, into matching tabs you navigate to).
-
-### Brand icon
-
-The official icon lives at
-[`assets/brand/easy-web-navigation-icon-source.png`](assets/brand/easy-web-navigation-icon-source.png).
-Runtime icons (`apps/extension/public/icon-*.png`) and store/GitHub assets are **downscaled from that
-source** by pure-Node scripts (`apps/extension/scripts/generate-icons.mjs`,
-`scripts/generate-store-assets.mjs`) — no external dependencies. See
-[`assets/brand/README.md`](assets/brand/README.md).
-
-### Releases & store submission
-
-`pnpm release:all` builds the Chromium MV3 package and writes versioned, store-ready ZIPs
-(`manifest.json` at the root) to `artifacts/` (git-ignored):
-
-- `artifacts/chrome/easy-web-navigation-chrome-v<version>.zip` — Chrome Web Store
-- `artifacts/edge/easy-web-navigation-edge-v<version>.zip` — Microsoft Edge Add-ons (same MV3 build)
-
-Submission is **manual**. Copy-paste-ready listings, privacy policy, permission justifications,
-reviewer instructions, a release checklist, and a required manual-QA checklist live in
-[`docs/store/`](docs/store/).
-
 ### Documentation
 
 - [Architecture](docs/architecture.md) — messaging flow, overlay model, permissions/security.
 - [Limitations](docs/limitations.md) — what the tool can and cannot detect (honest scope).
 - [Contributing](CONTRIBUTING.md) — setup, scope, workflow, PR checklist.
 - [Security](SECURITY.md) — how to report a vulnerability and the privacy posture.
-- [Code of Conduct](CODE_OF_CONDUCT.md).
+- [Store documentation](docs/store/) — listings, privacy policy, permission justifications, checklists.
+- [Brand assets](assets/brand/README.md) — the canonical icon source and how variants are generated.
 
-### Accessibility & compliance disclaimer
+## License
 
-Easy Web Navigation helps inspect keyboard accessibility at runtime. **It does not certify legal
-compliance** with WCAG, BITV, EN 301 549, the European Accessibility Act (EAA), the ADA, or
-Section 508. **A clean report is not a compliance pass.** Full accessibility requires source-level
-remediation, manual testing, and user testing with assistive technologies. See
-[docs/limitations.md](docs/limitations.md).
+Easy Web Navigation is released under the **MIT License**.
+
+Commercial use, modification, and distribution are allowed under the MIT License, provided that the
+license and copyright notice are retained. The software is provided without warranty. See
+[LICENSE](LICENSE).

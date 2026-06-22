@@ -10,6 +10,12 @@ All notable changes to Easy Web Navigation are documented here. The format is ba
 
 - Replaced the Easy Web Navigation production icon with the final user-provided brand artwork and regenerated all runtime, store, and GitHub asset variants.
 
+### Changed — GitHub product presentation
+
+- Reworked the public README and GitHub repository presentation to make Easy Web Navigation easier to understand for everyday users, testers, and teams.
+- Aligned the product-documentation layout with the creator's Re-Phraser repository while retaining Easy Web Navigation's own privacy, permissions, and accessibility-inspection scope.
+- No extension functionality, permissions, privacy behavior, or store availability changed.
+
 ## [1.0.0] — 2026-06-22
 
 ### Changed
