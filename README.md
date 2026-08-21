@@ -34,6 +34,9 @@ with developers or testers. It runs locally and never changes the website.
 - [Browser support](#browser-support)
 - [Known limitations](#known-limitations)
 - [Help and feedback](#help-and-feedback)
+- [Architecture](#architecture)
+- [Interesting engineering problems](#interesting-engineering-problems)
+- [Testing](#testing)
 - [For developers](#for-developers)
 - [License](#license)
 
@@ -41,15 +44,21 @@ with developers or testers. It runs locally and never changes the website.
 
 ## Quick start
 
-Easy Web Navigation is not in the browser stores yet. Store links will be added here once each listing
-is approved.
+<div align="center">
 
-| Store                  | Status      |
-| ---------------------- | ----------- |
-| Chrome Web Store       | Coming soon |
-| Microsoft Edge Add-ons | Coming soon |
+[![Available in the Chrome Web Store](https://img.shields.io/badge/Chrome_Web_Store-Install-4285F4?logo=googlechrome&logoColor=white&style=for-the-badge)](https://chromewebstore.google.com/detail/easy-web-navigation-keybo/jaffeipdpljhnfonacndcpjdkclgjiln)
 
-In the meantime you can try it by loading a production build **unpacked**:
+</div>
+
+| Store                  | Status                                                                                                                      |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Chrome Web Store       | **Live** — [install](https://chromewebstore.google.com/detail/easy-web-navigation-keybo/jaffeipdpljhnfonacndcpjdkclgjiln) |
+| Microsoft Edge Add-ons | Not submitted. The same Chromium MV3 package is built and validated by `pnpm release:all`.                                   |
+| Firefox                | Not submitted. `pnpm build:firefox` produces a working build; it is not published.                                           |
+
+Edge users can install the Chrome listing directly, or load the Edge ZIP unpacked.
+
+You can also run a production build **unpacked**:
 
 1. Build the extension (see [For developers](#for-developers)) or use a build you already have in
    `apps/extension/.output/chrome-mv3/`.
@@ -118,10 +127,13 @@ policy.
 
 ## Browser support
 
-- **Google Chrome** (Manifest V3)
-- **Microsoft Edge** (Manifest V3, same package as Chrome)
-- **Mozilla Firefox** — a development build exists today; published Firefox support is planned.
-- Store availability is **coming soon** (see [Quick start](#quick-start)).
+- **Google Chrome** (Manifest V3) — published on the Chrome Web Store.
+- **Microsoft Edge** (Manifest V3, byte-identical package to Chrome) — builds and packages cleanly;
+  not submitted to Edge Add-ons.
+- **Mozilla Firefox** — builds via `pnpm build:firefox`; not submitted to addons.mozilla.org.
+
+Only the Chrome listing is published today. The other two are packaging targets that are built and
+validated on every release, not store listings.
 
 ## Known limitations
 
@@ -144,6 +156,113 @@ Found a problem or have an idea? Please open an issue:
 
 > When sharing a report or screenshot, please **remove anything private first** — do not post
 > passwords, private documents, customer data, tokens, or confidential website content.
+
+## Architecture
+
+A pnpm monorepo: the extension is a thin shell around framework-free analysis packages, so the
+logic that matters is testable in Node without a browser.
+
+```mermaid
+flowchart LR
+    subgraph EXT["Extension (MV3)"]
+        POPUP["Popup · React<br/>initiates every action"]
+        BG["Background worker<br/>minimal message router"]
+        CS["Content script<br/>injected on demand"]
+    end
+
+    subgraph PKG["Analysis packages · no browser APIs"]
+        SCAN["dom-scanner<br/>read-only inspection"]
+        KB["keyboard-engine<br/>tab-order computation"]
+        RULES["wcag-rules<br/>deterministic evaluators"]
+        REP["report-generator<br/>Markdown + JSON"]
+    end
+
+    OVL["focus-overlay<br/>Shadow DOM container"]
+    PAGE[["Inspected page<br/>READ ONLY"]]
+
+    POPUP -->|"typed message envelope"| CS
+    POPUP -.-> BG
+    CS --> SCAN --> RULES
+    CS --> KB
+    CS --> OVL
+    SCAN -.->|"reads, never mutates"| PAGE
+    KB -.->|"reads, never mutates"| PAGE
+    OVL -->|"own container only"| PAGE
+    CS -->|"ScanResult"| POPUP --> REP
+
+    classDef ro stroke-dasharray: 4 4
+    class PAGE ro
+```
+
+The dashed boundary is the product's central constraint: everything crossing into the page is a
+read, except the overlay, which only ever touches a container the extension created itself.
+
+**Required permissions are `activeTab`, `scripting`, `storage` — and no host permissions at all.**
+WXT would normally add `host_permissions: ["<all_urls>"]` for a runtime-registered content script; a
+`build:manifestGenerated` hook deletes it. Broad host access is requested at runtime, only if the
+user turns on automatic checking for a site.
+
+Full detail: [docs/architecture.md](docs/architecture.md).
+
+## Interesting engineering problems
+
+**1. Drawing on a page without becoming part of it.**
+An overlay that highlights focus has to sit above arbitrary third-party CSS without inheriting it,
+and without the inspected page's own styles leaking in and breaking the markers. It also must not
+become a focusable element, or the tool would alter the very tab order it exists to measure. The
+overlay lives in a Shadow DOM container (`attachShadow({ mode: "open" })`) owned by the extension,
+removed entirely when unused — so page CSS cannot reach it, its CSS cannot reach the page, and it
+contributes nothing to the document's focus order.
+
+**2. Three execution contexts that cannot share memory.**
+Popup, background worker, and content script are separate JavaScript realms; MV3 additionally lets
+the browser terminate the background worker at any time. Anything they exchange must survive
+structured cloning and an unreliable peer. Message shapes live in `@easy-web-navigation/shared-types`
+as a typed envelope, so a change to `ScanResult` is a compile error in every context at once
+instead of a runtime `undefined` in one of them. The popup drives the work and messages the tab
+directly; the background worker is deliberately kept to a minimal router so there is no state to
+lose when it is torn down.
+
+**3. Single-page apps move the ground under the scan.**
+A `ScanResult` is a snapshot. In a React or Angular app the DOM it described can be gone a moment
+later without a page load, so cached findings quietly become lies. Monitoring watches URL signals to
+detect route changes and refresh — deliberately best-effort, and documented as such in
+[limitations.md](docs/limitations.md) rather than presented as complete. The honest alternative to
+a guarantee this cannot make is saying where it stops.
+
+**4. Three browsers, one implementation.**
+Chrome, Edge, and Firefox differ in extension APIs and packaging, and the usual outcome is a
+per-browser fork that drifts. Here all real logic sits in browser-free packages that take a DOM and
+return data, so the browser-specific surface is only the WXT entrypoints. Chrome and Edge ship a
+byte-identical MV3 package; Firefox is a separate build target from the same source. The analysis
+packages are tested in Node, so most of the suite never needs a browser at all.
+
+## Testing
+
+**142 unit tests across 9 files**, all passing, run on every push by
+[CI](https://github.com/atj393/easy-web-navigation/actions/workflows/ci.yml).
+
+| Package / area | What the tests pin down |
+|---|---|
+| `dom-scanner` (44) | Read-only inspection; each rule's positive and negative cases |
+| `monitoring` (33) | Automatic-checking state machine, scope handling, teardown |
+| `keyboard-engine` (16) | Tab-order computation, visibility filtering, the 100-item cap and its "100 of 342" reporting |
+| `focus-overlay` (16) | Shadow-DOM container lifecycle, marker rendering, cleanup |
+| `spa-monitoring` (14) | URL-signal route-change detection |
+| `report-generator` (6) | Markdown and JSON output shape |
+| `clipboard` (5) | Copy/download paths |
+| `shared-types` / `wcag-rules` (8) | Message-envelope and criteria metadata invariants |
+
+Because the analysis packages take a DOM and return plain data, they are tested directly in Node —
+no browser automation, no fixtures of a live page.
+
+Not covered: real end-to-end runs in a packaged browser (the demo pages in `apps/demo-sites/` exist
+for that, checked by hand), and store-review behaviour.
+
+```bash
+pnpm test          # vitest, what CI runs
+pnpm run ci        # typecheck -> lint -> test -> build
+```
 
 ## For developers
 

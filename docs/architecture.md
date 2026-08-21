@@ -1,7 +1,9 @@
 # Architecture
 
-> Phase 0A documents the intended architecture. Most behavior described here is represented by
-> placeholders in the current code.
+> **Status:** this describes the architecture as shipped in v1.0.1 (published on the Chrome Web
+> Store). The section headings keep their original phase labels as development history; they do not
+> mean the behaviour is unimplemented. Where something is genuinely partial or best-effort it is
+> called out in [limitations.md](limitations.md).
 
 ## Extension architecture
 
@@ -178,7 +180,9 @@ step for packages in Phase 0A.
   and never auto-fixes. Any future "safe enhancement" must be explicit, user-initiated, and
   conservative (see [limitations.md](limitations.md)).
 - **No network, no AI, no speech.** The extension does not call external services.
-- **Future host access** (e.g. `optional_host_permissions`) is documented but not relied upon by v0.
+- **Optional host access.** `optional_host_permissions` (`http://*/*`, `https://*/*`) is requested at
+  runtime, and only when the user turns on automatic checking with a site or all-sites scope. Manual
+  scanning never needs it. Nothing is requested at install time.
 
 ## Release packaging (Phase 1A)
 
