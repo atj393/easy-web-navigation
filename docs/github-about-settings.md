@@ -50,8 +50,13 @@ auto-fix
 
 ## Homepage / website
 
-Leave the homepage **unset** to a marketing/store URL. Do not add a Chrome Web Store or Microsoft
-Edge Add-ons link until those listings are actually live.
+The Chrome Web Store listing is live, so the homepage may now point at it:
+
+```
+https://chromewebstore.google.com/detail/easy-web-navigation-keybo/jaffeipdpljhnfonacndcpjdkclgjiln
+```
+
+Do not add a Microsoft Edge Add-ons or Firefox link — those listings do not exist yet.
 
 ## How to apply (GitHub CLI)
 

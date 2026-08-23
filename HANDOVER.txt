@@ -13,6 +13,26 @@ PROJECT NAME
   overlay, NOT an auto-fixer, NOT a legal compliance certifier.
 
 CURRENT PHASE
+  Recruiter-facing documentation pass (docs only, no source/behavior changes).
+  The Chrome Web Store listing is LIVE, so the README's "not in the stores yet /
+  Coming soon" text was factually wrong and contradicted the live store link on
+  the GitHub profile README. Corrected store status, and added the architecture,
+  engineering-problems and testing material the repository was missing.
+
+  Branch:  claude/github-profile-upgrade-v79mbm
+  Files changed:
+    README.md                       store status, browser support, TOC,
+                                    + Architecture (Mermaid), + Interesting
+                                    engineering problems, + Testing
+    docs/architecture.md            removed the stale "Phase 0A / placeholders"
+                                    banner; corrected the optional-host-access
+                                    bullet (it is used, not "future / not v0")
+    docs/github-about-settings.md   homepage may now point at the live listing
+    HANDOVER.txt                    this entry
+  Test results: pnpm run ci -> typecheck, lint, 142/142 vitest tests, build all
+                pass locally.
+
+PREVIOUS PHASE
   Release archive and GitHub protection.
   Created a permanent archive of the submitted Chrome Web Store v1.0.1 package
   (release branch + annotated tag + GitHub Release + SHA-256 checksums) and
@@ -120,8 +140,21 @@ IMPORTANT CAVEAT
   rules or delete repository data later, so it is not an irreversible legal vault.
 
 NEXT RECOMMENDED PHASE
-  Await Chrome Web Store / Microsoft Edge Add-ons review outcome. After approval:
-  add the live store links to the README and GitHub About. Future fixes go on a
-  new branch -> PR into main (main now requires PRs); cut the next release as a
-  new tag (e.g. v1.0.2) and a new release/v1.0.2 archive branch. Do not move or
-  delete v1.0.1.
+  Chrome Web Store: LIVE. README + docs now say so.
+    https://chromewebstore.google.com/detail/easy-web-navigation-keybo/jaffeipdpljhnfonacndcpjdkclgjiln
+  Edge Add-ons / Firefox: still NOT submitted. The README now states this plainly
+  instead of "coming soon". If either is submitted later, update the Quick start
+  table and the Browser support section together - they are the two places that
+  claim store status.
+
+  Manual tasks remaining (owner-only, cannot be done from a session):
+    - Set the GitHub About homepage to the live listing (see
+      docs/github-about-settings.md).
+    - Add a repository social-preview image.
+    - Record a short demo GIF (open extension -> check page -> overlay tab path
+      -> results) and add it under Quick start. This is the single biggest
+      remaining gap for a recruiter reading the README.
+
+  Future fixes go on a new branch -> PR into main (main requires PRs); cut the
+  next release as a new tag (e.g. v1.0.2) and a new release/v1.0.2 archive
+  branch. Do not move or delete v1.0.1.
