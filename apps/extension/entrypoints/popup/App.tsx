@@ -508,6 +508,7 @@ export function App() {
               className="field__select"
               value={tabPathMaxItems}
               onChange={(e) => changeTabPathMaxItems(Number(e.target.value) as TabPathMaxItems)}
+              aria-describedby="tab-path-max-items-hint"
             >
               {TAB_PATH_MAX_ITEMS_VALUES.map((value) => (
                 <option key={value} value={value}>
@@ -517,10 +518,10 @@ export function App() {
                 </option>
               ))}
             </select>
-            <span className="field__hint">
-              More markers can make very large pages slower and harder to read.
-            </span>
           </label>
+          <span id="tab-path-max-items-hint" className="field__hint">
+            More markers can make very large pages slower and harder to read.
+          </span>
         </div>
 
         {tabPathOn && tabPathText && (
