@@ -17,9 +17,7 @@ A privacy-first browser extension for checking keyboard navigation, focus, and v
 [![Tests](https://img.shields.io/badge/tests-142-blue)](#testing)
 [![No tracking](https://img.shields.io/badge/tracking-none-lightgrey)](#privacy)
 
-[<img src="docs/assets/brag.jpg" width="720" alt="Easy Web Navigation launch video" />](docs/assets/brag.mp4)
-
-▶ Watch the launch video
+https://github.com/user-attachments/assets/1ef84180-ccef-45e1-b4ed-cd6fd4c37a85
 
 </div>
 
