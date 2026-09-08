@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Correct Widgets Page — Easy Web Navigation Demo</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 16px;
+        line-height: 1.6;
+      }
+      :focus-visible {
+        outline: 3px solid #2563eb;
+        outline-offset: 2px;
+      }
+      [role="tablist"],
+      [role="menu"],
+      [role="radiogroup"] {
+        display: flex;
+        gap: 8px;
+        border: 1px solid #ccc;
+        padding: 8px;
+        border-radius: 8px;
+      }
+      [role="tab"],
+      [role="menuitem"],
+      [role="radio"] {
+        padding: 4px 10px;
+        border: 1px solid #999;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      [role="tab"][aria-selected="true"],
+      [role="radio"][aria-checked="true"] {
+        background: #2563eb;
+        color: #fff;
+      }
+      .note {
+        color: #555;
+        font-size: 14px;
+      }
+      .icon-btn {
+        display: inline-flex;
+        padding: 6px;
+      }
+      #hidden-host {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <!--
+      FALSE-POSITIVE FIXTURE.
+
+      Every widget on this page is built CORRECTLY. A keyboard-accessibility
+      checker must find nothing wrong with any of them. Each one used to be
+      reported as a problem, which is worse than useless: it teaches people to
+      ignore the tool.
+
+      The page deliberately has a <main> and a skip link so the landmark and
+      skip-link rules stay quiet too, leaving only the patterns under test.
+    -->
+    <a href="#main">Skip to main content</a>
+    <header>
+      <nav aria-label="Primary"><a href="#main">Home</a></nav>
+    </header>
+
+    <main id="main">
+      <h1>Correctly built widgets</h1>
+      <p class="note">
+        Checking this page should report no problems. Anything reported here is a false positive.
+      </p>
+
+      <h2>Roving tabindex: tabs</h2>
+      <p class="note">
+        One tab is in the tab order; the arrow keys move between the rest. The inactive tabs carry
+        <code>tabindex="-1"</code> by design.
+      </p>
+      <div role="tablist" aria-label="Sample tabs">
+        <button role="tab" id="t1" aria-selected="true" aria-controls="p1" tabindex="0">
+          First
+        </button>
+        <button role="tab" id="t2" aria-selected="false" aria-controls="p2" tabindex="-1">
+          Second
+        </button>
+        <button role="tab" id="t3" aria-selected="false" aria-controls="p3" tabindex="-1">
+          Third
+        </button>
+      </div>
+      <div role="tabpanel" id="p1" aria-labelledby="t1">First panel</div>
+      <div role="tabpanel" id="p2" aria-labelledby="t2" hidden>Second panel</div>
+      <div role="tabpanel" id="p3" aria-labelledby="t3" hidden>Third panel</div>
+
+      <h2>Roving tabindex: menu and radio group</h2>
+      <div role="menu" aria-label="Edit">
+        <div role="menuitem" tabindex="0">Copy</div>
+        <div role="menuitem" tabindex="-1">Paste</div>
+        <div role="menuitem" tabindex="-1">Delete</div>
+      </div>
+      <div role="radiogroup" aria-label="Delivery speed">
+        <div role="radio" tabindex="0" aria-checked="true">Standard</div>
+        <div role="radio" tabindex="-1" aria-checked="false">Express</div>
+      </div>
+
+      <h2>Deliberately unavailable controls</h2>
+      <p class="note">
+        A disabled control is meant to be out of the tab order. So is anything inside an
+        <code>inert</code> region — which is how the page behind an open dialog behaves.
+      </p>
+      <button disabled onclick="void 0">Save (disabled)</button>
+      <div role="button" aria-disabled="true">Publish (unavailable)</div>
+      <section inert aria-hidden="true">
+        <button>Behind a dialog</button>
+        <div role="button">Also behind a dialog</div>
+      </section>
+
+      <h2>Icon-only controls with real names</h2>
+      <p class="note">The label lives on the icon, which is where component libraries put it.</p>
+      <button class="icon-btn">
+        <svg width="16" height="16" aria-label="Close" role="img">
+          <rect width="16" height="16" fill="#333"></rect>
+        </svg>
+      </button>
+      <button class="icon-btn"><img src="data:," alt="Search" width="16" height="16" /></button>
+      <button class="icon-btn">
+        <span aria-hidden="true">&times;</span><span>Dismiss notice</span>
+      </button>
+      <a href="#main" class="icon-btn"
+        ><img src="data:," alt="" width="16" height="16" />Back to top</a
+      >
+
+      <h2>Labelled form controls</h2>
+      <p class="note">
+        A dropdown is not named by its options, and a text area is not named by its contents — both
+        of these carry real labels.
+      </p>
+      <p>
+        <label for="colour">Colour</label>
+        <select id="colour">
+          <option>Red</option>
+          <option>Blue</option>
+        </select>
+      </p>
+      <p>
+        <label
+          >Size
+          <select>
+            <option>Small</option>
+          </select></label
+        >
+      </p>
+      <p>
+        <label for="notes">Notes</label>
+        <textarea id="notes" rows="2">Existing draft text</textarea>
+      </p>
+
+      <h2>Hidden shadow host</h2>
+      <p class="note">
+        The control inside this component is not on screen, because its host is
+        <code>display: none</code>. It must not be reported.
+      </p>
+      <div id="hidden-host"></div>
+
+      <h2>Invalid tabindex on a real button</h2>
+      <p class="note">
+        HTML ignores an unparseable <code>tabindex</code>, so this button is still focusable.
+      </p>
+      <button tabindex="not-a-number" onclick="void 0">Still reachable</button>
+    </main>
+
+    <script>
+      // A component whose host is hidden. Its button is genuinely off screen.
+      const host = document.getElementById("hidden-host");
+      host.attachShadow({ mode: "open" }).innerHTML =
+        '<div role="button">Inside a hidden component</div>';
+
+      // Minimal roving-tabindex behaviour so the page behaves as it claims.
+      for (const group of document.querySelectorAll(
+        '[role="tablist"], [role="menu"], [role="radiogroup"]',
+      )) {
+        const itemRole =
+          group.getAttribute("role") === "tablist"
+            ? "tab"
+            : group.getAttribute("role") === "menu"
+              ? "menuitem"
+              : "radio";
+        const items = [...group.querySelectorAll(`[role="${itemRole}"]`)];
+        group.addEventListener("keydown", (event) => {
+          const current = items.indexOf(document.activeElement);
+          if (current < 0) return;
+          let next = current;
+          if (event.key === "ArrowRight" || event.key === "ArrowDown")
+            next = (current + 1) % items.length;
+          else if (event.key === "ArrowLeft" || event.key === "ArrowUp")
+            next = (current - 1 + items.length) % items.length;
+          else return;
+          event.preventDefault();
+          items.forEach((item, i) => item.setAttribute("tabindex", i === next ? "0" : "-1"));
+          items[next].focus();
+        });
+      }
+    </script>
+  </body>
+</html>
