@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SPA Routes Page — Easy Web Navigation Demo</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 16px;
+        line-height: 1.6;
+      }
+      :focus-visible {
+        outline: 3px solid #2563eb;
+        outline-offset: 2px;
+      }
+      nav button {
+        margin-right: 8px;
+      }
+      .note {
+        color: #555;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <!--
+      SPA FIXTURE.
+
+      Exercises every navigation signal the route monitor watches, without a
+      framework: pushState, replaceState, hashchange and Back/Forward
+      (popstate). Each route renders DIFFERENT controls, and one of them
+      replaces the whole <main>, which is the case that used to leave the
+      overlay detached and invisible.
+
+      Route 3 changes the DOM WITHOUT changing the URL, which no URL-based
+      monitor can detect. That is a real limitation of best-effort SPA
+      monitoring, and this page makes it easy to see rather than argue about.
+    -->
+    <a href="#main">Skip to main content</a>
+    <header>
+      <nav aria-label="Routes">
+        <button type="button" data-route="/one">pushState /one</button>
+        <button type="button" data-route="/two" data-replace="1">replaceState /two</button>
+        <button type="button" data-hash="#three">hash #three</button>
+        <button type="button" id="swap">Replace main (no URL change)</button>
+        <button type="button" id="back">Back</button>
+      </nav>
+    </header>
+
+    <main id="main">
+      <h1>SPA routes</h1>
+      <p class="note">Current route: <span id="where">/</span></p>
+      <div id="view"></div>
+    </main>
+
+    <script>
+      const view = document.getElementById("view");
+      const where = document.getElementById("where");
+      let counter = 0;
+
+      function render(name) {
+        counter += 1;
+        where.textContent = location.pathname + location.search + location.hash;
+        // Each route has a different, deliberately imperfect set of controls so
+        // a re-scan after the route change has something new to report.
+        view.innerHTML =
+          `<h2>Route ${name}</h2>` +
+          `<button type="button">Named action ${counter}</button>` +
+          `<div role="button" tabindex="-1">Unreachable on ${name}</div>` +
+          `<input type="text" placeholder="Unlabeled on ${name}">` +
+          `<button type="button"><span aria-hidden="true">&times;</span></button>`;
+      }
+
+      for (const button of document.querySelectorAll("[data-route], [data-hash]")) {
+        button.addEventListener("click", () => {
+          const route = button.dataset.route;
+          if (route) {
+            const method = button.dataset.replace ? "replaceState" : "pushState";
+            history[method]({}, "", route);
+            render(route);
+          } else {
+            location.hash = button.dataset.hash;
+          }
+        });
+      }
+
+      window.addEventListener("hashchange", () => render(location.hash));
+      window.addEventListener("popstate", () => render(location.pathname + location.hash));
+
+      // Replaces <main> outright, detaching anything an extension attached to
+      // the old body subtree.
+      document.getElementById("swap").addEventListener("click", () => {
+        const fresh = document.createElement("main");
+        fresh.id = "main";
+        fresh.innerHTML =
+          "<h1>SPA routes</h1>" +
+          '<p class="note">Current route: <span id="where">' +
+          location.pathname +
+          "</span></p>" +
+          '<div id="view"></div>';
+        document.querySelector("main").replaceWith(fresh);
+      });
+
+      document.getElementById("back").addEventListener("click", () => history.back());
+
+      render("/");
+    </script>
+  </body>
+</html>

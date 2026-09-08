@@ -33,6 +33,15 @@ export default tseslint.config(
     },
   },
   {
+    // Browser-automation scripts contain callbacks that are serialised and run
+    // inside the page (playwright's page.evaluate), so they legitimately use
+    // browser globals alongside Node ones.
+    files: ["scripts/check-popup-stability.mjs"],
+    languageOptions: {
+      globals: { ...globals.node, ...globals.browser },
+    },
+  },
+  {
     files: ["**/*.{ts,tsx}"],
     languageOptions: {
       ecmaVersion: 2022,

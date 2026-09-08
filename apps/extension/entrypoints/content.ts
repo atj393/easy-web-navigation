@@ -3,8 +3,9 @@ import { scanDocument } from "@easy-web-navigation/dom-scanner";
 import { computeTabPath } from "@easy-web-navigation/keyboard-engine";
 import { FocusOverlayController } from "@easy-web-navigation/focus-overlay";
 import type { ExtensionMessage, TabPathSummary } from "@easy-web-navigation/shared-types";
-import { monitoringItem } from "../lib/settings";
+import { monitoringItem, settingsItem } from "../lib/settings";
 import { normalizeTabPathMaxItems } from "../lib/monitoring";
+import { isSiteDisabled } from "../lib/site-rules";
 import { createSpaRouteMonitor, type SpaRouteMonitor } from "../lib/spa-monitoring";
 
 /**
@@ -40,7 +41,12 @@ export default defineContentScript({
     if (w[FLAG]) return;
     w[FLAG] = true;
 
-    const overlay = new FocusOverlayController({ doc: document });
+    /** Remove the overlay container once nothing wants it on screen. */
+    function releaseOverlayIfIdle(): void {
+      if (!focusHelperEnabled && !tabPathEnabled && !overlay.hasContent()) overlay.unmount();
+    }
+
+    const overlay = new FocusOverlayController({ doc: document, onIdle: releaseOverlayIfIdle });
     let focusHelperEnabled = false;
     let tabPathEnabled = false;
     let lastTabSummary: TabPathSummary | null = null;
@@ -66,7 +72,7 @@ export default defineContentScript({
       focusHelperEnabled = false;
       document.removeEventListener("focusin", onFocusIn, true);
       overlay.clearHighlight("focus");
-      if (!tabPathEnabled && !overlay.hasContent()) overlay.unmount();
+      releaseOverlayIfIdle();
     }
 
     function enableTabPath(options?: { maxItems?: number }): TabPathSummary {
@@ -81,7 +87,7 @@ export default defineContentScript({
       tabPathEnabled = false;
       lastTabSummary = null;
       overlay.clearTabPath();
-      if (!focusHelperEnabled && !overlay.hasContent()) overlay.unmount();
+      releaseOverlayIfIdle();
     }
 
     /**
@@ -105,6 +111,11 @@ export default defineContentScript({
      * replaced <body>. Read-only throughout.
      */
     async function refreshForRoute(): Promise<void> {
+      // A route change can move to a path the user excluded.
+      if (await isExcludedSite()) {
+        applyMonitoring(false, false);
+        return;
+      }
       // Use the LATEST saved preferences, not stale in-memory values.
       let wantFocus = focusHelperEnabled;
       let wantTab = tabPathEnabled;
@@ -254,10 +265,21 @@ export default defineContentScript({
     // the remembered visual helpers, run one read-only scan, and begin SPA
     // route monitoring. This runs only because the user explicitly enabled
     // monitoring.
+    /** Whether the user listed this site as one to stay off. */
+    async function isExcludedSite(): Promise<boolean> {
+      try {
+        const options = await settingsItem.getValue();
+        return isSiteDisabled(location.href, options.disabledDomains);
+      } catch {
+        return false;
+      }
+    }
+
     void (async () => {
       try {
         const monitoring = await monitoringItem.getValue();
         if (!monitoring.enabled) return;
+        if (await isExcludedSite()) return;
         applyMonitoring(
           monitoring.focusHelperEnabled,
           monitoring.tabPathEnabled,
@@ -277,17 +299,20 @@ export default defineContentScript({
       monitoringItem.watch((next, prev) => {
         const wasEnabled = prev?.enabled ?? false;
         if (next.enabled && !wasEnabled) {
-          applyMonitoring(
-            next.focusHelperEnabled,
-            next.tabPathEnabled,
-            normalizeTabPathMaxItems(next.tabPathMaxItems),
-          );
-          try {
-            scanDocument(document);
-          } catch {
-            /* read-only */
-          }
-          startSpaMonitor();
+          void (async () => {
+            if (await isExcludedSite()) return;
+            applyMonitoring(
+              next.focusHelperEnabled,
+              next.tabPathEnabled,
+              normalizeTabPathMaxItems(next.tabPathMaxItems),
+            );
+            try {
+              scanDocument(document);
+            } catch {
+              /* read-only */
+            }
+            startSpaMonitor();
+          })();
         } else if (!next.enabled && wasEnabled) {
           stopSpaMonitor();
           applyMonitoring(false, false);

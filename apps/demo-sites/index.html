@@ -36,6 +36,25 @@
       <li>
         <a href="./form-labels-page.html">Form labels page</a> — labeled vs. unlabeled inputs.
       </li>
+      <li>
+        <a href="./correct-widgets-page.html">Correct widgets page</a> — patterns that are built
+        properly and must <strong>not</strong> be reported: roving-tabindex tabs, menus and radio
+        groups, disabled and <code>inert</code> controls, icon buttons labelled on the icon, and a
+        component whose host is hidden.
+      </li>
+      <li>
+        <a href="./large-tab-order-page.html">Large tab order page</a> — over a thousand controls,
+        for comparing the keyboard-path marker limits and for spotting slow marker drawing.
+      </li>
+      <li>
+        <a href="./spa-routes-page.html">SPA routes page</a> — pushState, replaceState, hash
+        changes, Back/Forward, a full <code>&lt;main&gt;</code> replacement, and one DOM change with
+        no URL change at all.
+      </li>
     </ul>
+    <p>
+      The correct-widgets page is the important one to run after changing a rule: everything on it
+      is correct, so anything reported there is a false positive.
+    </p>
   </body>
 </html>

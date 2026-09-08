@@ -124,3 +124,38 @@ textarea:focus-visible {
   outline: 2px solid #2563eb;
   outline-offset: 2px;
 }
+
+.options__hint--error {
+  color: #b42318;
+  font-weight: 600;
+}
+
+.options__warn {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #b54708;
+}
+
+.options__row--block {
+  gap: 4px;
+}
+
+.options__row code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.95em;
+}
+
+@media (prefers-color-scheme: dark) {
+  .options__hint--error {
+    color: #ff9a90;
+  }
+
+  .options__warn {
+    color: #f3ba63;
+  }
+
+  .options__tag {
+    background: rgba(243, 186, 99, 0.18);
+    color: #f3ba63;
+  }
+}

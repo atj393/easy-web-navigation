@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Large Tab Order Page — Easy Web Navigation Demo</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        margin: 0;
+        padding: 16px;
+        line-height: 1.5;
+      }
+      :focus-visible {
+        outline: 3px solid #2563eb;
+        outline-offset: 2px;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        padding: 2px 0;
+      }
+      .row label {
+        min-width: 90px;
+      }
+      .drawer {
+        overflow: hidden;
+        width: 0;
+      }
+      .offscreen {
+        position: fixed;
+        left: -9999px;
+        top: 0;
+      }
+      .note {
+        color: #555;
+      }
+    </style>
+  </head>
+  <body>
+    <!--
+      PERFORMANCE AND CAP FIXTURE.
+
+      Builds a page with well over a thousand controls in the tab order, so the
+      keyboard-path marker limits (100 / 250 / 500) can be compared on
+      something realistic, and so drawing markers can be checked for the layout
+      thrashing that used to make a large page feel frozen.
+
+      It also carries the two shapes the keyboard-path filter must EXCLUDE: a
+      collapsed drawer clipped to zero width, and a control translated fully
+      off-canvas. Both are in the tab order but invisible, so neither should
+      receive a marker or be counted in the summary.
+    -->
+    <a href="#main">Skip to main content</a>
+    <header>
+      <nav aria-label="Primary"><a href="#main">Home</a></nav>
+    </header>
+
+    <main id="main">
+      <h1>Large tab order</h1>
+      <p class="note" id="count">Building…</p>
+
+      <div class="drawer" aria-label="Collapsed drawer">
+        <button>Inside a collapsed drawer</button>
+      </div>
+      <div class="offscreen">
+        <button>Translated off canvas</button>
+      </div>
+
+      <div id="rows"></div>
+    </main>
+
+    <script>
+      const CONTROLS = 400;
+      const rows = document.getElementById("rows");
+      const fragment = document.createDocumentFragment();
+      for (let i = 0; i < CONTROLS; i += 1) {
+        const row = document.createElement("div");
+        row.className = "row";
+        row.innerHTML =
+          `<label for="f${i}">Field ${i}</label>` +
+          `<input id="f${i}" type="text">` +
+          `<a href="#main">Link ${i}</a>` +
+          `<button type="button">Action ${i}</button>`;
+        fragment.appendChild(row);
+      }
+      rows.appendChild(fragment);
+      document.getElementById("count").textContent =
+        `${document.querySelectorAll("a[href], button, input").length} controls in the tab order, ` +
+        "plus two that are in the tab order but not visible.";
+    </script>
+  </body>
+</html>

@@ -94,3 +94,47 @@ describe("@easy-web-navigation/report-generator — JSON", () => {
     expect(withTab.tabPathSummary).toEqual(tabPathSummary);
   });
 });
+
+/** A fresh, mutable copy so a test can vary one field safely. */
+function freshResult(): ScanResult {
+  return { ...result, issues: result.issues.map((i) => ({ ...i })) };
+}
+
+describe("report options", () => {
+  it("records the tool version and rule profile so a finding can be traced", () => {
+    const md = generateMarkdownReport(freshResult(), { toolVersion: "1.0.2" });
+    expect(md).toContain("**Produced by:** Easy Web Navigation 1.0.2");
+    expect(md).toContain("**Rule profile:**");
+    const json = JSON.parse(generateJsonReport(freshResult(), { toolVersion: "1.0.2" }));
+    expect(json.toolVersion).toBe("1.0.2");
+  });
+
+  it("omits WCAG references when the user turned them off", () => {
+    const withRefs = generateMarkdownReport(freshResult());
+    expect(withRefs).toContain("- WCAG:");
+    const without = generateMarkdownReport(freshResult(), { showWcagReferences: false });
+    expect(without).not.toContain("- WCAG:");
+    // The finding itself must survive; only the reference line goes.
+    expect(without).toContain("- Rule: `");
+
+    const json = JSON.parse(generateJsonReport(freshResult(), { showWcagReferences: false }));
+    for (const issue of json.issues) expect(issue.wcag).toBeUndefined();
+  });
+
+  it("tells the reader what the file can contain before they share it", () => {
+    const md = generateMarkdownReport(freshResult());
+    expect(md).toContain("was not uploaded anywhere");
+    expect(md).toMatch(/selector/i);
+    expect(md).toContain("Review it before sharing.");
+    expect(JSON.parse(generateJsonReport(freshResult())).privacyNote).toBeTruthy();
+  });
+
+  it("never includes form values or page HTML", () => {
+    const result = freshResult();
+    result.issues[0].elementPreview = '<input name="ssn" type="text">';
+    const md = generateMarkdownReport(result);
+    // Only the sanitized preview the scanner produced; no value attribute.
+    expect(md).toContain('<input name="ssn" type="text">');
+    expect(md).not.toMatch(/<html|<body|document\.|value="/);
+  });
+});

@@ -216,3 +216,29 @@ export function keyboardPathSummaryText(summary: TabPathSummary): { line: string
     hint: "Choose a higher limit to show more.",
   };
 }
+
+/**
+ * File name for a downloaded report: the page host plus the scan date, so
+ * repeated downloads do not silently overwrite each other in the browser's
+ * downloads folder. Falls back to a generic name for unparseable URLs.
+ * Only host and date are used — never the path, query, or fragment, which can
+ * carry private information.
+ */
+export function reportFileName(url: string, scannedAt: number): string {
+  let host = "page";
+  try {
+    const parsed = new URL(url);
+    if (parsed.host) host = parsed.host;
+  } catch {
+    /* unparseable URL — keep the generic name */
+  }
+  const safeHost = host.replace(/[^a-z0-9.-]/gi, "-").slice(0, 60);
+  const stamp = Number.isFinite(scannedAt) && scannedAt > 0 ? new Date(scannedAt) : new Date();
+  let date: string;
+  try {
+    date = stamp.toISOString().slice(0, 10);
+  } catch {
+    date = "report";
+  }
+  return `easy-web-navigation-${safeHost}-${date}.md`;
+}

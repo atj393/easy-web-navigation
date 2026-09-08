@@ -15,7 +15,7 @@ describe("@easy-web-navigation/shared-types", () => {
   });
 
   it("exposes sane default settings", () => {
-    expect(DEFAULT_SETTINGS.enableVisibleFocusHelper).toBe(true);
+    expect(DEFAULT_SETTINGS.showWcagReferences).toBe(true);
     expect(Array.isArray(DEFAULT_SETTINGS.disabledDomains)).toBe(true);
     expect(DEFAULT_SETTINGS.disabledDomains).toHaveLength(0);
   });

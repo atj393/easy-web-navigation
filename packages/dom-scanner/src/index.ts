@@ -27,6 +27,15 @@ export const PROFILE = "WCAG 2.2 Keyboard & Navigation Profile (Level A/AA)";
 /** Elements that are never relevant to inspect. */
 const SKIP_TAGS = new Set(["SCRIPT", "STYLE", "TEMPLATE", "NOSCRIPT"]);
 
+/**
+ * The extension's own visual overlay container. It must never appear in a scan
+ * or in the computed keyboard path: the tool measures the page, not itself.
+ * The overlay carries no focusable content today, so this is belt-and-braces —
+ * but it also stops the deep query descending into the overlay's shadow root
+ * on every scan, which on a page with a full keyboard path is real work.
+ */
+const OWN_OVERLAY_ATTR = "data-easy-web-navigation-overlay";
+
 /** Selector for natively keyboard-focusable elements (excluding tabindex). */
 const NATURAL_FOCUSABLE = [
   "a[href]",
@@ -38,7 +47,6 @@ const NATURAL_FOCUSABLE = [
   "iframe",
   "audio[controls]",
   "video[controls]",
-  "details",
   '[contenteditable="true"]',
   '[contenteditable=""]',
 ].join(", ");
@@ -46,11 +54,28 @@ const NATURAL_FOCUSABLE = [
 /** Candidates worth considering for focusability (natural + anything with tabindex). */
 const FOCUSABLE_CANDIDATES = `${NATURAL_FOCUSABLE}, [tabindex]`;
 
+/**
+ * Per-pass memoisation.
+ *
+ * A scan is a single synchronous read of a DOM that cannot change underneath
+ * it, so every derived fact is stable for the duration. Without this the
+ * keyboard-path filter re-resolved computed styles for every ancestor of every
+ * candidate — on a page with a few hundred controls that is tens of thousands
+ * of `getComputedStyle` calls, each one a potential style recalculation.
+ */
+interface ScanCaches {
+  style: WeakMap<Element, CSSStyleDeclaration | null>;
+  hidden: WeakMap<Element, boolean>;
+  layoutAvailable?: boolean;
+}
+
 /** Context shared across a single scan pass. */
 export interface ScanContext {
   doc: Document;
   view: (Window & typeof globalThis) | null;
   options: Required<Pick<ScanOptions, "traverseShadow" | "includeHidden">>;
+  /** Internal memo cache; never part of a scan's observable result. */
+  caches: ScanCaches;
 }
 
 function getDefaultDocument(): Document {
@@ -76,23 +101,38 @@ export function createScanContext(
       traverseShadow: options.traverseShadow !== false,
       includeHidden: options.includeHidden === true,
     },
+    caches: { style: new WeakMap(), hidden: new WeakMap() },
   };
 }
 
 /** Safe computed-style lookup; returns null when layout info is unavailable. */
 function computedStyle(ctx: ScanContext, el: Element): CSSStyleDeclaration | null {
+  const cached = ctx.caches?.style.get(el);
+  if (cached !== undefined) return cached;
+  let style: CSSStyleDeclaration | null = null;
   try {
     const view = ctx.view ?? (el.ownerDocument?.defaultView as Window | null);
-    return view?.getComputedStyle ? view.getComputedStyle(el) : null;
+    style = view?.getComputedStyle ? view.getComputedStyle(el) : null;
   } catch {
-    return null;
+    style = null;
   }
+  ctx.caches?.style.set(el, style);
+  return style;
 }
 
 /**
  * Open shadow-aware querySelectorAll starting at the document root.
  * Closed shadow roots and cross-origin iframes are intentionally not traversed.
  */
+/** Whether an element belongs to the extension's own overlay. */
+function isOwnOverlay(el: Element): boolean {
+  try {
+    return el.hasAttribute(OWN_OVERLAY_ATTR) || !!el.closest(`[${OWN_OVERLAY_ATTR}]`);
+  } catch {
+    return false;
+  }
+}
+
 export function deepQuery(ctx: ScanContext, selector: string): Element[] {
   const results: Element[] = [];
   const seen = new Set<Element>();
@@ -106,6 +146,7 @@ export function deepQuery(ctx: ScanContext, selector: string): Element[] {
     }
     for (const el of matches) {
       if (SKIP_TAGS.has(el.tagName)) continue;
+      if (isOwnOverlay(el)) continue;
       if (!seen.has(el)) {
         seen.add(el);
         results.push(el);
@@ -120,6 +161,7 @@ export function deepQuery(ctx: ScanContext, selector: string): Element[] {
       all = [];
     }
     for (const el of all) {
+      if (el.hasAttribute(OWN_OVERLAY_ATTR)) continue;
       const shadow = (el as Element & { shadowRoot?: ShadowRoot | null }).shadowRoot;
       if (shadow) collectFrom(shadow);
     }
@@ -129,21 +171,83 @@ export function deepQuery(ctx: ScanContext, selector: string): Element[] {
   return results;
 }
 
+/** Elements for which the `disabled` content attribute is actually meaningful. */
+const DISABLEABLE = new Set([
+  "BUTTON",
+  "INPUT",
+  "SELECT",
+  "TEXTAREA",
+  "FIELDSET",
+  "OPTGROUP",
+  "OPTION",
+]);
+
 function isDisabled(el: Element): boolean {
-  if (el.hasAttribute("disabled")) return true;
+  // `disabled` on, say, a <div> is inert markup, not a disabled control.
+  if (DISABLEABLE.has(el.tagName) && el.hasAttribute("disabled")) return true;
   try {
-    if (el.closest("fieldset[disabled]")) return true;
+    if (DISABLEABLE.has(el.tagName) && el.closest("fieldset[disabled]")) return true;
   } catch {
     /* closest may be unavailable on exotic nodes */
   }
   return false;
 }
 
+/**
+ * Whether an element is presented to users as unavailable — either natively
+ * disabled or marked `aria-disabled="true"`. A control in this state is
+ * deliberately not in the tab order, so it must not be reported as an element
+ * that "cannot be reached by keyboard".
+ */
+export function isDisabledForUsers(el: Element): boolean {
+  if (isDisabled(el)) return true;
+  try {
+    if (el.getAttribute("aria-disabled") === "true") return true;
+    return !!el.closest('[aria-disabled="true"]');
+  } catch {
+    return false;
+  }
+}
+
+/** Whether an element sits inside an `inert` subtree. */
+export function isInertElement(el: Element): boolean {
+  try {
+    return !!el.closest("[inert]");
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * The next element up the visual containment chain, stepping OUT of an open
+ * shadow root to its host when the top of that tree is reached. Without this a
+ * control inside a shadow root whose host is `display: none` looks visible.
+ */
+function visualParent(el: Element): Element | null {
+  if (el.parentElement) return el.parentElement;
+  try {
+    const root = el.getRootNode?.();
+    const host = (root as ShadowRoot | undefined)?.host;
+    return host instanceof Element ? host : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Whether an element is reasonably detectable as hidden. */
 export function isHidden(ctx: ScanContext, el: Element): boolean {
+  const cached = ctx.caches?.hidden.get(el);
+  if (cached !== undefined) return cached;
+  const result = computeHidden(ctx, el);
+  ctx.caches?.hidden.set(el, result);
+  return result;
+}
+
+function computeHidden(ctx: ScanContext, el: Element): boolean {
   if ((el as HTMLInputElement).type === "hidden") return true;
   let node: Element | null = el;
-  while (node && node.nodeType === 1) {
+  let depth = 0;
+  while (node && node.nodeType === 1 && depth < 200) {
     if (node.hasAttribute("hidden")) return true;
     if (node.getAttribute("aria-hidden") === "true") return true;
     const style = computedStyle(ctx, node);
@@ -151,7 +255,8 @@ export function isHidden(ctx: ScanContext, el: Element): boolean {
       if (style.display === "none") return true;
       if (style.visibility === "hidden" || style.visibility === "collapse") return true;
     }
-    node = node.parentElement;
+    node = visualParent(node);
+    depth += 1;
   }
   return false;
 }
@@ -169,7 +274,10 @@ export function isFocusable(ctx: ScanContext, el: Element): boolean {
   const tabindexAttr = el.getAttribute("tabindex");
   if (tabindexAttr !== null) {
     const value = Number.parseInt(tabindexAttr, 10);
-    return !Number.isNaN(value) && value >= 0;
+    // A valid value decides focusability outright. An INVALID one (tabindex="")
+    // is ignored per the HTML spec, so fall through to natural focusability:
+    // <button tabindex="abc"> is still a focusable button.
+    if (!Number.isNaN(value)) return value >= 0;
   }
 
   try {
@@ -246,15 +354,6 @@ export function isClippedAwayBy(
   return offX || offY;
 }
 
-/** Whether an element is inside an inert subtree. */
-function isInert(el: Element): boolean {
-  try {
-    return !!el.closest("[inert]");
-  } catch {
-    return false;
-  }
-}
-
 /** Read `content-visibility` (computed first, inline-attribute as a fallback). */
 function readContentVisibility(ctx: ScanContext, el: Element): string {
   const style = computedStyle(ctx, el);
@@ -279,6 +378,13 @@ function hasContentVisibilityHidden(ctx: ScanContext, el: Element): boolean {
 
 /** Whether real layout measurements are available (false under jsdom etc.). */
 function isLayoutAvailable(ctx: ScanContext): boolean {
+  if (ctx.caches && ctx.caches.layoutAvailable !== undefined) return ctx.caches.layoutAvailable;
+  const result = probeLayout(ctx);
+  if (ctx.caches) ctx.caches.layoutAvailable = result;
+  return result;
+}
+
+function probeLayout(ctx: ScanContext): boolean {
   const probe = (el: Element | null | undefined): boolean => {
     try {
       if (!el || typeof el.getBoundingClientRect !== "function") return false;
@@ -385,7 +491,7 @@ export function isVisuallyAvailableForKeyboardPath(ctx: ScanContext, el: Element
   try {
     if (isHidden(ctx, el)) return false;
     if (isDisabled(el)) return false;
-    if (isInert(el)) return false;
+    if (isInertElement(el)) return false;
     if (hasContentVisibilityHidden(ctx, el)) return false;
     if (isLayoutAvailable(ctx) && isGeometricallyUnavailable(ctx, el)) return false;
     return true;
@@ -495,9 +601,83 @@ function textFromIds(ctx: ScanContext, ids: string): string {
   return collapseWhitespace(parts.join(" "));
 }
 
+/** Text of a wrapping <label>, with the labelled control's own subtree removed. */
+function labelTextExcluding(label: Element, control: Element): string {
+  const parts: string[] = [];
+  const walk = (node: Node): void => {
+    if (node === control) return;
+    if (node.nodeType === 3) {
+      parts.push(node.textContent ?? "");
+      return;
+    }
+    if (node.nodeType !== 1) return;
+    if (SKIP_TAGS.has((node as Element).tagName)) return;
+    for (const child of Array.from(node.childNodes)) walk(child);
+  };
+  try {
+    for (const child of Array.from(label.childNodes)) walk(child);
+  } catch {
+    return "";
+  }
+  return collapseWhitespace(parts.join(" "));
+}
+
+/**
+ * Elements whose accessible name is NEVER taken from their contents.
+ *
+ * A <select>'s options and a <textarea>'s value are its VALUE, not its name;
+ * treating them as a name made every unlabeled dropdown with options look
+ * correctly labeled. See the "name from content" rule in the accname spec.
+ */
+const NAME_NEVER_FROM_CONTENT = new Set(["SELECT", "TEXTAREA", "INPUT", "PROGRESS", "METER"]);
+
+/**
+ * Text of an element's subtree for accessible-name purposes.
+ *
+ * Two differences from `textContent`, both from the accname algorithm:
+ *  - an `aria-hidden="true"` subtree contributes nothing, so a decorative glyph
+ *    cannot stand in for a real name;
+ *  - a descendant that carries its own `aria-label` (or `alt`) contributes that
+ *    label, which is how `<button><svg aria-label="Close"></svg></button>` —
+ *    the ordinary icon-button pattern — gets its name.
+ */
+function nameFromContent(el: Element, depth = 0): string {
+  if (depth > 20) return "";
+  const parts: string[] = [];
+  for (const node of Array.from(el.childNodes)) {
+    if (node.nodeType === 3) {
+      parts.push(node.textContent ?? "");
+      continue;
+    }
+    if (node.nodeType !== 1) continue;
+    const child = node as Element;
+    if (SKIP_TAGS.has(child.tagName)) continue;
+    if (child.getAttribute("aria-hidden") === "true") continue;
+
+    const label = child.getAttribute("aria-label");
+    if (label && label.trim()) {
+      parts.push(label.trim());
+      continue;
+    }
+    const alt = child.getAttribute("alt");
+    if (alt !== null) {
+      // An explicitly empty alt marks the image decorative: it adds nothing.
+      if (alt.trim()) parts.push(alt.trim());
+      continue;
+    }
+    if (child.tagName === "SVG" || child.tagName === "svg") {
+      const title = collapseWhitespace(child.querySelector("title")?.textContent ?? "");
+      if (title) parts.push(title);
+      continue;
+    }
+    parts.push(nameFromContent(child, depth + 1));
+  }
+  return collapseWhitespace(parts.join(" "));
+}
+
 /**
  * Best-effort accessible name. A pragmatic subset of the ARIA accname
- * algorithm covering the cases the Phase 0B rules rely on.
+ * algorithm covering the cases these rules rely on.
  */
 export function getAccessibleName(ctx: ScanContext, el: Element): string {
   // 1. aria-labelledby
@@ -527,7 +707,10 @@ export function getAccessibleName(ctx: ScanContext, el: Element): string {
     }
     const wrapping = el.closest("label");
     if (wrapping) {
-      const text = collapseWhitespace(wrapping.textContent ?? "");
+      // The control's own contents are its value, not its label: a <select>
+      // wrapped in a bare <label> is unlabeled even though the label's
+      // textContent contains the option text.
+      const text = labelTextExcluding(wrapping, el);
       if (text) return text;
     }
     if (tag === "input") {
@@ -545,24 +728,20 @@ export function getAccessibleName(ctx: ScanContext, el: Element): string {
     }
   }
 
-  // Text content for buttons/links and other elements.
-  const text = collapseWhitespace(el.textContent ?? "");
-  if (text) return text;
-
-  // Nested image alt / inline SVG title.
-  try {
-    const img = el.querySelector("img[alt]");
-    const alt = collapseWhitespace(img?.getAttribute("alt") ?? "");
-    if (alt) return alt;
-    const svgTitle = collapseWhitespace(el.querySelector("svg title")?.textContent ?? "");
-    if (svgTitle) return svgTitle;
-  } catch {
-    /* ignore */
-  }
-
   if (tag === "img") {
     const alt = el.getAttribute("alt");
     if (alt && alt.trim()) return alt.trim();
+  }
+
+  // Name from content — but only for roles that actually take one. A dropdown
+  // is not named by its options, and a textarea is not named by its value.
+  if (!NAME_NEVER_FROM_CONTENT.has(el.tagName)) {
+    try {
+      const text = nameFromContent(el);
+      if (text) return text;
+    } catch {
+      /* exotic subtree — fall through to the title attribute */
+    }
   }
 
   // 4. title (weak fallback)
@@ -579,6 +758,8 @@ export function createRuleContext(ctx: ScanContext): RuleContext {
     query: (selector) => deepQuery(ctx, selector),
     isVisible: (el) => isVisible(ctx, el),
     isFocusable: (el) => isFocusable(ctx, el),
+    isDisabled: (el) => isDisabledForUsers(el),
+    isInert: (el) => isInertElement(el),
     getAccessibleName: (el) => getAccessibleName(ctx, el),
     getStableSelector: (el) => getStableSelector(el),
     getElementPreview: (el) => getElementPreview(el),

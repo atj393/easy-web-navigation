@@ -6,7 +6,111 @@ All notable changes to Easy Web Navigation are documented here. The format is ba
 
 ## [Unreleased]
 
-_Nothing yet._
+### Fixed — Popup no longer resizes while it opens (RB-001)
+
+- The popup grew and reflowed for roughly 0.75s every time it was opened. An extension popup is
+  auto-sized by the browser, and the shell was `width: min(420px, calc(100vw - 32px))` on a
+  content-box element with 20px of padding — so content width depended on popup width and popup
+  width depended on content width. Each round-trip grew the popup by exactly 8px until `min()`
+  clamped. Measured in packaged Chromium: 31 resizes from a cold start, 30 distinct widths, and the
+  rendered content width equal to the popup width at every step.
+- The popup now follows an explicit sizing contract, documented at the top of the popup stylesheet:
+  no viewport units, an explicit pixel width and height on `html`, `body` and the shell, global
+  `box-sizing: border-box`, and variable content scrolling inside the shell rather than in the popup
+  window. After: one settled size from every starting point, and one rendered shell width whatever
+  the popup width is.
+- Startup was collapsed into a single reducer with an explicit boot phase, so persisted settings are
+  applied in one commit instead of a dozen independent async state writes.
+
+### Fixed — Accessibility findings that were wrong
+
+- Disabled and `aria-disabled` controls, and everything inside an `inert` region, are no longer
+  reported as unreachable by keyboard. They are deliberately out of the tab order.
+- Roving-tabindex widgets (tabs, menus, radio groups, trees) are no longer reported as broken. A
+  widget where **no** member is reachable is still reported.
+- An unlabeled `<select>` is no longer treated as labelled by its own option text, and a `<textarea>`
+  is no longer named by its contents. Both were false negatives — a clean result the user believed.
+- Icon buttons labelled on the icon (`<button><svg aria-label="Close">`) are recognised, and a
+  decorative `aria-hidden` glyph no longer counts as an accessible name.
+- A control inside a shadow root whose host is `display: none` is no longer reported; the visibility
+  walk now steps out to the shadow host.
+- `positive-tabindex` now applies the same visibility filter as every other rule.
+- An unparseable `tabindex` no longer makes a native button look unfocusable, `<details>` is no
+  longer counted as focusable alongside its `<summary>`, and "Jump to content" is recognised as a
+  skip link.
+- Verified end to end: a new demo page of correctly-built widgets reported 10 findings before and
+  reports 0 now.
+
+### Fixed — Options page settings that did nothing
+
+- All four settings were dead. **Disabled domains** was described to users as keeping the extension
+  inactive on those sites but was never consulted, so excluded sites were still checked. It now
+  works across the popup, the background worker and the content script, including after an SPA route
+  change, and matches a host plus its subdomains rather than by substring.
+- **Show WCAG references** now drives the popup's finding detail and the Markdown and JSON reports.
+- The two toggles that only duplicated the popup's own guide controls were removed, along with a
+  "safe enhancements" setting for a mode that would modify inspected pages.
+- A failed save now says so instead of reporting "saved".
+
+### Fixed — Automatic checking on Firefox
+
+- Manifest V2 has no `optional_host_permissions`, so the Firefox build declared no optional origins
+  and the "This website" and "All websites" scopes could never be granted. The same optional access
+  is now declared under the MV2 `optional_permissions` key. Required permissions are unchanged.
+
+### Fixed — Other correctness and robustness
+
+- The overlay no longer leaves its container and scroll listeners attached to the page after a
+  "locate" flash, and rebuilds itself when a single-page app replaces `<body>`.
+- Persisted settings are validated before reaching the UI; a corrupted scope no longer leaves the
+  select showing one value while state holds another.
+- A superseded scan can no longer overwrite the current result.
+- Raw browser exception text is no longer shown to users; failures are classified and each maps to
+  one sentence with a next step.
+- Saving results no longer revokes the object URL before the download starts, keeps the anchor in the
+  document so Firefox follows it, and names the file per host and date.
+
+### Changed — Popup layout and wording
+
+- The popup is now a fixed shell: pinned header with the primary action, a Results / Guides /
+  Automatic tab strip, a scrolling body, and pinned report actions. Findings sit directly under the
+  button that produces them instead of roughly 700px below it.
+- Findings are ordered most serious first, capped at 25 with an explicit control for the rest, and
+  each carries a plain-language explanation of its severity.
+- Before a check the summary reads "Not checked yet" rather than a dash that looks like a result.
+- The report privacy warning now appears with the confirmation, at the moment results leave the
+  popup, rather than as a permanent footnote.
+- Design tokens, a dark palette, and Windows high-contrast support.
+
+### Fixed — The extension's own accessibility
+
+- Each tab's `aria-controls` pointed at a panel that was not in the DOM; all panels are now rendered
+  with the inactive ones hidden.
+- Heading levels no longer skip from H1 to H3.
+- The scrollable panel has the same focus ring as every other control.
+
+### Performance
+
+- Drawing keyboard-path markers no longer forces a synchronous layout per marker, and a scan
+  memoises style lookups per pass. Measured in packaged Chromium on a page with 1801 focusable
+  elements: the keyboard path with 500 markers went from 582ms to 124ms, and a full scan from 107ms
+  to 94ms.
+
+### Tests and CI
+
+- 142 tests to 281. New coverage for the popup state machine, the popup CSS sizing contract, popup
+  components rendered into a real DOM, rule correctness, the overlay's read-only contract, site
+  rules, error classification, and report options.
+- `pnpm format:check` was in no CI job and had drifted red on `main`. It, the Firefox build and a new
+  manifest guard now run in CI and in `pnpm run ci`.
+- `scripts/check-manifest.mjs` asserts the built manifests for both browsers. `scripts/check-popup-stability.mjs`
+  verifies RB-001 in a real packaged browser.
+
+### Unchanged
+
+- Permissions, the privacy model, and the read-only contract. No account, no server, no telemetry, no
+  AI, no remote code, no network calls. The read-only contract is now verified in a real browser: the
+  inspected page's HTML is byte-identical after repeated scans and overlay cycles.
 
 ## [1.0.1] — 2026-06-22
 
