@@ -29,6 +29,12 @@ export interface HighlightOptions {
 export interface FocusOverlayOptions {
   /** Document the overlay attaches to. Defaults to the ambient document. */
   doc?: Document;
+  /**
+   * Called when a timed highlight expires and leaves the overlay with nothing
+   * to draw. The owner decides whether to unmount — it may still want the
+   * container for a helper that is on but has no current target.
+   */
+  onIdle?: () => void;
 }
 
 interface Highlight {
@@ -86,6 +92,17 @@ const SHADOW_CSS = `
 }
 `;
 
+/** Write a measured rectangle onto an overlay box. Write-only: never measures. */
+function applyRect(
+  box: HTMLElement,
+  rect: { left: number; top: number; width: number; height: number },
+): void {
+  box.style.left = `${rect.left}px`;
+  box.style.top = `${rect.top}px`;
+  box.style.width = `${rect.width}px`;
+  box.style.height = `${rect.height}px`;
+}
+
 export class FocusOverlayController {
   private readonly doc: Document;
   private readonly view: (Window & typeof globalThis) | null;
@@ -94,10 +111,12 @@ export class FocusOverlayController {
   private readonly highlights = new Map<string, Highlight>();
   private tabMarkers: TabMarker[] = [];
   private rafPending = false;
+  private readonly onIdle?: () => void;
   private readonly onViewportChange = (): void => this.scheduleReposition();
 
   constructor(options: FocusOverlayOptions = {}) {
     this.doc = options.doc ?? (globalThis.document as Document);
+    this.onIdle = options.onIdle;
     let view: (Window & typeof globalThis) | null = null;
     try {
       view = (this.doc?.defaultView as (Window & typeof globalThis) | null) ?? null;
@@ -107,8 +126,21 @@ export class FocusOverlayController {
     this.view = view;
   }
 
-  /** Create and attach the overlay container. Idempotent. */
+  /**
+   * Create and attach the overlay container. Idempotent.
+   *
+   * A single-page app can replace <body> wholesale, which detaches the
+   * container while this controller still holds a reference to it. Treating
+   * that as "already mounted" left the overlay permanently invisible, so a
+   * detached container is dropped and rebuilt.
+   */
   mount(): void {
+    if (this.container && !this.container.isConnected) {
+      this.view?.removeEventListener("scroll", this.onViewportChange, true);
+      this.view?.removeEventListener("resize", this.onViewportChange, true);
+      this.container = null;
+      this.layer = null;
+    }
     if (this.container || !this.doc?.body) return;
 
     const container = this.doc.createElement("div");
@@ -136,7 +168,7 @@ export class FocusOverlayController {
   }
 
   isMounted(): boolean {
-    return this.container !== null;
+    return this.container !== null && this.container.isConnected;
   }
 
   /**
@@ -175,7 +207,13 @@ export class FocusOverlayController {
     this.positionBox(highlight);
 
     if (options.durationMs && options.durationMs > 0) {
-      highlight.timer = setTimeout(() => this.clearHighlight(id), options.durationMs);
+      highlight.timer = setTimeout(() => {
+        this.clearHighlight(id);
+        // A "locate" flash used to leave the container and its scroll/resize
+        // listeners attached to the page forever, because the only caller that
+        // unmounts runs when a helper is switched off — not when a timer fires.
+        if (!this.hasContent()) this.onIdle?.();
+      }, options.durationMs);
     }
     return true;
   }
@@ -207,20 +245,42 @@ export class FocusOverlayController {
   showTabPath(elements: Element[]): void {
     this.clearTabPath();
     this.mount();
-    if (!this.layer) return;
+    const layer = this.layer;
+    if (!layer) return;
+
+    // Strict read-then-write. Measuring an element after appending the previous
+    // marker forces a synchronous layout every iteration, so drawing 500
+    // markers meant 500 reflows and a visibly frozen page. All geometry is read
+    // first, then every node is built and appended in one batch.
+    const live: { element: Element; rect: DOMRect; index: number }[] = [];
     elements.forEach((element, i) => {
       if (!element || !element.isConnected) return;
+      let rect: DOMRect;
+      try {
+        rect = element.getBoundingClientRect();
+      } catch {
+        return;
+      }
+      live.push({ element, rect, index: i + 1 });
+    });
+
+    const fragment = this.doc.createDocumentFragment();
+    for (const { element, rect, index } of live) {
       const box = this.doc.createElement("div");
       box.className = "tab-box";
+      applyRect(box, rect);
+
       const num = this.doc.createElement("div");
       num.className = "tab-num";
-      num.textContent = String(i + 1);
-      this.layer!.appendChild(box);
-      this.layer!.appendChild(num);
-      const marker: TabMarker = { element, box, num };
-      this.tabMarkers.push(marker);
-      this.positionMarker(marker);
-    });
+      num.textContent = String(index);
+      num.style.left = `${rect.left}px`;
+      num.style.top = `${rect.top}px`;
+
+      fragment.appendChild(box);
+      fragment.appendChild(num);
+      this.tabMarkers.push({ element, box, num });
+    }
+    layer.appendChild(fragment);
   }
 
   /** Remove all tab-path markers. */
@@ -262,33 +322,11 @@ export class FocusOverlayController {
   private positionBox(highlight: Highlight): void {
     const { element, box } = highlight;
     if (!element.isConnected) return;
-    let rect: DOMRect;
     try {
-      rect = element.getBoundingClientRect();
+      applyRect(box, element.getBoundingClientRect());
     } catch {
-      return;
+      /* unmeasurable element — leave the box where it was */
     }
-    box.style.left = `${rect.left}px`;
-    box.style.top = `${rect.top}px`;
-    box.style.width = `${rect.width}px`;
-    box.style.height = `${rect.height}px`;
-  }
-
-  private positionMarker(marker: TabMarker): void {
-    const { element, box, num } = marker;
-    if (!element.isConnected) return;
-    let rect: DOMRect;
-    try {
-      rect = element.getBoundingClientRect();
-    } catch {
-      return;
-    }
-    box.style.left = `${rect.left}px`;
-    box.style.top = `${rect.top}px`;
-    box.style.width = `${rect.width}px`;
-    box.style.height = `${rect.height}px`;
-    num.style.left = `${rect.left}px`;
-    num.style.top = `${rect.top}px`;
   }
 
   private reposition(): void {
@@ -299,8 +337,9 @@ export class FocusOverlayController {
       }
       this.positionBox(highlight);
     }
+
+    // Drop markers whose elements left the DOM.
     if (this.tabMarkers.some((m) => !m.element.isConnected)) {
-      // Drop markers whose elements left the DOM.
       const live: TabMarker[] = [];
       for (const marker of this.tabMarkers) {
         if (marker.element.isConnected) {
@@ -312,7 +351,24 @@ export class FocusOverlayController {
       }
       this.tabMarkers = live;
     }
-    for (const marker of this.tabMarkers) this.positionMarker(marker);
+
+    // Same read-then-write split as showTabPath: this runs on every scroll
+    // frame, so interleaving measurement and style writes would thrash layout
+    // once per marker per frame.
+    const rects: (DOMRect | null)[] = this.tabMarkers.map((marker) => {
+      try {
+        return marker.element.getBoundingClientRect();
+      } catch {
+        return null;
+      }
+    });
+    this.tabMarkers.forEach((marker, i) => {
+      const rect = rects[i];
+      if (!rect) return;
+      applyRect(marker.box, rect);
+      marker.num.style.left = `${rect.left}px`;
+      marker.num.style.top = `${rect.top}px`;
+    });
   }
 
   private scheduleReposition(): void {

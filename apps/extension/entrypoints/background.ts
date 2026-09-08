@@ -1,7 +1,8 @@
 import { defineBackground, browser } from "#imports";
 import type { ExtensionMessage } from "@easy-web-navigation/shared-types";
-import { monitoringItem } from "../lib/settings";
+import { monitoringItem, settingsItem } from "../lib/settings";
 import { isSupportedPageUrl, originPatternFromUrl } from "../lib/monitoring";
+import { isSiteDisabled } from "../lib/site-rules";
 
 /**
  * Background service worker (MV3).
@@ -40,6 +41,16 @@ export default defineBackground(() => {
         // `tab.url` is only populated for tabs covered by a granted host
         // permission (we deliberately avoid the broad "tabs" permission).
         if (!isSupportedPageUrl(tab.url)) return;
+
+        // Sites the user listed on the options page are left completely alone:
+        // no injection, so no scan and no overlay.
+        try {
+          const options = await settingsItem.getValue();
+          if (isSiteDisabled(tab.url, options.disabledDomains)) return;
+        } catch {
+          /* options unreadable — fall through to the permission check */
+        }
+
         const pattern = originPatternFromUrl(tab.url);
         if (!pattern) return;
 

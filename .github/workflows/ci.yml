@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    name: typecheck · lint · test · build
+    name: typecheck · lint · format · test · build · manifest
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -38,6 +38,11 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+      # Formatting was previously checked by no job at all, so `pnpm
+      # format:check` had drifted red on main.
+      - name: Format check
+        run: pnpm format:check
+
       - name: Test
         run: pnpm test
 
@@ -46,3 +51,8 @@ jobs:
 
       - name: Build (Firefox)
         run: pnpm build:firefox
+
+      # The permission surface is part of the product; assert the BUILT
+      # manifests rather than trusting the config that generates them.
+      - name: Validate manifests
+        run: pnpm check:manifest

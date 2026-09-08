@@ -33,6 +33,12 @@ export const NOTHING_CHECKED_YET =
   "Nothing has been checked yet. Choose “Check this page” to look at keyboard use, movement " +
   "order, and names and labels.";
 
+export const DISABLED_SITE_TITLE = "This site is switched off";
+
+export const DISABLED_SITE_BODY =
+  `You added this site to the “Sites to stay off” list, so ${PRODUCT_NAME} does not check it or ` +
+  "draw anything on it. Remove it from that list in settings to check it again.";
+
 export const RESTRICTED_PAGE_TITLE = "This page cannot be checked";
 
 export const RESTRICTED_PAGE_BODY =

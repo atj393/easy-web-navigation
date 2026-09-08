@@ -129,6 +129,10 @@ export interface RuleContext {
   query(selector: string): Element[];
   isVisible(el: Element): boolean;
   isFocusable(el: Element): boolean;
+  /** Natively disabled, or marked `aria-disabled="true"` (directly or above). */
+  isDisabled(el: Element): boolean;
+  /** Inside an `inert` subtree, which the browser removes from the tab order. */
+  isInert(el: Element): boolean;
   getAccessibleName(el: Element): string;
   getStableSelector(el: Element): string;
   getElementPreview(el: Element): string;
@@ -164,6 +168,45 @@ function buildIssue(
 
 const INTERACTIVE_ROLES = ["button", "link", "menuitem", "checkbox", "radio", "switch", "tab"];
 
+/**
+ * Composite widgets that manage focus with a "roving tabindex": exactly one
+ * member is in the tab order and the arrow keys move between the rest, which
+ * therefore carry `tabindex="-1"` BY DESIGN. This is the pattern the ARIA
+ * Authoring Practices prescribe, so its members must not be reported as
+ * unreachable — doing so flagged every inactive tab, menu item and radio on
+ * correctly built pages.
+ */
+const ROVING_MEMBERS: { role: string; container: string }[] = [
+  { role: "tab", container: '[role="tablist"]' },
+  { role: "menuitem", container: '[role="menu"], [role="menubar"]' },
+  { role: "menuitemradio", container: '[role="menu"], [role="menubar"]' },
+  { role: "menuitemcheckbox", container: '[role="menu"], [role="menubar"]' },
+  { role: "radio", container: '[role="radiogroup"]' },
+  { role: "option", container: '[role="listbox"]' },
+  { role: "treeitem", container: '[role="tree"]' },
+];
+
+/**
+ * Whether this element is a non-active member of a roving-tabindex widget:
+ * it has a composite role, sits inside the matching container, and a sibling
+ * with the same role IS in the tab order (which is what proves the container
+ * manages focus rather than simply being broken).
+ */
+export function isRovingTabindexMember(ctx: RuleContext, el: Element): boolean {
+  const role = el.getAttribute("role");
+  if (!role) return false;
+  const pattern = ROVING_MEMBERS.find((p) => p.role === role);
+  if (!pattern) return false;
+  try {
+    const container = el.closest(pattern.container);
+    if (!container) return false;
+    const siblings = Array.from(container.querySelectorAll(`[role="${role}"]`));
+    return siblings.some((sibling) => sibling !== el && ctx.isFocusable(sibling));
+  } catch {
+    return false;
+  }
+}
+
 /** Rule: clickable-not-focusable (WCAG 2.1.1, 4.1.2). */
 export function ruleClickableNotFocusable(ctx: RuleContext): A11yIssue[] {
   const rule = RULES["clickable-not-focusable"];
@@ -175,6 +218,11 @@ export function ruleClickableNotFocusable(ctx: RuleContext): A11yIssue[] {
     seen.add(el);
     if (!ctx.isVisible(el)) continue;
     if (ctx.isFocusable(el)) continue;
+    // A disabled or inert control is deliberately out of the tab order; saying
+    // it "cannot be reached by keyboard" would be wrong.
+    if (ctx.isDisabled(el)) continue;
+    if (ctx.isInert(el)) continue;
+    if (isRovingTabindexMember(ctx, el)) continue;
     issues.push(buildIssue(rule, ctx, el, issues.length));
   }
   return issues;
@@ -213,6 +261,9 @@ export function rulePositiveTabindex(ctx: RuleContext): A11yIssue[] {
   for (const el of ctx.query("[tabindex]")) {
     const value = Number.parseInt(el.getAttribute("tabindex") ?? "", 10);
     if (Number.isNaN(value) || value <= 0) continue;
+    // Every other rule reports only what the user can actually encounter;
+    // this one used to report hidden markup too.
+    if (!ctx.isVisible(el)) continue;
     issues.push(buildIssue(rule, ctx, el, issues.length));
   }
   return issues;
@@ -230,6 +281,12 @@ export function ruleMissingMainLandmark(ctx: RuleContext): A11yIssue[] {
 
 const SKIP_TARGET_ID = /^(main|content|main-?content)$/i;
 
+/**
+ * Wordings commonly used for a skip link. Matching only "skip" reported a
+ * missing skip link on pages that ship a perfectly good "Jump to content" one.
+ */
+const SKIP_LINK_TEXT = /\b(skip|jump)\b/i;
+
 /** Rule: missing-skip-link (WCAG 2.4.1). Conservative to avoid false positives. */
 export function ruleMissingSkipLink(ctx: RuleContext): A11yIssue[] {
   const rule = RULES["missing-skip-link"];
@@ -244,8 +301,8 @@ export function ruleMissingSkipLink(ctx: RuleContext): A11yIssue[] {
 
   const mainEl = ctx.query('main, [role="main"]')[0] ?? null;
   const hasSkipLink = ctx.query('a[href^="#"]').some((a) => {
-    const text = (ctx.getAccessibleName(a) || a.textContent || "").toLowerCase();
-    if (text.includes("skip")) return true;
+    const text = ctx.getAccessibleName(a) || a.textContent || "";
+    if (SKIP_LINK_TEXT.test(text)) return true;
     const targetId = (a.getAttribute("href") ?? "").slice(1);
     if (!targetId) return false;
     if (SKIP_TARGET_ID.test(targetId)) return true;

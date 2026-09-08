@@ -180,14 +180,24 @@ export interface ReportOptions {
    * report as a clearly-labeled runtime visual aid — never as an audit metric.
    */
   tabPathSummary?: TabPathSummary;
+  /** Include WCAG criterion references. Mirrors the options-page preference. */
+  showWcagReferences?: boolean;
+  /** Extension version that produced the report, so findings can be traced. */
+  toolVersion?: string;
 }
 
-/** User-configurable extension settings. */
+/**
+ * User-configurable extension settings (the options page).
+ *
+ * Every field here is READ somewhere in the product. Settings that were only
+ * stored — a "safe enhancements" toggle for a mode that would break the
+ * read-only contract, and duplicates of the popup's own guide toggles — were
+ * removed rather than left on screen implying behaviour that did not exist.
+ */
 export interface ExtensionSettings {
-  enableVisibleFocusHelper: boolean;
-  showTabPath: boolean;
+  /** Show WCAG criterion references beside findings and in reports. */
   showWcagReferences: boolean;
-  enableSafeEnhancementsManually: boolean;
+  /** Hosts (and their subdomains) the extension stays inactive on. */
   disabledDomains: string[];
 }
 
@@ -278,10 +288,7 @@ export type ExtensionMessage =
 
 /** Sensible defaults for first run. */
 export const DEFAULT_SETTINGS: ExtensionSettings = {
-  enableVisibleFocusHelper: true,
-  showTabPath: false,
   showWcagReferences: true,
-  enableSafeEnhancementsManually: false,
   disabledDomains: [],
 };
 

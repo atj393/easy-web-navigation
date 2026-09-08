@@ -172,6 +172,32 @@ describe("ResultsPanel", () => {
     expect(container.querySelectorAll(".card")).toHaveLength(0);
   });
 
+  it("explains a site the user switched off, without calling it an error", () => {
+    const state = ready({ page: { url: "https://example.com/", blocked: "disabled-here" } });
+    render(<ResultsPanel state={state} issues={[]} onLocate={() => {}} onShowMore={() => {}} />);
+    expect(container.textContent).toContain("This site is switched off");
+    expect(container.textContent).toContain("Sites to stay off");
+    expect(container.querySelectorAll(".card")).toHaveLength(0);
+  });
+
+  it("drops WCAG references when the options page turned them off", () => {
+    const issues = [issue("a", "serious")];
+    const withRefs = ready({ scan: { phase: "done", result: scanResult(issues), error: null } });
+    render(
+      <ResultsPanel state={withRefs} issues={issues} onLocate={() => {}} onShowMore={() => {}} />,
+    );
+    expect(container.textContent).toContain("WCAG 4.1.2 (A)");
+
+    const without = { ...withRefs, showWcagReferences: false };
+    render(
+      <ResultsPanel state={without} issues={issues} onLocate={() => {}} onShowMore={() => {}} />,
+    );
+    expect(container.textContent).not.toContain("WCAG");
+    // The finding, and what to do about it, must still be there.
+    expect(container.textContent).toContain("What to check:");
+    expect(container.querySelector(".issue__where")?.textContent).toBe("#a");
+  });
+
   it("orders the rendered findings most serious first", () => {
     const issues = [issue("a", "minor"), issue("b", "critical"), issue("c", "moderate")];
     const result = scanResult(issues);

@@ -6,59 +6,90 @@ import {
   type ExtensionSettings,
 } from "@easy-web-navigation/shared-types";
 import { settingsItem } from "../../lib/settings";
+import { normalizeDisabledDomains, normalizeDomainEntry } from "../../lib/site-rules";
 
 /**
- * Options UI (Phase 0F).
+ * Options UI.
  *
- * Preferences persist via typed WXT storage. Some toggles are saved for future
- * phases and are clearly marked as not yet wired to behavior; the focus helper
- * and tab path are currently controlled directly from the popup.
+ * Every control on this page changes real behaviour. The page previously
+ * carried four settings, three of them labelled "not wired yet" and the fourth
+ * ("Show WCAG references") not read anywhere either — including a disabled-
+ * domains list described as keeping the extension inactive on those sites,
+ * which nothing consulted. Settings that only duplicated the popup's own guide
+ * toggles were removed; the two that remain are read by the popup, the content
+ * script and the background worker.
  */
-type BoolKey = Exclude<keyof ExtensionSettings, "disabledDomains">;
 
-const TOGGLES: { key: BoolKey; label: string; hint: string; ready: boolean }[] = [
-  {
-    key: "enableVisibleFocusHelper",
-    label: "Enable visible focus helper by default",
-    hint: "Preference for future auto-enable. Today the focus helper is toggled from the popup.",
-    ready: false,
-  },
-  {
-    key: "showTabPath",
-    label: "Show tab path by default",
-    hint: "Preference for future auto-enable. Today the tab path is toggled from the popup.",
-    ready: false,
-  },
-  {
-    key: "showWcagReferences",
-    label: "Show WCAG references",
-    hint: "Show WCAG criterion references alongside issues and in reports.",
-    ready: true,
-  },
-  {
-    key: "enableSafeEnhancementsManually",
-    label: "Enable safe enhancements manually",
-    hint: "Reserved for a future, opt-in assist mode. Not implemented yet — read-only today.",
-    ready: false,
-  },
-];
+/** Coerce whatever is in storage into settings the UI can rely on. */
+function normalizeSettings(value: unknown): ExtensionSettings {
+  const raw = (value ?? {}) as Partial<Record<keyof ExtensionSettings, unknown>>;
+  return {
+    showWcagReferences:
+      typeof raw.showWcagReferences === "boolean"
+        ? raw.showWcagReferences
+        : DEFAULT_SETTINGS.showWcagReferences,
+    disabledDomains: normalizeDisabledDomains(raw.disabledDomains),
+  };
+}
+
+type SaveState = "loading" | "saved" | "saving" | "error";
+
+const SAVE_TEXT: Record<SaveState, string> = {
+  loading: "Loading your settings…",
+  saving: "Saving…",
+  saved: "Settings are saved automatically.",
+  error: "Your settings could not be saved. Check that this browser allows extension storage.",
+};
 
 export function App() {
   const [settings, setSettings] = useState<ExtensionSettings>(DEFAULT_SETTINGS);
-  const [loaded, setLoaded] = useState(false);
+  /** Raw textarea contents, so typing is not fought by normalisation. */
+  const [domainsText, setDomainsText] = useState("");
+  const [saveState, setSaveState] = useState<SaveState>("loading");
 
   useEffect(() => {
-    settingsItem.getValue().then((value) => {
-      setSettings(value);
-      setLoaded(true);
-    });
+    let alive = true;
+    void (async () => {
+      try {
+        const value = normalizeSettings(await settingsItem.getValue());
+        if (!alive) return;
+        setSettings(value);
+        setDomainsText(value.disabledDomains.join("\n"));
+        setSaveState("saved");
+      } catch {
+        if (alive) setSaveState("error");
+      }
+    })();
+    return () => {
+      alive = false;
+    };
   }, []);
 
   async function update(patch: Partial<ExtensionSettings>) {
     const next = { ...settings, ...patch };
     setSettings(next);
-    await settingsItem.setValue(next);
+    setSaveState("saving");
+    try {
+      await settingsItem.setValue(next);
+      setSaveState("saved");
+    } catch {
+      // A silent failure here would leave the user believing a privacy choice
+      // had been recorded when it had not.
+      setSaveState("error");
+    }
   }
+
+  /** Commit the domain list when the field loses focus, not on every keypress. */
+  function commitDomains() {
+    const cleaned = normalizeDisabledDomains(domainsText.split("\n"));
+    setDomainsText(cleaned.join("\n"));
+    void update({ disabledDomains: cleaned });
+  }
+
+  const rejected = domainsText
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0 && normalizeDomainEntry(line) === "");
 
   return (
     <main className="options">
@@ -70,69 +101,76 @@ export function App() {
         </div>
       </header>
 
-      <p className="options__hint" role="status">
-        {loaded ? "Settings are saved automatically." : "Loading settings…"}
+      <p
+        className={`options__hint${saveState === "error" ? " options__hint--error" : ""}`}
+        role="status"
+      >
+        {SAVE_TEXT[saveState]}
       </p>
 
       <fieldset className="options__group">
-        <legend>Helpers</legend>
-        {TOGGLES.map(({ key, label, hint, ready }) => (
-          <label key={key} className="options__row">
-            <input
-              type="checkbox"
-              checked={settings[key]}
-              onChange={(e) => update({ [key]: e.target.checked } as Partial<ExtensionSettings>)}
-            />
-            <span className="options__text">
-              <span className="options__label">
-                {label}
-                {!ready && <span className="options__tag">not wired yet</span>}
-              </span>
-              <span className="options__desc">{hint}</span>
-            </span>
-          </label>
-        ))}
-      </fieldset>
-
-      <fieldset className="options__group">
-        <legend>Disabled domains</legend>
-        <label className="options__row options__row--block">
-          <span className="options__desc">
-            One domain per line. {PRODUCT_NAME} stays inactive on these.
-          </span>
-          <textarea
-            rows={4}
-            value={settings.disabledDomains.join("\n")}
-            onChange={(e) =>
-              update({
-                disabledDomains: e.target.value
-                  .split("\n")
-                  .map((d) => d.trim())
-                  .filter(Boolean),
-              })
-            }
+        <legend>Findings</legend>
+        <label className="options__row">
+          <input
+            type="checkbox"
+            checked={settings.showWcagReferences}
+            onChange={(e) => void update({ showWcagReferences: e.target.checked })}
           />
+          <span className="options__text">
+            <span className="options__label">Show WCAG references</span>
+            <span className="options__desc">
+              Adds the related WCAG success criteria to each finding in the popup and in saved
+              results. Turn this off for a plainer list.
+            </span>
+          </span>
         </label>
       </fieldset>
 
       <fieldset className="options__group">
-        <legend>Monitoring &amp; privacy</legend>
+        <legend>Sites to stay off</legend>
+        <label className="options__row options__row--block" htmlFor="disabled-domains">
+          <span className="options__label">Disabled sites</span>
+          <span className="options__desc" id="disabled-domains-hint">
+            One site per line, for example <code>example.com</code>. {PRODUCT_NAME} will not check
+            these sites and will not draw its guides there. A site also covers its subsections, so{" "}
+            <code>example.com</code> also covers <code>shop.example.com</code>.
+          </span>
+        </label>
+        <textarea
+          id="disabled-domains"
+          rows={5}
+          value={domainsText}
+          aria-describedby="disabled-domains-hint"
+          spellCheck={false}
+          onChange={(e) => setDomainsText(e.target.value)}
+          onBlur={commitDomains}
+        />
+        {rejected.length > 0 && (
+          <p className="options__warn" role="status">
+            {`These lines are not site addresses and will be removed when you leave this box: ${rejected.join(", ")}`}
+          </p>
+        )}
+      </fieldset>
+
+      <fieldset className="options__group">
+        <legend>Automatic checking and privacy</legend>
         <p className="options__desc">
-          Monitoring is started from the popup. It is off by default. When you start it,{" "}
-          {PRODUCT_NAME} scans supported pages automatically and re-applies the visual helpers you
-          enabled, within the scope you choose (current tab, this site, or all supported websites).
-          Site and all-sites scopes ask for an optional permission first.
+          Automatic checking is started from the {PRODUCT_NAME} popup and is off until you start it.
+          When you start it, supported pages are checked as you browse and the guides you turned on
+          are drawn again, within the area you chose (this page, this website, or all websites).
+          Website-wide and all-website checking asks your browser for permission first.
         </p>
         <p className="options__desc">
-          {PRODUCT_NAME} does not upload page content, does not call external APIs, and does not use
-          analytics. Monitoring only runs when you explicitly start it.
+          {PRODUCT_NAME} does everything on your own computer. It does not upload page content, call
+          external services, use analytics, or keep any account.
         </p>
       </fieldset>
 
       <footer className="options__footer">
         <p>
-          {PRODUCT_NAME} inspects keyboard accessibility at runtime. It does not certify legal
-          compliance, and a clean report is not a compliance pass.
+          {PRODUCT_NAME} looks for some keyboard-access problems while a page is open. It cannot
+          confirm that a page is accessible, it does not change websites, and a clean result is not
+          a compliance pass.
         </p>
       </footer>
     </main>

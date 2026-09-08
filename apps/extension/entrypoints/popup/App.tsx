@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { browser } from "#imports";
 import { generateMarkdownReport } from "@easy-web-navigation/report-generator";
 import { PRODUCT_NAME, type TabPathMaxItems } from "@easy-web-navigation/shared-types";
 import type { MonitoringScope, MonitoringSettings } from "@easy-web-navigation/shared-types";
 import { copyTextToClipboard } from "../../lib/clipboard";
-import { monitoringItem } from "../../lib/settings";
+import { monitoringItem, settingsItem } from "../../lib/settings";
+import { isSiteDisabled } from "../../lib/site-rules";
 import {
   createApplyMonitoringPayload,
   hostPermissionsForScope,
@@ -103,17 +105,32 @@ export function App() {
         settings = normalizeMonitoringSettings(undefined);
       }
 
+      let disabledSites: string[] = [];
+      let showWcagReferences = true;
+      try {
+        const options = await settingsItem.getValue();
+        disabledSites = options.disabledDomains ?? [];
+        showWcagReferences = options.showWcagReferences !== false;
+      } catch {
+        /* storage unavailable — options defaults stand */
+      }
+
       let url = "";
       try {
         url = (await getActiveTab()).url;
       } catch {
-        /* no active tab — the restricted/blocked state below covers it */
+        /* no active tab — the blocked state below covers it */
       }
       if (!alive.current) return;
 
-      const blocked = isSupportedPageUrl(url) ? null : "restricted";
-      dispatch({ type: "BOOTED", payload: { url, blocked, settings } });
+      const blocked = !isSupportedPageUrl(url)
+        ? "restricted"
+        : isSiteDisabled(url, disabledSites)
+          ? "disabled-here"
+          : null;
+      dispatch({ type: "BOOTED", payload: { url, blocked, settings, showWcagReferences } });
 
+      // A page the user excluded is never injected into, scanned, or drawn on.
       if (blocked) return;
 
       if (settings.enabled) {
@@ -346,6 +363,8 @@ export function App() {
   function buildReport(): string {
     return generateMarkdownReport(state.scan.result!, {
       tabPathSummary: state.guides.summary ?? undefined,
+      showWcagReferences: state.showWcagReferences,
+      toolVersion: browser.runtime.getManifest().version,
     });
   }
 
@@ -396,7 +415,7 @@ export function App() {
   const status = statusLine(state);
   const issues = useMemo(() => issuesForDisplay(state.scan.result), [state.scan.result]);
   const findings = resultsTabCount(state);
-  const guidesDisabled = state.page.blocked === "restricted";
+  const guidesDisabled = state.page.blocked !== null;
 
   const tabs: TabDescriptor[] = [
     { id: "results", label: "Results", count: findings, countLabel: "possible problems" },

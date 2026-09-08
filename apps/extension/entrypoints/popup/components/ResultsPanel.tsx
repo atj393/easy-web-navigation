@@ -6,6 +6,8 @@
  */
 import type { A11yIssue, ScanResult } from "@easy-web-navigation/shared-types";
 import {
+  DISABLED_SITE_BODY,
+  DISABLED_SITE_TITLE,
   NOTHING_CHECKED_YET,
   NOT_CHECKED_YET,
   NO_PROBLEMS_FOUND,
@@ -38,12 +40,15 @@ function SummaryCard({ label, value }: { label: string; value: CardValue }) {
 
 function IssueCard({
   issue,
+  showWcag,
   onLocate,
 }: {
   issue: A11yIssue;
+  showWcag: boolean;
   onLocate: (selector: string) => void;
 }) {
   const headingId = `issue-${issue.id}`;
+  const meaning = SEVERITY_MEANING[issue.severity] ?? "";
   return (
     <li className={`issue issue--${issue.severity}`}>
       <div className="issue__head">
@@ -59,8 +64,10 @@ function IssueCard({
         {issue.recommendation}
       </p>
       <p className="issue__meta">
-        {SEVERITY_MEANING[issue.severity] ?? ""} Related to WCAG{" "}
-        {issue.wcag.map((c) => `${c.id} (${c.level})`).join(", ")}.
+        {meaning}
+        {showWcag && issue.wcag.length > 0 && (
+          <> Related to WCAG {issue.wcag.map((c) => `${c.id} (${c.level})`).join(", ")}.</>
+        )}
       </p>
       <div className="issue__actions">
         <button
@@ -88,12 +95,15 @@ export function ResultsPanel({ state, issues, onLocate, onShowMore }: ResultsPan
   const shown = issues.slice(0, state.visibleIssues);
   const remaining = issues.length - shown.length;
 
-  if (state.page.blocked === "restricted") {
+  if (state.page.blocked !== null) {
+    const restricted = state.page.blocked === "restricted";
     return (
       <div className="panel">
         <section className="section">
-          <h3 className="section__title">{RESTRICTED_PAGE_TITLE}</h3>
-          <p className="empty">{RESTRICTED_PAGE_BODY}</p>
+          <h3 className="section__title">
+            {restricted ? RESTRICTED_PAGE_TITLE : DISABLED_SITE_TITLE}
+          </h3>
+          <p className="empty">{restricted ? RESTRICTED_PAGE_BODY : DISABLED_SITE_BODY}</p>
         </section>
       </div>
     );
@@ -125,7 +135,12 @@ export function ResultsPanel({ state, issues, onLocate, onShowMore }: ResultsPan
           <>
             <ul className="issue-list">
               {shown.map((issue) => (
-                <IssueCard key={issue.id} issue={issue} onLocate={onLocate} />
+                <IssueCard
+                  key={issue.id}
+                  issue={issue}
+                  showWcag={state.showWcagReferences}
+                  onLocate={onLocate}
+                />
               ))}
             </ul>
             {remaining > 0 && (

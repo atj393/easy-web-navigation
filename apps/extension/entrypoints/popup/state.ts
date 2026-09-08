@@ -38,10 +38,12 @@ export const POPUP_TABS: PopupTab[] = ["results", "guides", "auto"];
 export type ScanPhase = "idle" | "checking" | "done" | "error";
 
 /**
- * Why the current page cannot be checked. `null` means it can (or that we do
- * not know yet, which is treated the same way — the check itself reports).
+ * Why the current page will not be checked.
+ * `restricted` — the browser does not allow extensions to read this page.
+ * `disabled-here` — the user listed this site on the options page.
+ * `null` — checking is available.
  */
-export type PageBlock = "restricted" | null;
+export type PageBlock = "restricted" | "disabled-here" | null;
 
 export interface PopupState {
   /** Two structural states only: everything async resolves before `ready`. */
@@ -72,6 +74,8 @@ export interface PopupState {
   notice: string | null;
   /** How many findings are rendered before "show the rest". */
   visibleIssues: number;
+  /** Options-page preference, resolved during boot. */
+  showWcagReferences: boolean;
 }
 
 /** Findings rendered before the user asks for the rest (large-result guard). */
@@ -92,6 +96,7 @@ export const INITIAL_STATE: PopupState = {
   auto: { enabled: false, scope: "current-tab", message: null },
   notice: null,
   visibleIssues: ISSUE_PAGE_SIZE,
+  showWcagReferences: true,
 };
 
 /** Everything resolved during boot, applied to the tree in one commit. */
@@ -105,6 +110,8 @@ export interface BootPayload {
   guides?: { focusHelper: boolean; tabPath: boolean; summary: TabPathSummary | null };
   /** Human-readable problem encountered while booting (never a raw exception). */
   message?: string | null;
+  /** Options-page preference: show WCAG criteria beside findings. */
+  showWcagReferences?: boolean;
 }
 
 export type PopupAction =
@@ -131,7 +138,8 @@ export type PopupAction =
 export function popupReducer(state: PopupState, action: PopupAction): PopupState {
   switch (action.type) {
     case "BOOTED": {
-      const { url, blocked, settings, result, guides, message } = action.payload;
+      const { url, blocked, settings, result, guides, message, showWcagReferences } =
+        action.payload;
       const safe = normalizeMonitoringSettings(settings);
       return {
         ...state,
@@ -153,6 +161,7 @@ export function popupReducer(state: PopupState, action: PopupAction): PopupState
           message: message ?? null,
         },
         visibleIssues: ISSUE_PAGE_SIZE,
+        showWcagReferences: showWcagReferences ?? state.showWcagReferences,
       };
     }
 
@@ -325,6 +334,9 @@ export function statusLine(state: PopupState): StatusLine {
   if (state.page.blocked === "restricted") {
     return { text: "This browser page cannot be checked.", tone: "error" };
   }
+  if (state.page.blocked === "disabled-here") {
+    return { text: "You turned this site off in settings.", tone: "neutral" };
+  }
   const result = state.scan.result;
   if (state.scan.phase === "done" && result) {
     const n = result.summary.total;
@@ -339,9 +351,7 @@ export function statusLine(state: PopupState): StatusLine {
 
 /** Whether "Check this page" can run right now. */
 export function canCheck(state: PopupState): boolean {
-  return (
-    state.boot === "ready" && state.scan.phase !== "checking" && state.page.blocked !== "restricted"
-  );
+  return state.boot === "ready" && state.scan.phase !== "checking" && state.page.blocked === null;
 }
 
 /** Whether a report can be produced right now. */

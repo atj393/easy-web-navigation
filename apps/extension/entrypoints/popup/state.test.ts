@@ -126,6 +126,39 @@ describe("startup (RB-001)", () => {
     expect(statusLine(next).tone).toBe("error");
   });
 
+  it("marks a site the user switched off, and will not check it", () => {
+    const next = popupReducer(INITIAL_STATE, {
+      type: "BOOTED",
+      payload: { url: "https://example.com/", blocked: "disabled-here", settings },
+    });
+    expect(next.page.blocked).toBe("disabled-here");
+    expect(canCheck(next)).toBe(false);
+    // Not an error: the user asked for this, so the tone stays calm.
+    expect(statusLine(next)).toEqual({
+      text: "You turned this site off in settings.",
+      tone: "neutral",
+    });
+  });
+
+  it("carries the options-page WCAG preference into the ready state", () => {
+    const off = popupReducer(INITIAL_STATE, {
+      type: "BOOTED",
+      payload: {
+        url: "https://example.com/",
+        blocked: null,
+        settings,
+        showWcagReferences: false,
+      },
+    });
+    expect(off.showWcagReferences).toBe(false);
+    // Absent means "keep the default", not "turn it off".
+    const missing = popupReducer(INITIAL_STATE, {
+      type: "BOOTED",
+      payload: { url: "https://example.com/", blocked: null, settings },
+    });
+    expect(missing.showWcagReferences).toBe(true);
+  });
+
   it("adopts a scan produced during boot without a second transition", () => {
     const next = popupReducer(INITIAL_STATE, {
       type: "BOOTED",
