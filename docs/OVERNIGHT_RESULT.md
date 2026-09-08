@@ -34,12 +34,12 @@ than asserted in a comment.
 
 ## Repository
 
-|          |                                                     |
-| -------- | --------------------------------------------------- |
-| Base     | `54171ce5792492ec7f86c82b81eef741ad96d175` (`main`) |
-| Branch   | `claude/easy-web-nav-overnight-hardening-edx86j`    |
-| Commits  | 6                                                   |
-| Draft PR | see the PR link in the session summary              |
+|          |                                                      |
+| -------- | ---------------------------------------------------- |
+| Base     | `54171ce5792492ec7f86c82b81eef741ad96d175` (`main`)  |
+| Branch   | `claude/easy-web-nav-overnight-hardening-edx86j`     |
+| Commits  | 10 (branch head is the final commit)                 |
+| Draft PR | https://github.com/atj393/easy-web-navigation/pull/7 |
 
 ---
 
