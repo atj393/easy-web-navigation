@@ -19,6 +19,10 @@ CURRENT PHASE
   Branch:   claude/easy-web-nav-overnight-hardening-edx86j (restarted from main
             after the previous PR was squash-merged)
   Base SHA: 34de9cd (main, the squash-merge of PR #7)
+  Landed:   release-prep commit 10ecbd9 was opened as PR #8 and SQUASH-MERGED
+            into main as cfa6868 on 2026-09-08, after CI passed. This handover
+            note itself follows in a separate small PR, so main carries an
+            accurate record instead of a stale "not merged" line.
 
   VERSION
     1.0.1 -> 1.0.2 in every workspace package.json (root, apps/extension,
