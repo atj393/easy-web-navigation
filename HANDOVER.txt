@@ -13,6 +13,70 @@ PROJECT NAME
   overlay, NOT an auto-fixer, NOT a legal compliance certifier.
 
 CURRENT PHASE
+  v1.0.2 release preparation. Version bump + store packages built for MANUAL
+  upload. No source/behaviour change beyond the version numbers and docs.
+
+  Branch:   claude/easy-web-nav-overnight-hardening-edx86j (restarted from main
+            after the previous PR was squash-merged)
+  Base SHA: 34de9cd (main, the squash-merge of PR #7)
+
+  VERSION
+    1.0.1 -> 1.0.2 in every workspace package.json (root, apps/extension,
+    apps/demo-sites, and all six packages/*), matching how 1.0.0 -> 1.0.1 was
+    done. apps/extension/package.json is the one that drives the manifest and
+    the ZIP file names.
+
+  STORE PACKAGES BUILT (git-ignored; rebuild with `pnpm release:all`)
+    artifacts/chrome/easy-web-navigation-chrome-v1.0.2.zip   92177 bytes
+    artifacts/edge/easy-web-navigation-edge-v1.0.2.zip       92177 bytes
+    SHA-256 (both, identical by design -- same Chromium MV3 package):
+      d09cee22afd3923a18c53492550a4fc31e6d7c264391a9040a643bc10af52b52
+
+  ZIP VERIFIED
+    manifest.json at ZIP root; version 1.0.2; name "Easy Web Navigation -
+    Keyboard Access Check"; short_name "Easy Web Nav"; permissions exactly
+    activeTab/scripting/storage; NO host_permissions; optional_host_permissions
+    http://*/* + https://*/*; 14 runtime files, no source maps, no TypeScript,
+    no tests, no docs.
+
+  VALIDATION (all PASS)
+    pnpm run ci -> typecheck, lint, format:check, 281 tests, Chromium build,
+    Firefox build, manifest guard
+    pnpm release:all -> both ZIPs, manifest at root
+    node scripts/check-popup-stability.mjs against the release build -> PASS
+
+  FILES CHANGED
+    9 x package.json          version bump
+    CHANGELOG.md              [Unreleased] closed as [1.0.2] - 2026-09-08
+    docs/store/release-notes-v1.0.2.md   NEW
+    docs/store/release-checklist.md      version + ZIP names
+    docs/store/reviewer-test-instructions.md  ZIP names
+    README.md                 project-status version
+    CLAUDE.md                 release version (notes 1.0.1 is still what is live)
+    docs/architecture.md      status banner now says v1.0.2 + popup restructure
+    HANDOVER.txt              this entry
+
+  NOT DONE (deliberately -- these are the maintainer's, and were not asked for)
+    - NO git tag created. The release checklist says tag AFTER submission.
+    - NO GitHub Release created.
+    - NO release/v1.0.2 archive branch created.
+    - NOTHING uploaded to any store.
+
+  MANUAL TASKS BEFORE SUBMITTING
+    1. Run docs/store/manual-qa-before-submit.md in Chrome against the unpacked
+       build. The one that matters most: open and close the popup repeatedly and
+       watch that it does not move.
+    2. RESHOOT THE STORE SCREENSHOTS. The live listing's screenshots show the
+       v1.0.1 popup; v1.0.2 restructured it into a fixed shell with tabs. No
+       other listing text needs changing -- description, privacy disclosure and
+       permission justifications are all still accurate.
+    3. Firefox and Edge runtime are still UNVERIFIED (no such browser in the
+       session environment). Both build; both manifests are asserted by
+       scripts/check-manifest.mjs.
+    4. After submission: tag v1.0.2 and cut a release/v1.0.2 archive branch, the
+       way v1.0.1 was archived. Do not move or delete v1.0.1.
+
+PREVIOUS PHASE
   Overnight product hardening. Popup stability (RB-001), accessibility-rule
   correctness, options-page honesty, cross-browser permissions, performance,
   and the extension's own accessibility. Source and behaviour DID change this
@@ -20,7 +84,9 @@ CURRENT PHASE
 
   Branch:   claude/easy-web-nav-overnight-hardening-edx86j
   Base SHA: 54171ce5792492ec7f86c82b81eef741ad96d175 (main)
-  Commits:  8, pushed. Draft PR opened into main. NOT merged.
+  Commits:  11, pushed. PR #7 SQUASH-MERGED into main as 34de9cd on
+            2026-09-08. (An earlier draft of this entry said 8 commits and
+            "NOT merged"; it was written mid-flight and both facts moved on.)
 
   THE RELEASE BLOCKER (RB-001)
     The popup resized itself ~30 times over ~0.75s every time it opened.
@@ -108,7 +174,7 @@ CURRENT PHASE
     NO release was published, NO tag was created, NO store listing was touched,
     and v1.0.1 / release/v1.0.1 were not modified.
 
-PREVIOUS PHASE
+PHASE BEFORE THAT
   Recruiter-facing documentation pass (docs only, no source/behavior changes).
   The Chrome Web Store listing is LIVE, so the README's "not in the stores yet /
   Coming soon" text was factually wrong and contradicted the live store link on
@@ -128,14 +194,16 @@ PREVIOUS PHASE
   Test results: pnpm run ci -> typecheck, lint, 142/142 vitest tests, build all
                 pass locally.
 
-PHASE BEFORE THAT
+AND BEFORE THAT
   Release archive and GitHub protection.
   Created a permanent archive of the submitted Chrome Web Store v1.0.1 package
   (release branch + annotated tag + GitHub Release + SHA-256 checksums) and
   protected main, the release branch, and v* tags. No source/behavior changes.
 
 RELEASE VERSION
-  1.0.1
+  1.0.2 (built, NOT yet submitted or tagged)
+  1.0.1 remains the version live on the Chrome Web Store until 1.0.2 is
+  approved. The v1.0.1 archive below is historical and must not be edited.
 
 RELEASE SOURCE SHA (RELEASE_SHA)
   20b0abda2e3b4af5bb94b31d9ad577aa53209a2c
@@ -219,7 +287,7 @@ VALIDATION (this phase, all PASS)
   built chrome manifest matches submitted ZIP manifest exactly.
 
 DATE/TIME OF UPDATE
-  2026-09-08 (Overnight product hardening; see CURRENT PHASE).
+  2026-09-08 (v1.0.2 release preparation; see CURRENT PHASE).
 
 NO PRODUCT / PERMISSION / UI / BEHAVIOR CHANGES (applies to the RELEASE ARCHIVE
 phase, not to the CURRENT PHASE above, which did change product code)

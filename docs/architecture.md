@@ -1,9 +1,11 @@
 # Architecture
 
-> **Status:** this describes the architecture as shipped in v1.0.1 (published on the Chrome Web
-> Store). The section headings keep their original phase labels as development history; they do not
-> mean the behaviour is unimplemented. Where something is genuinely partial or best-effort it is
-> called out in [limitations.md](limitations.md).
+> **Status:** this describes the architecture as of v1.0.2. v1.0.1 is the version currently live on
+> the Chrome Web Store; v1.0.2 restructures the popup into a fixed shell with a Results / Guides /
+> Automatic tab strip and a pure state module (see [OVERNIGHT_AUDIT.md](OVERNIGHT_AUDIT.md), RB-001).
+> The section headings keep their original phase labels as development history; they do not mean the
+> behaviour is unimplemented. Where something is genuinely partial or best-effort it is called out in
+> [limitations.md](limitations.md).
 
 ## Extension architecture
 
