@@ -6,6 +6,10 @@ All notable changes to Easy Web Navigation are documented here. The format is ba
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [1.0.2] — 2026-09-08
+
 ### Fixed — Popup no longer resizes while it opens (RB-001)
 
 - The popup grew and reflowed for roughly 0.75s every time it was opened. An extension popup is

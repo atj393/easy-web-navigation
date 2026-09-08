@@ -49,7 +49,7 @@ with developers or testers. It runs locally and never changes the website.
 
 ## Project status
 
-- **Source:** open source under **MIT**, version `1.0.1`.
+- **Source:** open source under **MIT**, version `1.0.2`.
 - **Chrome Web Store:** [live](https://chromewebstore.google.com/detail/easy-web-navigation-keybo/jaffeipdpljhnfonacndcpjdkclgjiln). Edge and Firefox are built and validated on every release but not submitted.
 - **Stack:** a pnpm monorepo of six framework-free analysis packages plus a WXT and React Manifest V3 extension.
 - **CI:** every push and pull request runs typecheck, lint, formatting, 281 unit tests, both the

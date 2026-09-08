@@ -13,7 +13,7 @@ browsing tool — not an overlay, not an auto-fixer, not a compliance certifier.
 - **Store / manifest name:** `Easy Web Navigation - Keyboard Access Check` (manifest `short_name`:
   `Easy Web Nav`). The compact toolbar/popup brand stays **Easy Web Navigation** (`PRODUCT_NAME` in
   code). Use the short brand in prose; do not rename packages, the repo slug, or ZIP base names.
-- **Current production version:** 1.0.1
+- **Current release version:** 1.0.2 (prepared for submission; 1.0.1 is the version live in the Chrome Web Store until 1.0.2 is approved)
 - **Repository:** https://github.com/atj393/easy-web-navigation
 - **Default branch:** main
 - Read [HANDOVER.txt](HANDOVER.txt) at the start of every session for current state.
