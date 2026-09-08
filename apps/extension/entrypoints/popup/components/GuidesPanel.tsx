@@ -38,9 +38,9 @@ export function GuidesPanel({
       </p>
 
       <section className="section card-box" aria-labelledby="focus-guide-heading">
-        <h3 className="section__title" id="focus-guide-heading">
+        <h2 className="section__title" id="focus-guide-heading">
           Keyboard focus highlight
-        </h3>
+        </h2>
         <p className="section__sub">
           Draws a clear outline around whatever the Tab key has selected.
         </p>
@@ -56,9 +56,9 @@ export function GuidesPanel({
       </section>
 
       <section className="section card-box" aria-labelledby="path-guide-heading">
-        <h3 className="section__title" id="path-guide-heading">
+        <h2 className="section__title" id="path-guide-heading">
           Keyboard path
-        </h3>
+        </h2>
         <p className="section__sub">
           Numbers every stop the Tab key makes, in order, so you can see the route through the page.
         </p>

@@ -486,22 +486,36 @@ export function App() {
         onSelect={(tab: PopupTab) => dispatch({ type: "TAB_SELECTED", tab })}
       />
 
-      <div
-        className="shell__body"
-        role="tabpanel"
-        id={tabPanelId(state.tab)}
-        aria-labelledby={tabButtonId(state.tab)}
-        tabIndex={0}
-      >
-        {state.tab === "results" && (
+      {/*
+        Every panel is rendered and the inactive ones are hidden, so each tab's
+        `aria-controls` points at a panel that really exists. Each panel owns
+        its own scrolling, so switching tabs does not move the other panels'
+        scroll position.
+      */}
+      <div className="shell__body">
+        <div
+          className="panel-scroll"
+          role="tabpanel"
+          id={tabPanelId("results")}
+          aria-labelledby={tabButtonId("results")}
+          tabIndex={0}
+          hidden={state.tab !== "results"}
+        >
           <ResultsPanel
             state={state}
             issues={issues}
             onLocate={locate}
             onShowMore={() => dispatch({ type: "SHOW_MORE_ISSUES" })}
           />
-        )}
-        {state.tab === "guides" && (
+        </div>
+        <div
+          className="panel-scroll"
+          role="tabpanel"
+          id={tabPanelId("guides")}
+          aria-labelledby={tabButtonId("guides")}
+          tabIndex={0}
+          hidden={state.tab !== "guides"}
+        >
           <GuidesPanel
             state={state}
             disabled={guidesDisabled}
@@ -509,8 +523,15 @@ export function App() {
             onToggleTabPath={() => void toggleGuide("path")}
             onChangeMaxItems={(v) => void changeMaxItems(v)}
           />
-        )}
-        {state.tab === "auto" && (
+        </div>
+        <div
+          className="panel-scroll"
+          role="tabpanel"
+          id={tabPanelId("auto")}
+          aria-labelledby={tabButtonId("auto")}
+          tabIndex={0}
+          hidden={state.tab !== "auto"}
+        >
           <AutoPanel
             state={state}
             busy={busy}
@@ -520,7 +541,7 @@ export function App() {
             onStart={() => void startAuto()}
             onStop={() => void stopAuto()}
           />
-        )}
+        </div>
       </div>
 
       <footer className="footer">

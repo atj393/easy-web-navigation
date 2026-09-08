@@ -156,9 +156,34 @@ body {
 .shell__body {
   flex: 1 1 auto;
   min-height: 0;
+  display: flex;
+}
+
+/*
+ * One scroll region per tab panel. Only the selected panel is displayed, but
+ * all three exist so each tab's `aria-controls` resolves, and each keeps its
+ * own scroll position.
+ */
+.panel-scroll {
+  flex: 1 1 auto;
+  min-width: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: var(--sp-4);
+}
+
+.panel-scroll[hidden] {
+  display: none;
+}
+
+/*
+ * The panel is focusable so a keyboard user can scroll it with the arrow keys
+ * when it has no focusable content of its own. Give it the same ring as every
+ * other control rather than leaving the browser default.
+ */
+.panel-scroll:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: -3px;
 }
 
 /* --------------------------------------------------------------- header -- */

@@ -69,8 +69,9 @@ describe("popup sizing contract (RB-001)", () => {
   });
 
   it("scrolls variable content inside the shell, not the popup window", () => {
-    expect(declarations).toMatch(/\.shell__body\s*\{[^}]*overflow-y:\s*auto/);
     expect(declarations).toMatch(/\.shell__body\s*\{[^}]*flex:\s*1 1 auto/);
+    expect(declarations).toMatch(/\.shell__body\s*\{[^}]*min-height:\s*0/);
+    expect(declarations).toMatch(/\.panel-scroll\s*\{[^}]*overflow-y:\s*auto/);
   });
 
   it("reserves a fixed-height status strip so messages never move controls", () => {

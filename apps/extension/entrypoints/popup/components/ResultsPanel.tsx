@@ -53,9 +53,9 @@ function IssueCard({
     <li className={`issue issue--${issue.severity}`}>
       <div className="issue__head">
         <span className={`badge badge--${issue.severity}`}>{issue.severity}</span>
-        <h4 className="issue__title" id={headingId}>
+        <h3 className="issue__title" id={headingId}>
           {issue.title}
-        </h4>
+        </h3>
       </div>
       <p className="issue__why">{issue.description}</p>
       <code className="issue__where">{issue.selector || "(no selector)"}</code>
@@ -100,9 +100,9 @@ export function ResultsPanel({ state, issues, onLocate, onShowMore }: ResultsPan
     return (
       <div className="panel">
         <section className="section">
-          <h3 className="section__title">
+          <h2 className="section__title">
             {restricted ? RESTRICTED_PAGE_TITLE : DISABLED_SITE_TITLE}
-          </h3>
+          </h2>
           <p className="empty">{restricted ? RESTRICTED_PAGE_BODY : DISABLED_SITE_BODY}</p>
         </section>
       </div>
@@ -112,9 +112,9 @@ export function ResultsPanel({ state, issues, onLocate, onShowMore }: ResultsPan
   return (
     <div className="panel">
       <section className="section" aria-labelledby="summary-heading">
-        <h3 className="section__title" id="summary-heading">
+        <h2 className="section__title" id="summary-heading">
           What was checked
-        </h3>
+        </h2>
         <div className="cards">
           <SummaryCard label="Keyboard use" value={cards.keyboard} />
           <SummaryCard label="Moving around the page" value={cards.navigation} />
@@ -123,9 +123,9 @@ export function ResultsPanel({ state, issues, onLocate, onShowMore }: ResultsPan
       </section>
 
       <section className="section" aria-labelledby="findings-heading">
-        <h3 className="section__title" id="findings-heading">
+        <h2 className="section__title" id="findings-heading">
           Possible problems
-        </h3>
+        </h2>
 
         {!state.scan.result && <p className="empty">{NOTHING_CHECKED_YET}</p>}
 

@@ -35,9 +35,9 @@ export function AutoPanel({ state, busy, onScopeChange, onStart, onStop }: AutoP
       </p>
 
       <section className="section card-box" aria-labelledby="auto-heading">
-        <h3 className="section__title" id="auto-heading">
+        <h2 className="section__title" id="auto-heading">
           Automatic checking: {automaticCheckingStatusLabel(scope, enabled)}
-        </h3>
+        </h2>
 
         <label className="field">
           <span className="field__label">Where should checking continue?</span>
