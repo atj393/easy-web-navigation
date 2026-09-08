@@ -62,11 +62,11 @@ with developers or testers. It runs locally and never changes the website.
 
 </div>
 
-| Store                  | Status                                                                                                                      |
-| ---------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Store                  | Status                                                                                                                   |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | Chrome Web Store       | **Live**: [install](https://chromewebstore.google.com/detail/easy-web-navigation-keybo/jaffeipdpljhnfonacndcpjdkclgjiln) |
-| Microsoft Edge Add-ons | Not submitted. The same Chromium MV3 package is built and validated by `pnpm release:all`.                                   |
-| Firefox                | Not submitted. `pnpm build:firefox` produces a working build, but it is not published.                                       |
+| Microsoft Edge Add-ons | Not submitted. The same Chromium MV3 package is built and validated by `pnpm release:all`.                               |
+| Firefox                | Not submitted. `pnpm build:firefox` produces a working build, but it is not published.                                   |
 
 Edge users can install the Chrome listing directly, or load the Edge ZIP unpacked.
 
@@ -254,17 +254,17 @@ packages are tested in Node, so most of the suite never needs a browser at all.
 **142 unit tests across 9 files**, all passing, run on every push by
 [CI](https://github.com/atj393/easy-web-navigation/actions/workflows/ci.yml).
 
-| Package / area | What the tests pin down |
-|---|---|
-| `dom-scanner` (44) | Read-only inspection, and each rule's positive and negative cases |
-| `monitoring` (33) | Automatic-checking state machine, scope handling, teardown |
+| Package / area         | What the tests pin down                                                                      |
+| ---------------------- | -------------------------------------------------------------------------------------------- |
+| `dom-scanner` (44)     | Read-only inspection, and each rule's positive and negative cases                            |
+| `monitoring` (33)      | Automatic-checking state machine, scope handling, teardown                                   |
 | `keyboard-engine` (16) | Tab-order computation, visibility filtering, the 100-item cap and its "100 of 342" reporting |
-| `focus-overlay` (16) | Shadow-DOM container lifecycle, marker rendering, cleanup |
-| `spa-monitoring` (14) | URL-signal route-change detection |
-| `report-generator` (6) | Markdown and JSON output shape |
-| `clipboard` (5) | Copy and download paths |
-| `wcag-rules` (4) | Criteria metadata invariants |
-| `shared-types` (4) | Message-envelope invariants |
+| `focus-overlay` (16)   | Shadow-DOM container lifecycle, marker rendering, cleanup                                    |
+| `spa-monitoring` (14)  | URL-signal route-change detection                                                            |
+| `report-generator` (6) | Markdown and JSON output shape                                                               |
+| `clipboard` (5)        | Copy and download paths                                                                      |
+| `wcag-rules` (4)       | Criteria metadata invariants                                                                 |
+| `shared-types` (4)     | Message-envelope invariants                                                                  |
 
 Because the analysis packages take a DOM and return plain data, they are tested directly in Node,
 with no browser automation and no fixtures of a live page.

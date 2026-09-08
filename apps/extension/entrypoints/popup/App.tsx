@@ -1,269 +1,236 @@
-import { useEffect, useState } from "react";
-import { browser } from "#imports";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { generateMarkdownReport } from "@easy-web-navigation/report-generator";
+import { PRODUCT_NAME, type TabPathMaxItems } from "@easy-web-navigation/shared-types";
+import type { MonitoringScope, MonitoringSettings } from "@easy-web-navigation/shared-types";
 import { copyTextToClipboard } from "../../lib/clipboard";
 import { monitoringItem } from "../../lib/settings";
 import {
-  automaticCheckingStatusLabel,
   createApplyMonitoringPayload,
-  CURRENT_TAB_KEEP_CHECKING_HINT,
   hostPermissionsForScope,
-  keyboardPathSummaryText,
-  normalizeTabPathMaxItems,
-  scopeChoiceLabel,
-  scopeExplanation,
+  isSupportedPageUrl,
+  reportFileName,
   scopeNeedsPermission,
 } from "../../lib/monitoring";
+import { AutoPanel } from "./components/AutoPanel";
+import { GuidesPanel } from "./components/GuidesPanel";
+import { ResultsPanel } from "./components/ResultsPanel";
+import { Tabs, tabButtonId, tabPanelId, type TabDescriptor } from "./components/Tabs";
 import {
-  DEFAULT_TAB_PATH_MAX_ITEMS,
-  PRODUCT_NAME,
-  TAB_PATH_MAX_ITEMS_VALUES,
-  type ExtensionMessage,
-  type IssueSeverity,
-  type MonitoringScope,
-  type MonitoringSettings,
-  type ScanResult,
-  type TabPathMaxItems,
-  type TabPathSummary,
-} from "@easy-web-navigation/shared-types";
+  DISCLAIMER,
+  humanizeError,
+  PERMISSION_DENIED_MSG,
+  REPORT_PRIVACY_NOTE,
+  TAGLINE,
+} from "./messages";
+import { ensureInjected, getActiveTab, requestOrigins, send } from "./page-actions";
+import {
+  canCheck,
+  canReport,
+  INITIAL_STATE,
+  issuesForDisplay,
+  normalizeMonitoringSettings,
+  popupReducer,
+  resultsTabCount,
+  statusLine,
+  type PopupTab,
+} from "./state";
 
 /**
  * Popup UI.
  *
- * Plain-language wording for everyday users (Phase 1A-UX). The underlying
- * behavior is unchanged: a read-only check of the current page, optional
- * visual guides (keyboard focus highlight / keyboard path), automatic checking
- * within a user-chosen scope, and copy/download of results. Internal scope
- * values and persisted keys are unchanged; only the visible text differs.
+ * Structure is a fixed shell: header (brand, status strip, primary action),
+ * a tab strip, a scrolling body, and a pinned footer. The shell's dimensions
+ * come from CSS constants and never depend on content, which is what keeps the
+ * browser's popup autosizer still (see RB-001 and the sizing contract at the
+ * top of style.css).
+ *
+ * All state moves through one reducer (`state.ts`) so startup is two structural
+ * states — `booting` then `ready` — rather than a dozen independent async
+ * `setState` calls each re-shaping the tree.
+ *
+ * The extension stays READ-ONLY toward inspected pages throughout: it scans,
+ * and it asks the content script to draw its own isolated overlay. It never
+ * mutates page nodes.
  */
-const TAGLINE = "Check how a website works with a keyboard.";
-
-const DISCLAIMER =
-  "This tool checks for possible keyboard-access problems. It does not change the website or " +
-  "confirm legal compliance.";
-
-const PERMISSION_DENIED_MSG =
-  "We couldn’t get permission, so checking will stay on this page only.";
-
-const ENABLED_NOTE =
-  "Your keyboard focus and keyboard path choices will be shown again on supported pages where " +
-  "permission allows.";
-
-const SEVERITY_LEGEND: { key: IssueSeverity; label: string }[] = [
-  { key: "critical", label: "Critical" },
-  { key: "serious", label: "Serious" },
-  { key: "moderate", label: "Moderate" },
-  { key: "minor", label: "Minor" },
-];
-
-const SCOPE_VALUES: MonitoringScope[] = ["current-tab", "site", "all-sites"];
-
-type Phase = "idle" | "scanning" | "done" | "error";
-
-interface SummaryCardProps {
-  label: string;
-  count: number | "–";
-}
-
-function SummaryCard({ label, count }: SummaryCardProps) {
-  return (
-    <div className="card">
-      <span className="card__count">{count}</span>
-      <span className="card__label">{label}</span>
-    </div>
-  );
-}
-
-const RESTRICTED = /cannot access|host permission|chrome:\/\/|edge:\/\/|about:|extension|no tab/i;
-
-function humanizeError(message: string): string {
-  if (RESTRICTED.test(message)) {
-    return "Easy Web Navigation can't act on this page. Browser-internal and extension pages are restricted.";
-  }
-  return message;
-}
-
-async function getActiveTab(): Promise<{ id: number; url: string }> {
-  const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
-  if (!tab?.id) throw new Error("No active tab.");
-  return { id: tab.id, url: tab.url ?? "" };
-}
-
-async function ensureInjected(tabId: number): Promise<void> {
-  // Idempotent: the content script's init guard prevents double-setup.
-  await browser.scripting.executeScript({
-    target: { tabId },
-    files: ["/content-scripts/content.js"],
-  });
-}
-
-async function send(
-  tabId: number,
-  message: ExtensionMessage,
-): Promise<ExtensionMessage | undefined> {
-  return (await browser.tabs.sendMessage(tabId, message)) as ExtensionMessage | undefined;
-}
-
 export function App() {
-  const [phase, setPhase] = useState<Phase>("idle");
-  const [result, setResult] = useState<ScanResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [focusHelperOn, setFocusHelperOn] = useState(false);
-  const [tabPathOn, setTabPathOn] = useState(false);
-  const [tabPathMaxItems, setTabPathMaxItems] = useState<TabPathMaxItems>(
-    DEFAULT_TAB_PATH_MAX_ITEMS,
-  );
-  const [tabSummary, setTabSummary] = useState<TabPathSummary | null>(null);
-  const [locateStatus, setLocateStatus] = useState<string | null>(null);
-  const [reportStatus, setReportStatus] = useState<string | null>(null);
-  // Monitoring
-  const [monitoringEnabled, setMonitoringEnabled] = useState(false);
-  const [monitoringScope, setMonitoringScope] = useState<MonitoringScope>("current-tab");
-  const [monitoringMsg, setMonitoringMsg] = useState<string | null>(null);
-  // Cached active tab so permission requests stay within the click gesture.
-  const [activeUrl, setActiveUrl] = useState<string>("");
+  const [state, dispatch] = useReducer(popupReducer, INITIAL_STATE);
+  const [busy, setBusy] = useState(false);
 
+  /**
+   * Race guards (§ async): the popup can be closed, or the user can start a new
+   * action, while an await is still in flight. `alive` drops every update after
+   * unmount; `scanSeq` makes sure only the newest check may write a result.
+   */
+  const alive = useRef(true);
+  const scanSeq = useRef(0);
   useEffect(() => {
-    (async () => {
-      // Load persisted monitoring settings (and remembered helper prefs).
-      let settings: MonitoringSettings | undefined;
-      try {
-        settings = await monitoringItem.getValue();
-        setMonitoringEnabled(settings.enabled);
-        setMonitoringScope(settings.scope === "off" ? "current-tab" : settings.scope);
-        setTabPathMaxItems(normalizeTabPathMaxItems(settings.tabPathMaxItems));
-      } catch {
-        /* storage unavailable — defaults stand */
-      }
-      // Cache the active tab URL up front for gesture-safe permission requests.
-      try {
-        const tab = await getActiveTab();
-        setActiveUrl(tab.url);
-      } catch {
-        /* no active tab yet */
-      }
-
-      if (settings?.enabled) {
-        // Monitoring is on: opening the popup is a user gesture, so we may inject
-        // into the active tab and re-apply the remembered helpers + scan. This is
-        // what makes monitoring re-apply on each supported page (also in the
-        // current-tab scope, where the background cannot inject on navigation).
-        try {
-          const tab = await getActiveTab();
-          await ensureInjected(tab.id);
-          const scan = await send(tab.id, { type: "SCAN_REQUEST", payload: {} });
-          if (scan?.type === "SCAN_RESULT") {
-            setResult(scan.payload);
-            setPhase("done");
-          }
-          const applied = await send(tab.id, {
-            type: "APPLY_MONITORING",
-            payload: createApplyMonitoringPayload(settings),
-          });
-          if (applied?.type === "MONITORING_APPLIED") {
-            setFocusHelperOn(applied.payload.focusHelper);
-            setTabPathOn(applied.payload.tabPath);
-            setTabSummary(applied.payload.tabPathSummary);
-          }
-        } catch (e) {
-          // Restricted/unsupported page — monitoring can't act here.
-          setMonitoringMsg(humanizeError(e instanceof Error ? e.message : String(e)));
-        }
-        return;
-      }
-
-      // Monitoring off: best-effort sync of live helper state (does not inject).
-      try {
-        const tab = await getActiveTab();
-        const focus = await send(tab.id, { type: "GET_FOCUS_HELPER_STATE" });
-        if (focus?.type === "FOCUS_HELPER_STATE") setFocusHelperOn(focus.payload.enabled);
-        const tp = await send(tab.id, { type: "GET_TAB_PATH_STATE" });
-        if (tp?.type === "TAB_PATH_RESULT") {
-          setTabPathOn(tp.payload.enabled);
-          setTabSummary(tp.payload.summary);
-        }
-      } catch {
-        /* content script not injected yet — helpers are off */
-      }
-    })();
+    alive.current = true;
+    return () => {
+      alive.current = false;
+    };
   }, []);
 
-  async function saveMonitoring(patch: Partial<MonitoringSettings>) {
-    const current = await monitoringItem.getValue();
-    await monitoringItem.setValue({ ...current, ...patch });
-  }
+  /* ------------------------------------------------------------ startup -- */
 
-  async function runScan() {
-    setPhase("scanning");
-    setError(null);
-    setResult(null);
-    setLocateStatus(null);
-    setReportStatus(null);
+  const runScan = useCallback(async () => {
+    const seq = ++scanSeq.current;
+    dispatch({ type: "SCAN_STARTED" });
     try {
       const tab = await getActiveTab();
       await ensureInjected(tab.id);
       const response = await send(tab.id, { type: "SCAN_REQUEST", payload: {} });
+      // A newer check (or a closed popup) supersedes this one.
+      if (!alive.current || seq !== scanSeq.current) return;
       if (!response) throw new Error("No response from the page.");
       if (response.type === "SCAN_ERROR") throw new Error(response.payload.message);
       if (response.type !== "SCAN_RESULT") throw new Error("Unexpected response from the page.");
-      setResult(response.payload);
-      setPhase("done");
+      dispatch({ type: "SCAN_SUCCEEDED", result: response.payload });
     } catch (e) {
-      setError(humanizeError(e instanceof Error ? e.message : String(e)));
-      setPhase("error");
+      if (!alive.current || seq !== scanSeq.current) return;
+      dispatch({ type: "SCAN_FAILED", message: humanizeError(e) });
     }
-  }
+  }, []);
 
-  async function toggleFocusHelper() {
-    setLocateStatus(null);
-    try {
-      const tab = await getActiveTab();
-      await ensureInjected(tab.id);
-      const next = !focusHelperOn;
-      const response = await send(tab.id, {
-        type: "TOGGLE_FOCUS_HELPER",
-        payload: { enabled: next },
-      });
-      if (response?.type === "FOCUS_HELPER_STATE") {
-        setFocusHelperOn(response.payload.enabled);
-        await saveMonitoring({ focusHelperEnabled: response.payload.enabled });
+  useEffect(() => {
+    void (async () => {
+      // Boot reads only fast, local sources — extension storage and the active
+      // tab. Nothing here waits on the inspected page, so `booting` is a few
+      // milliseconds and the interactive UI is committed in one go.
+      let settings: MonitoringSettings;
+      try {
+        settings = normalizeMonitoringSettings(await monitoringItem.getValue());
+      } catch {
+        settings = normalizeMonitoringSettings(undefined);
       }
-    } catch (e) {
-      setLocateStatus(humanizeError(e instanceof Error ? e.message : String(e)));
-    }
+
+      let url = "";
+      try {
+        url = (await getActiveTab()).url;
+      } catch {
+        /* no active tab — the restricted/blocked state below covers it */
+      }
+      if (!alive.current) return;
+
+      const blocked = isSupportedPageUrl(url) ? null : "restricted";
+      dispatch({ type: "BOOTED", payload: { url, blocked, settings } });
+
+      if (blocked) return;
+
+      if (settings.enabled) {
+        // Automatic checking is on and opening the popup is a user gesture, so
+        // the read-only content script may be injected and the remembered
+        // guides re-applied here — this is what makes the `current-tab` scope
+        // work, where the background cannot inject on navigation.
+        await runScan();
+        if (!alive.current) return;
+        try {
+          const tab = await getActiveTab();
+          const applied = await send(tab.id, {
+            type: "APPLY_MONITORING",
+            payload: createApplyMonitoringPayload(settings),
+          });
+          if (!alive.current) return;
+          if (applied?.type === "MONITORING_APPLIED") {
+            dispatch({
+              type: "GUIDES_APPLIED",
+              focusHelper: applied.payload.focusHelper,
+              tabPath: applied.payload.tabPath,
+              summary: applied.payload.tabPathSummary,
+            });
+          }
+        } catch (e) {
+          if (alive.current) dispatch({ type: "AUTO_FAILED", message: humanizeError(e) });
+        }
+        return;
+      }
+
+      // Automatic checking is off: read live guide state without injecting, so
+      // opening the popup has no effect on a page the user did not ask about.
+      try {
+        const tab = await getActiveTab();
+        const focus = await send(tab.id, { type: "GET_FOCUS_HELPER_STATE" });
+        const path = await send(tab.id, { type: "GET_TAB_PATH_STATE" });
+        if (!alive.current) return;
+        if (focus?.type === "FOCUS_HELPER_STATE" || path?.type === "TAB_PATH_RESULT") {
+          dispatch({
+            type: "GUIDES_APPLIED",
+            focusHelper: focus?.type === "FOCUS_HELPER_STATE" ? focus.payload.enabled : false,
+            tabPath: path?.type === "TAB_PATH_RESULT" ? path.payload.enabled : false,
+            summary: path?.type === "TAB_PATH_RESULT" ? path.payload.summary : null,
+          });
+        }
+      } catch {
+        // Expected: the content script has not been injected into this page
+        // yet, so no guide is running. Not a user-significant failure.
+      }
+    })();
+    // Startup runs exactly once; `runScan` is stable via useCallback.
+  }, [runScan]);
+
+  /* ------------------------------------------------------------ actions -- */
+
+  async function saveMonitoring(patch: Partial<MonitoringSettings>) {
+    const current = normalizeMonitoringSettings(await monitoringItem.getValue());
+    await monitoringItem.setValue({ ...current, ...patch });
   }
 
-  async function toggleTabPath() {
-    setLocateStatus(null);
+  async function toggleGuide(kind: "focus" | "path") {
+    dispatch({ type: "NOTICE", message: null });
     try {
       const tab = await getActiveTab();
       await ensureInjected(tab.id);
-      const next = !tabPathOn;
+      if (kind === "focus") {
+        const next = !state.guides.focusHelper;
+        const response = await send(tab.id, {
+          type: "TOGGLE_FOCUS_HELPER",
+          payload: { enabled: next },
+        });
+        if (!alive.current) return;
+        if (response?.type === "FOCUS_HELPER_STATE") {
+          dispatch({
+            type: "GUIDES_APPLIED",
+            focusHelper: response.payload.enabled,
+            tabPath: state.guides.tabPath,
+            summary: state.guides.summary,
+          });
+          await saveMonitoring({ focusHelperEnabled: response.payload.enabled });
+        }
+        return;
+      }
+      const next = !state.guides.tabPath;
       const response = await send(tab.id, {
         type: "TOGGLE_TAB_PATH",
-        payload: { enabled: next, options: { maxItems: tabPathMaxItems } },
+        payload: { enabled: next, options: { maxItems: state.guides.maxItems } },
       });
+      if (!alive.current) return;
       if (response?.type === "TAB_PATH_RESULT") {
-        setTabPathOn(response.payload.enabled);
-        setTabSummary(response.payload.summary);
+        dispatch({
+          type: "GUIDES_APPLIED",
+          focusHelper: state.guides.focusHelper,
+          tabPath: response.payload.enabled,
+          summary: response.payload.summary,
+        });
         await saveMonitoring({ tabPathEnabled: response.payload.enabled });
       }
     } catch (e) {
-      setLocateStatus(humanizeError(e instanceof Error ? e.message : String(e)));
+      if (alive.current) dispatch({ type: "GUIDES_FAILED", message: humanizeError(e) });
     }
   }
 
   /**
-   * Change the keyboard-path marker limit. Always saves the new value so it is
-   * remembered (and reused during automatic checking). If the keyboard path is
-   * already visible, redraw it immediately on the current page — no need to
-   * toggle it off and on again.
+   * Change the keyboard-path marker limit. The choice is always remembered (it
+   * is reused by automatic checking); the path is redrawn immediately only when
+   * it is already on screen.
    */
-  async function changeTabPathMaxItems(next: TabPathMaxItems) {
-    setTabPathMaxItems(next);
-    await saveMonitoring({ tabPathMaxItems: next });
-    if (!tabPathOn) return;
-    setLocateStatus(null);
+  async function changeMaxItems(next: TabPathMaxItems) {
+    dispatch({ type: "MAX_ITEMS_CHANGED", maxItems: next });
+    try {
+      await saveMonitoring({ tabPathMaxItems: next });
+    } catch (e) {
+      if (alive.current) dispatch({ type: "GUIDES_FAILED", message: humanizeError(e) });
+      return;
+    }
+    if (!state.guides.tabPath) return;
     try {
       const tab = await getActiveTab();
       await ensureInjected(tab.id);
@@ -271,411 +238,293 @@ export function App() {
         type: "TOGGLE_TAB_PATH",
         payload: { enabled: true, options: { maxItems: next } },
       });
+      if (!alive.current) return;
       if (response?.type === "TAB_PATH_RESULT") {
-        setTabPathOn(response.payload.enabled);
-        setTabSummary(response.payload.summary);
+        dispatch({
+          type: "GUIDES_APPLIED",
+          focusHelper: state.guides.focusHelper,
+          tabPath: response.payload.enabled,
+          summary: response.payload.summary,
+        });
       }
     } catch (e) {
-      setLocateStatus(humanizeError(e instanceof Error ? e.message : String(e)));
+      if (alive.current) dispatch({ type: "GUIDES_FAILED", message: humanizeError(e) });
     }
   }
 
   async function locate(selector: string) {
-    setLocateStatus("Locating…");
+    dispatch({ type: "NOTICE", message: "Looking for that item on the page…" });
     try {
       const tab = await getActiveTab();
       await ensureInjected(tab.id);
       const response = await send(tab.id, { type: "LOCATE_ISSUE", payload: { selector } });
-      if (response?.type === "LOCATE_RESULT") {
-        setLocateStatus(
-          response.payload.found
-            ? "Highlighted the element on the page."
-            : "That element is no longer on the page.",
-        );
-      } else {
-        setLocateStatus("Could not locate the element.");
-      }
+      if (!alive.current) return;
+      dispatch({
+        type: "NOTICE",
+        message:
+          response?.type === "LOCATE_RESULT" && response.payload.found
+            ? "Highlighted that item on the page."
+            : "That item is no longer on the page. Check the page again.",
+      });
     } catch (e) {
-      setLocateStatus(humanizeError(e instanceof Error ? e.message : String(e)));
+      if (alive.current) dispatch({ type: "NOTICE", message: humanizeError(e) });
     }
   }
 
-  async function startMonitoring() {
-    setMonitoringMsg(null);
-    let effectiveScope = monitoringScope;
+  async function startAuto() {
+    setBusy(true);
+    let effectiveScope = state.auto.scope;
+    let message: string | null = null;
     try {
-      // Request optional host permission FIRST (still inside the click gesture)
-      // using the cached active URL — no awaits before request() for site/all.
-      if (scopeNeedsPermission(monitoringScope)) {
-        const origins = hostPermissionsForScope(monitoringScope, activeUrl);
-        if (origins.length === 0) {
+      // The permission request must be the first await after the click so it
+      // still counts as a user gesture.
+      if (scopeNeedsPermission(effectiveScope)) {
+        const origins = hostPermissionsForScope(effectiveScope, state.page.url);
+        const granted = await requestOrigins(origins);
+        if (!granted) {
           effectiveScope = "current-tab";
-          setMonitoringMsg(PERMISSION_DENIED_MSG);
-        } else {
-          const granted = await browser.permissions.request({ origins });
-          if (!granted) {
-            effectiveScope = "current-tab";
-            setMonitoringMsg(PERMISSION_DENIED_MSG);
-          }
+          message = PERMISSION_DENIED_MSG;
         }
       }
 
-      // Enable monitoring + set scope, but PRESERVE the remembered helper
-      // preferences (focusHelperEnabled / tabPathEnabled) so Stop→Start keeps
-      // them. Toggling a helper persists its preference independently.
+      // Preserve the remembered guide preferences so Stop -> Start keeps them.
       await saveMonitoring({ enabled: true, scope: effectiveScope });
-      const settings = await monitoringItem.getValue();
-      setMonitoringEnabled(true);
-      setMonitoringScope(effectiveScope);
+      const settings = normalizeMonitoringSettings(await monitoringItem.getValue());
+      if (!alive.current) return;
+      dispatch({ type: "AUTO_STARTED", scope: effectiveScope, message });
+
+      await runScan();
+      if (!alive.current) return;
 
       const tab = await getActiveTab();
-      await ensureInjected(tab.id);
-
-      // Scan immediately and show the result.
-      const scan = await send(tab.id, { type: "SCAN_REQUEST", payload: {} });
-      if (scan?.type === "SCAN_RESULT") {
-        setResult(scan.payload);
-        setPhase("done");
-      } else if (scan?.type === "SCAN_ERROR") {
-        setError(humanizeError(scan.payload.message));
-        setPhase("error");
-      }
-
-      // Re-apply the remembered visual helpers (from saved settings, not stale
-      // popup state).
       const applied = await send(tab.id, {
         type: "APPLY_MONITORING",
         payload: createApplyMonitoringPayload(settings),
       });
+      if (!alive.current) return;
       if (applied?.type === "MONITORING_APPLIED") {
-        setFocusHelperOn(applied.payload.focusHelper);
-        setTabPathOn(applied.payload.tabPath);
-        setTabSummary(applied.payload.tabPathSummary);
+        dispatch({
+          type: "GUIDES_APPLIED",
+          focusHelper: applied.payload.focusHelper,
+          tabPath: applied.payload.tabPath,
+          summary: applied.payload.tabPathSummary,
+        });
       }
     } catch (e) {
-      setMonitoringMsg(humanizeError(e instanceof Error ? e.message : String(e)));
+      if (alive.current) dispatch({ type: "AUTO_FAILED", message: humanizeError(e) });
+    } finally {
+      if (alive.current) setBusy(false);
     }
   }
 
-  async function stopMonitoring() {
+  async function stopAuto() {
+    setBusy(true);
     try {
       await saveMonitoring({ enabled: false });
-      setMonitoringEnabled(false);
-      setMonitoringMsg(null);
+      if (alive.current) dispatch({ type: "AUTO_STOPPED" });
+    } catch (e) {
+      // Storage failed: automatic checking is genuinely still on, so say so
+      // rather than showing a stopped state that is not real.
+      if (alive.current) dispatch({ type: "AUTO_FAILED", message: humanizeError(e) });
+      if (alive.current) setBusy(false);
+      return;
+    }
+    try {
       const tab = await getActiveTab();
-      // Clear any active overlays on the current tab.
-      const applied = await send(tab.id, {
+      await send(tab.id, {
         type: "APPLY_MONITORING",
         payload: { focusHelper: false, tabPath: false },
       });
-      if (applied?.type === "MONITORING_APPLIED") {
-        setFocusHelperOn(false);
-        setTabPathOn(false);
-        setTabSummary(null);
-      }
     } catch {
-      // Content script may not be present (e.g. restricted page) — monitoring
-      // is still recorded as off; overlays will not re-apply.
-      setMonitoringEnabled(false);
-      setFocusHelperOn(false);
-      setTabPathOn(false);
+      // The page has no content script (restricted page, or never injected),
+      // so there is nothing to clear. Automatic checking is recorded as off.
+    } finally {
+      if (alive.current) setBusy(false);
     }
   }
 
   function buildReport(): string {
-    return generateMarkdownReport(result!, { tabPathSummary: tabSummary ?? undefined });
+    return generateMarkdownReport(state.scan.result!, {
+      tabPathSummary: state.guides.summary ?? undefined,
+    });
   }
 
   function downloadReport() {
-    if (!result) {
-      setReportStatus("Check this page before saving results.");
-      return;
+    if (!state.scan.result) return;
+    let url: string | null = null;
+    let anchor: HTMLAnchorElement | null = null;
+    try {
+      const blob = new Blob([buildReport()], { type: "text/markdown" });
+      url = URL.createObjectURL(blob);
+      anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = reportFileName(state.scan.result.url, state.scan.result.scannedAt);
+      // Firefox only follows a click on an anchor that is in the document.
+      document.body.appendChild(anchor);
+      anchor.click();
+      dispatch({ type: "NOTICE", message: "Results saved to your downloads." });
+    } catch {
+      dispatch({ type: "NOTICE", message: "The results could not be saved. Try copying instead." });
+    } finally {
+      anchor?.remove();
+      // Revoking synchronously can cancel the download that was just started.
+      const objectUrl = url;
+      if (objectUrl) setTimeout(() => URL.revokeObjectURL(objectUrl), 30_000);
     }
-    const blob = new Blob([buildReport()], { type: "text/markdown" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = "easy-web-navigation-report.md";
-    anchor.click();
-    URL.revokeObjectURL(url);
-    setReportStatus("Results downloaded.");
   }
 
   async function copyReport() {
-    if (!result) {
-      setReportStatus("Check this page before saving results.");
-      return;
+    if (!state.scan.result) return;
+    try {
+      const ok = await copyTextToClipboard(buildReport());
+      if (!alive.current) return;
+      dispatch({
+        type: "NOTICE",
+        message: ok
+          ? "Results copied to the clipboard."
+          : "Copying is blocked here. You can download the results instead.",
+      });
+    } catch {
+      if (alive.current) {
+        dispatch({ type: "NOTICE", message: "Copying is blocked here. Try downloading instead." });
+      }
     }
-    const ok = await copyTextToClipboard(buildReport());
-    setReportStatus(ok ? "Results copied." : "Couldn’t copy. You can still download the results.");
   }
 
-  const tabPathText = tabSummary ? keyboardPathSummaryText(tabSummary) : null;
+  /* -------------------------------------------------------------- render -- */
 
-  const summary = result?.summary;
-  const labelIssues = summary ? summary.byCategory.forms + summary.byCategory.naming : "–";
-  const keyboardIssues = summary ? summary.byCategory.keyboard + summary.byCategory.focus : "–";
-  const navigationIssues = summary ? summary.byCategory.navigation : "–";
+  const status = statusLine(state);
+  const issues = useMemo(() => issuesForDisplay(state.scan.result), [state.scan.result]);
+  const findings = resultsTabCount(state);
+  const guidesDisabled = state.page.blocked === "restricted";
 
-  const statusText =
-    phase === "scanning"
-      ? "Checking this page…"
-      : phase === "done" && result
-        ? `${result.summary.total} problem(s) found`
-        : "Ready to check this page.";
+  const tabs: TabDescriptor[] = [
+    { id: "results", label: "Results", count: findings, countLabel: "possible problems" },
+    { id: "guides", label: "Guides" },
+    { id: "auto", label: "Automatic" },
+  ];
+
+  if (state.boot === "booting") {
+    return (
+      <div className="shell">
+        <p className="boot" role="status">
+          Starting {PRODUCT_NAME}…
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <main className="popup">
-      <header className="popup__header">
+    <div className="shell">
+      <header className="header">
         <div className="brand">
-          <img className="brand__icon" src="/icon-48.png" alt="" width={36} height={36} />
-          <div>
-            <h1 className="popup__title">{PRODUCT_NAME}</h1>
-            <p className="popup__tagline">{TAGLINE}</p>
+          <img className="brand__icon" src="/icon-48.png" alt="" width={32} height={32} />
+          <div className="brand__text">
+            <h1 className="brand__name">{PRODUCT_NAME}</h1>
+            <p className="brand__tagline">{TAGLINE}</p>
           </div>
         </div>
-        {phase !== "error" && (
-          <p className="popup__status" role="status">
-            {statusText}
+
+        {/*
+          One reserved-height strip carries every transient message (status,
+          scan errors, locate and report feedback). Because its height is fixed
+          nothing below it can be pushed around, and because there is a single
+          live region a scan does not fire a burst of announcements.
+        */}
+        <div
+          className={`header__status${
+            status.tone === "error"
+              ? " header__status--error"
+              : status.tone === "busy"
+                ? " header__status--busy"
+                : ""
+          }`}
+        >
+          <p className="header__status-text" role="status">
+            {state.notice ?? status.text}
+          </p>
+        </div>
+
+        {state.page.url && (
+          <p className="header__page" title={state.page.url}>
+            {state.scan.result?.title || state.page.url}
           </p>
         )}
-        {result && (
-          <p className="popup__page" title={result.url}>
-            {result.title || result.url || "(untitled page)"}
-          </p>
-        )}
+
+        <button
+          type="button"
+          className="btn btn--primary btn--block"
+          onClick={runScan}
+          disabled={!canCheck(state)}
+        >
+          {state.scan.phase === "checking" ? "Checking…" : "Check this page"}
+        </button>
       </header>
 
-      <button
-        type="button"
-        className="btn btn--primary"
-        onClick={runScan}
-        disabled={phase === "scanning"}
+      <Tabs
+        tabs={tabs}
+        selected={state.tab}
+        onSelect={(tab: PopupTab) => dispatch({ type: "TAB_SELECTED", tab })}
+      />
+
+      <div
+        className="shell__body"
+        role="tabpanel"
+        id={tabPanelId(state.tab)}
+        aria-labelledby={tabButtonId(state.tab)}
+        tabIndex={0}
       >
-        {phase === "scanning" ? "Checking…" : "Check this page"}
-      </button>
-
-      {phase === "error" && (
-        <p className="popup__error" role="alert">
-          {error ?? "Something went wrong."}
-        </p>
-      )}
-
-      <section className="block" aria-labelledby="guides-heading">
-        <h2 id="guides-heading" className="block__heading">
-          Show on this page
-        </h2>
-        <p className="block__sub">
-          Use these guides to see how a keyboard user moves through the page.
-        </p>
-
-        <div className="guide">
-          <div className="guide__text">
-            <p className="guide__title">Keyboard focus highlight</p>
-            <p className="guide__desc">
-              Shows a clear outline around the item selected with the Tab key.
-            </p>
-          </div>
-          <button
-            type="button"
-            className={`btn btn--toggle${focusHelperOn ? " btn--on" : ""}`}
-            onClick={toggleFocusHelper}
-            aria-pressed={focusHelperOn}
-          >
-            {focusHelperOn ? "Hide keyboard focus" : "Show keyboard focus"}
-          </button>
-        </div>
-
-        <div className="guide">
-          <div className="guide__text">
-            <p className="guide__title">Keyboard path</p>
-            <p className="guide__desc">
-              Shows numbered markers in the order the Tab key moves through the page.
-            </p>
-          </div>
-          <button
-            type="button"
-            className={`btn btn--toggle${tabPathOn ? " btn--on" : ""}`}
-            onClick={toggleTabPath}
-            aria-pressed={tabPathOn}
-          >
-            {tabPathOn ? "Hide keyboard path" : "Show keyboard path"}
-          </button>
-
-          <label className="field">
-            <span className="field__label">Number of keyboard path markers</span>
-            <select
-              className="field__select"
-              value={tabPathMaxItems}
-              onChange={(e) => changeTabPathMaxItems(Number(e.target.value) as TabPathMaxItems)}
-              aria-describedby="tab-path-max-items-hint"
-            >
-              {TAB_PATH_MAX_ITEMS_VALUES.map((value) => (
-                <option key={value} value={value}>
-                  {value === DEFAULT_TAB_PATH_MAX_ITEMS
-                    ? `${value} markers (recommended)`
-                    : `${value} markers`}
-                </option>
-              ))}
-            </select>
-          </label>
-          <span id="tab-path-max-items-hint" className="field__hint">
-            More markers can make very large pages slower and harder to read.
-          </span>
-        </div>
-
-        {tabPathOn && tabPathText && (
-          <div className="popup__tabsummary" role="status">
-            <p className="popup__tabsummary-line">{tabPathText.line}</p>
-            {tabPathText.hint && <p className="popup__warn">{tabPathText.hint}</p>}
-          </div>
+        {state.tab === "results" && (
+          <ResultsPanel
+            state={state}
+            issues={issues}
+            onLocate={locate}
+            onShowMore={() => dispatch({ type: "SHOW_MORE_ISSUES" })}
+          />
         )}
-      </section>
-
-      <section className="block" aria-labelledby="auto-heading">
-        <h2 id="auto-heading" className="block__heading">
-          Keep checking as you browse
-        </h2>
-        <p className="block__sub">
-          Choose where {PRODUCT_NAME} should continue checking while you browse.
-        </p>
-        <p className="block__status" role="status">
-          Automatic checking:{" "}
-          <strong>{automaticCheckingStatusLabel(monitoringScope, monitoringEnabled)}</strong>
-        </p>
-
-        {/* Plain-language explanation directly under the status — shown before
-            and after checking starts, so the "This page only" limitation is
-            never hidden in a tooltip or help icon. */}
-        <p className="block__hint">{scopeExplanation(monitoringScope)}</p>
-        {monitoringScope === "current-tab" && !monitoringEnabled && (
-          <p className="block__hint">{CURRENT_TAB_KEEP_CHECKING_HINT}</p>
+        {state.tab === "guides" && (
+          <GuidesPanel
+            state={state}
+            disabled={guidesDisabled}
+            onToggleFocusHelper={() => void toggleGuide("focus")}
+            onToggleTabPath={() => void toggleGuide("path")}
+            onChangeMaxItems={(v) => void changeMaxItems(v)}
+          />
         )}
-
-        <label className="field">
-          <span className="field__label">Where should I keep checking?</span>
-          <select
-            className="field__select"
-            value={monitoringScope}
-            disabled={monitoringEnabled}
-            onChange={(e) => setMonitoringScope(e.target.value as MonitoringScope)}
-          >
-            {SCOPE_VALUES.map((value) => (
-              <option key={value} value={value}>
-                {scopeChoiceLabel(value)}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        {monitoringScope === "all-sites" && !monitoringEnabled && (
-          <p className="block__hint">
-            Your browser will ask for permission before checking all websites.
-          </p>
+        {state.tab === "auto" && (
+          <AutoPanel
+            state={state}
+            busy={busy}
+            onScopeChange={(scope: Exclude<MonitoringScope, "off">) =>
+              dispatch({ type: "SCOPE_CHANGED", scope })
+            }
+            onStart={() => void startAuto()}
+            onStop={() => void stopAuto()}
+          />
         )}
-
-        {monitoringEnabled ? (
-          <button type="button" className="btn btn--on btn--toggle" onClick={stopMonitoring}>
-            Stop automatic checking
-          </button>
-        ) : (
-          <button type="button" className="btn btn--primary btn--toggle" onClick={startMonitoring}>
-            Start automatic checking
-          </button>
-        )}
-
-        {monitoringEnabled && <p className="block__hint">{ENABLED_NOTE}</p>}
-        {monitoringMsg && (
-          <p className="block__msg" role="status">
-            {monitoringMsg}
-          </p>
-        )}
-      </section>
-
-      <section className="block" aria-labelledby="results-heading">
-        <h2 id="results-heading" className="block__heading">
-          What we checked
-        </h2>
-
-        <div className="cards" aria-label="Summary">
-          <SummaryCard label="Keyboard use" count={keyboardIssues} />
-          <SummaryCard label="Moving around the page" count={navigationIssues} />
-          <SummaryCard label="Names and labels" count={labelIssues} />
-        </div>
-
-        <div className="issues__head">
-          <h3 className="section__title">Problems found</h3>
-          <ul className="legend" aria-label="How serious">
-            {SEVERITY_LEGEND.map(({ key, label }) => (
-              <li key={key} className="legend__item">
-                <span className={`legend__dot legend__dot--${key}`} aria-hidden="true" />
-                {label}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {locateStatus && (
-          <p className="popup__locate" role="status">
-            {locateStatus}
-          </p>
-        )}
-
-        {!result && (
-          <p className="issues__empty">
-            Nothing checked yet. Select <strong>Check this page</strong> to review keyboard use,
-            movement order, and names and labels.
-          </p>
-        )}
-        {result && result.issues.length === 0 && (
-          <p className="issues__empty">
-            No problems were found by these checks. This does not mean the page is fully accessible.
-          </p>
-        )}
-        {result && result.issues.length > 0 && (
-          <ul className="issue-list">
-            {result.issues.map((issue) => (
-              <li key={issue.id} className="issue">
-                <div className="issue__head">
-                  <span className={`badge badge--${issue.severity}`}>{issue.severity}</span>
-                  <span className="issue__title">{issue.title}</span>
-                </div>
-                <p className="issue__wcag">
-                  WCAG {issue.wcag.map((c) => `${c.id} (${c.level})`).join(", ")}
-                </p>
-                <code className="issue__selector">{issue.selector}</code>
-                <p className="issue__rec">{issue.recommendation}</p>
-                <button
-                  type="button"
-                  className="btn btn--small"
-                  onClick={() => locate(issue.selector)}
-                >
-                  Show this problem
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <div className="popup__actions">
-        <button type="button" className="btn" onClick={copyReport} disabled={!result}>
-          Copy results
-        </button>
-        <button type="button" className="btn" onClick={downloadReport} disabled={!result}>
-          Download results
-        </button>
       </div>
 
-      {reportStatus && (
-        <p className="popup__report-status" role="status">
-          {reportStatus}
-        </p>
-      )}
-
-      <footer className="popup__disclaimer">
-        <p>{DISCLAIMER}</p>
+      <footer className="footer">
+        <div className="footer__actions">
+          <button
+            type="button"
+            className="btn btn--grow"
+            onClick={() => void copyReport()}
+            disabled={!canReport(state)}
+          >
+            Copy results
+          </button>
+          <button
+            type="button"
+            className="btn btn--grow"
+            onClick={downloadReport}
+            disabled={!canReport(state)}
+          >
+            Save results
+          </button>
+        </div>
+        <p className="footer__note">{canReport(state) ? REPORT_PRIVACY_NOTE : DISCLAIMER}</p>
       </footer>
-    </main>
+    </div>
   );
 }
