@@ -20,7 +20,7 @@ CURRENT PHASE
 
   Branch:   claude/easy-web-nav-overnight-hardening-edx86j
   Base SHA: 54171ce5792492ec7f86c82b81eef741ad96d175 (main)
-  Commits:  6, pushed. Draft PR opened into main. NOT merged.
+  Commits:  8, pushed. Draft PR opened into main. NOT merged.
 
   THE RELEASE BLOCKER (RB-001)
     The popup resized itself ~30 times over ~0.75s every time it opened.
@@ -82,7 +82,7 @@ CURRENT PHASE
 
   TEST RESULTS (all PASS)
     typecheck / lint / format:check / build / build:firefox / run ci
-    vitest: 276 tests, 16 files  (was 142 across 9)
+    vitest: 281 tests, 16 files  (was 142 across 9)
     node scripts/check-manifest.mjs        PASS both browsers
     node scripts/check-popup-stability.mjs PASS (fails on the origin/main build)
     NOTE: format:check was FAILING on main before this phase (README.md) and was

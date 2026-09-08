@@ -14,7 +14,7 @@ A privacy-first browser extension for checking keyboard navigation, focus, and v
 [![Chrome Web Store](https://img.shields.io/badge/Chrome_Web_Store-Live-4285F4?logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/easy-web-navigation-keybo/jaffeipdpljhnfonacndcpjdkclgjiln)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Chrome MV3](https://img.shields.io/badge/Chrome-Manifest%20V3-4285F4?logo=googlechrome&logoColor=white)](https://developer.chrome.com/docs/extensions/mv3/)
-[![Tests](https://img.shields.io/badge/tests-276-blue)](#testing)
+[![Tests](https://img.shields.io/badge/tests-281-blue)](#testing)
 [![No tracking](https://img.shields.io/badge/tracking-none-lightgrey)](#privacy)
 
 https://github.com/user-attachments/assets/1ef84180-ccef-45e1-b4ed-cd6fd4c37a85
@@ -52,7 +52,7 @@ with developers or testers. It runs locally and never changes the website.
 - **Source:** open source under **MIT**, version `1.0.1`.
 - **Chrome Web Store:** [live](https://chromewebstore.google.com/detail/easy-web-navigation-keybo/jaffeipdpljhnfonacndcpjdkclgjiln). Edge and Firefox are built and validated on every release but not submitted.
 - **Stack:** a pnpm monorepo of six framework-free analysis packages plus a WXT and React Manifest V3 extension.
-- **CI:** every push and pull request runs typecheck, lint, formatting, 276 unit tests, both the
+- **CI:** every push and pull request runs typecheck, lint, formatting, 281 unit tests, both the
   Chromium and Firefox builds, and a guard that asserts the built manifests' permission surface.
 
 ## Quick start
@@ -253,7 +253,7 @@ packages are tested in Node, so most of the suite never needs a browser at all.
 
 ## Testing
 
-**276 unit tests across 16 files**, all passing, run on every push by
+**281 unit tests across 16 files**, all passing, run on every push by
 [CI](https://github.com/atj393/easy-web-navigation/actions/workflows/ci.yml).
 
 | Package / area                 | What the tests pin down                                                                                                                             |
@@ -261,9 +261,9 @@ packages are tested in Node, so most of the suite never needs a browser at all.
 | `dom-scanner` (44)             | Read-only inspection, and each rule's positive and negative cases                                                                                   |
 | `dom-scanner` correctness (27) | Patterns that are built correctly and must **not** be reported: roving tabindex, disabled and `inert` controls, icon buttons, hidden shadow content |
 | `monitoring` (33)              | Automatic-checking state machine, scope handling, teardown                                                                                          |
-| `popup` state (27)             | Startup determinism, the scan lifecycle, and validation of anything read back from storage                                                          |
-| `popup` messages (22)          | Error classification, and a guard against claiming a page is accessible                                                                             |
-| `popup` components (21)        | Findings, empty and restricted states, and ARIA semantics, rendered into a real DOM                                                                 |
+| `popup` state (31)             | Startup determinism, the scan lifecycle, and validation of anything read back from storage                                                          |
+| `popup` messages (21)          | Error classification, and a guard against claiming a page is accessible                                                                             |
+| `popup` components (23)        | Findings, empty and restricted states, and ARIA semantics, rendered into a real DOM                                                                 |
 | `keyboard-engine` (16)         | Tab-order computation, visibility filtering, the 100-item cap and its "100 of 342" reporting                                                        |
 | `focus-overlay` (16)           | Shadow-DOM container lifecycle, marker rendering, cleanup                                                                                           |
 | `focus-overlay` contract (11)  | That inspected nodes are left byte-identical, and that markers are measured before any is drawn                                                     |

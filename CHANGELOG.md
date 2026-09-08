@@ -98,7 +98,7 @@ All notable changes to Easy Web Navigation are documented here. The format is ba
 
 ### Tests and CI
 
-- 142 tests to 276. New coverage for the popup state machine, the popup CSS sizing contract, popup
+- 142 tests to 281. New coverage for the popup state machine, the popup CSS sizing contract, popup
   components rendered into a real DOM, rule correctness, the overlay's read-only contract, site
   rules, error classification, and report options.
 - `pnpm format:check` was in no CI job and had drifted red on `main`. It, the Firefox build and a new

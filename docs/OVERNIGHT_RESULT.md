@@ -152,7 +152,7 @@ oscillation looks like, and the rendered shell measures 420 whether the popup is
 | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
 | `scripts/check-popup-stability.mjs`    | Real packaged browser. Fails on the pre-fix build and prints the 8px growth sequence as the failure message.                         |
 | `entrypoints/popup/style.test.ts` (11) | The CSS contract as an executable guard — no viewport units, explicit dimensions, border-box, internal scrolling. Runs in normal CI. |
-| `entrypoints/popup/state.test.ts` (27) | Startup is exactly two structural states, and every persisted value is applied in one commit.                                        |
+| `entrypoints/popup/state.test.ts` (31) | Startup is exactly two structural states, and every persisted value is applied in one commit.                                        |
 
 ---
 
@@ -353,7 +353,7 @@ Two improvements _to_ privacy, neither of which changes the model:
 | TypeScript                         | PASS                                              |
 | ESLint                             | PASS                                              |
 | Formatting                         | PASS — was **failing** on `main`                  |
-| Vitest                             | PASS — **276 tests**, 16 files (was 142 across 9) |
+| Vitest                             | PASS — **281 tests**, 16 files (was 142 across 9) |
 | Chromium build                     | PASS                                              |
 | Firefox build                      | PASS                                              |
 | Manifest guard                     | PASS — both browsers                              |
