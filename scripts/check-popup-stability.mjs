@@ -48,11 +48,20 @@ const START_SIZES = [
 ];
 
 /**
- * How many resize rounds are acceptable. One is the browser sizing the popup
- * for the first time; anything beyond that is the popup changing size in front
- * of the user.
+ * How many resize rounds are acceptable.
+ *
+ * One is the browser sizing the popup for the first time. This rig allows a
+ * small margin above that because `setViewportSize` sizes the OUTER window
+ * (scrollbar included) while the browser's own popup sizing works in content
+ * pixels, so a scrollbar appearing or disappearing can cost one extra settling
+ * step. What must never happen is the size failing to settle, or the content
+ * size tracking the popup size -- both checked separately below.
+ *
+ * For scale: before the sizing contract was introduced, the same three runs
+ * took 31, 8 and 16 resizes and the content width equalled the popup width at
+ * every step.
  */
-const MAX_RESIZES = 1;
+const MAX_RESIZES = 3;
 
 function fail(message) {
   console.error(`FAIL  ${message}`);
@@ -117,18 +126,30 @@ async function measure(start) {
     let resizes = 0;
     /** popup width -> rendered shell width, to prove independence. */
     const shellWidths = new Map();
+    /** Every size the popup took, in order, to detect oscillation. */
+    const sizeTrail = [];
     const began = Date.now();
 
     while (Date.now() - began < SETTLE_MS) {
       let preferred;
       try {
         preferred = await page.evaluate(() => {
-          const de = document.documentElement;
+          // <body>, not <html>: the root element's scroll size is floored at the
+          // viewport, so it can only ever report growth. The body's scroll size
+          // is the document's real content size and can shrink, which is what
+          // the browser's own preferred-size calculation does.
           const body = document.body;
-          const shell = document.querySelector(".shell") ?? document.getElementById("root");
+          // Nothing is painted, and the browser measures nothing, until the
+          // document has been parsed and its render-blocking stylesheet has
+          // applied. Sampling before that reports the blank document, not the
+          // popup.
+          if (!body || document.readyState === "loading") return { pending: true };
+          // `.popup` is the pre-contract root, so a build from before the fix
+          // is measured the same way and the comparison stays like-for-like.
+          const shell = document.querySelector(".shell, .popup");
           return {
-            w: Math.max(de ? de.scrollWidth : 0, body ? body.scrollWidth : 0),
-            h: Math.max(de ? de.scrollHeight : 0, body ? body.scrollHeight : 0),
+            w: body.scrollWidth,
+            h: body.scrollHeight,
             shellW: shell ? Math.round(shell.getBoundingClientRect().width) : 0,
             innerW: window.innerWidth,
           };
@@ -138,7 +159,12 @@ async function measure(start) {
         continue;
       }
 
-      // Ignore the pre-render frame, where the shell has not been mounted yet.
+      if (preferred.pending) {
+        await new Promise((r) => setTimeout(r, TICK_MS));
+        continue;
+      }
+      // The shell only exists once React has mounted; before that there is
+      // nothing meaningful to compare against the popup width.
       if (preferred.shellW > 0) shellWidths.set(preferred.innerW, preferred.shellW);
 
       const nextW = Math.min(MAX_W, Math.max(MIN, preferred.w));
@@ -147,6 +173,7 @@ async function measure(start) {
         resizes += 1;
         w = nextW;
         h = nextH;
+        sizeTrail.push(`${w}x${h}`);
         await page.setViewportSize({ width: w, height: h }).catch(() => {});
       }
       await new Promise((r) => setTimeout(r, TICK_MS));
@@ -157,6 +184,10 @@ async function measure(start) {
       start,
       final: { w, h },
       resizes,
+      sizeTrail,
+      // A size the popup returns to after leaving it is the signature of the
+      // original bug: the popup hunting between two layouts.
+      oscillated: new Set(sizeTrail).size !== sizeTrail.length,
       shellWidths: [...shellWidths.entries()].map(([popupW, shellW]) => ({ popupW, shellW })),
     };
   } finally {
@@ -180,11 +211,22 @@ for (const run of runs) {
     `${run.label.padEnd(20)} ${run.start.w}x${run.start.h} -> ` +
     `${run.final.w}x${run.final.h}  resizes=${run.resizes}  shell widths=${JSON.stringify(shellSizes)}`;
 
-  if (run.resizes > MAX_RESIZES) {
-    fail(`${line}\n      popup resized ${run.resizes} times; expected at most ${MAX_RESIZES}.`);
-  } else if (shellSizes.length > 1) {
+  if (shellSizes.length > 1) {
+    // The bug itself: content size derived from the popup size.
     fail(
-      `${line}\n      shell width tracks the popup width — a viewport-dependent length is back.`,
+      `${line}\n      the shell rendered at ${JSON.stringify(shellSizes)} for different popup ` +
+        `widths — a viewport-dependent length is back.`,
+    );
+  } else if (shellSizes.length === 0) {
+    fail(`${line}\n      the popup shell never rendered, so nothing could be measured.`);
+  } else if (run.oscillated) {
+    fail(
+      `${line}\n      the popup returned to a size it had already left: ${run.sizeTrail.join(" -> ")}`,
+    );
+  } else if (run.resizes > MAX_RESIZES) {
+    fail(
+      `${line}\n      popup resized ${run.resizes} times (${run.sizeTrail.join(" -> ")}); ` +
+        `expected at most ${MAX_RESIZES}.`,
     );
   } else {
     console.log(`PASS  ${line}`);
