@@ -31,9 +31,6 @@ import {
 /** Which panel the popup body is showing. */
 export type PopupTab = "results" | "guides" | "auto";
 
-/** All tabs in display order. */
-export const POPUP_TABS: PopupTab[] = ["results", "guides", "auto"];
-
 /** Lifecycle of the page check. */
 export type ScanPhase = "idle" | "checking" | "done" | "error";
 

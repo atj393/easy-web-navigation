@@ -25,6 +25,15 @@ const SEVERITY_MEANING: Record<string, string> = {
   info: "Context only, not a problem on its own.",
 };
 
+/** How much of the page was actually looked at — context, not a finding. */
+export function focusableSummary(result: ScanResult | null): string | null {
+  if (!result) return null;
+  const n = result.focusableCount;
+  return n === 1
+    ? "1 item on this page can take keyboard focus."
+    : `${n} items on this page can take keyboard focus.`;
+}
+
 function SummaryCard({ label, value }: { label: string; value: CardValue }) {
   return (
     <div className="card">
@@ -92,6 +101,7 @@ export interface ResultsPanelProps {
 
 export function ResultsPanel({ state, issues, onLocate, onShowMore }: ResultsPanelProps) {
   const cards = summaryCards(state.scan.result);
+  const focusable = focusableSummary(state.scan.result);
   const shown = issues.slice(0, state.visibleIssues);
   const remaining = issues.length - shown.length;
 
@@ -120,6 +130,7 @@ export function ResultsPanel({ state, issues, onLocate, onShowMore }: ResultsPan
           <SummaryCard label="Moving around the page" value={cards.navigation} />
           <SummaryCard label="Names and labels" value={cards.naming} />
         </div>
+        {focusable && <p className="section__sub">{focusable}</p>}
       </section>
 
       <section className="section" aria-labelledby="findings-heading">
@@ -157,11 +168,4 @@ export function ResultsPanel({ state, issues, onLocate, onShowMore }: ResultsPan
       </section>
     </div>
   );
-}
-
-/** Exported for tests and for the scan-details line. */
-export function focusableSummary(result: ScanResult | null): string | null {
-  if (!result) return null;
-  const n = result.focusableCount;
-  return n === 1 ? "1 item can take keyboard focus." : `${n} items can take keyboard focus.`;
 }

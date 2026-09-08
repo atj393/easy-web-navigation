@@ -11,7 +11,6 @@ import {
   classifyFailure,
   DISCLAIMER,
   humanizeError,
-  isRestrictedFailure,
   NOTHING_CHECKED_YET,
   NO_PROBLEMS_FOUND,
   PERMISSION_DENIED_MSG,
@@ -130,10 +129,5 @@ describe("humanizeError", () => {
       "Reload the page",
     );
     expect(humanizeError(new Error("Cannot access a chrome:// URL"))).toContain("normal website");
-  });
-
-  it("identifies a restricted page for the calm restricted state", () => {
-    expect(isRestrictedFailure(new Error("Cannot access a chrome:// URL"))).toBe(true);
-    expect(isRestrictedFailure(new Error("Could not establish connection."))).toBe(false);
   });
 });

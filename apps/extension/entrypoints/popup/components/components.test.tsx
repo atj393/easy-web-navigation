@@ -16,7 +16,7 @@ import {
 import { INITIAL_STATE, issuesForDisplay, popupReducer, type PopupState } from "../state";
 import { AutoPanel } from "./AutoPanel";
 import { GuidesPanel } from "./GuidesPanel";
-import { ResultsPanel } from "./ResultsPanel";
+import { focusableSummary, ResultsPanel } from "./ResultsPanel";
 import { Tabs } from "./Tabs";
 
 // React 18's concurrent renderer expects this flag in test environments.
@@ -170,6 +170,21 @@ describe("ResultsPanel", () => {
     render(<ResultsPanel state={state} issues={[]} onLocate={() => {}} onShowMore={() => {}} />);
     expect(container.textContent).toContain("This page cannot be checked");
     expect(container.querySelectorAll(".card")).toHaveLength(0);
+  });
+
+  it("says how much of the page was looked at, once there is a result", () => {
+    const issues = [issue("a", "minor")];
+    const state = ready({ scan: { phase: "done", result: scanResult(issues), error: null } });
+    render(
+      <ResultsPanel state={state} issues={issues} onLocate={() => {}} onShowMore={() => {}} />,
+    );
+    expect(container.textContent).toContain("9 items on this page can take keyboard focus.");
+  });
+
+  it("says nothing about focusable items before a check", () => {
+    render(<ResultsPanel state={ready()} issues={[]} onLocate={() => {}} onShowMore={() => {}} />);
+    expect(container.textContent).not.toContain("can take keyboard focus");
+    expect(focusableSummary(null)).toBeNull();
   });
 
   it("explains a site the user switched off, without calling it an error", () => {

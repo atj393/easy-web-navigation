@@ -105,9 +105,3 @@ export function humanizeError(error: unknown): string {
   const raw = error instanceof Error ? error.message : String(error ?? "");
   return FAILURE_TEXT[classifyFailure(raw)];
 }
-
-/** True when the failure means the page itself is off-limits to the extension. */
-export function isRestrictedFailure(error: unknown): boolean {
-  const raw = error instanceof Error ? error.message : String(error ?? "");
-  return classifyFailure(raw) === "restricted";
-}
