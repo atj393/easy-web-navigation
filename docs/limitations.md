@@ -160,8 +160,11 @@ Monitoring is explicit, user-started, and read-only:
   current-tab session.
 - **Preferences are remembered across Start/Stop.** Stopping monitoring removes the overlays but
   keeps your Focus helper / Tab path choices; the next Start re-applies them.
-- **Firefox limitation.** Firefox's MV2 build does not expose optional host permissions, so the
-  `site` and `all-sites` scopes fall back to current-tab there. Chrome/Edge (MV3) support them.
+- **Firefox.** The Firefox build is Manifest V2, which spells optional host access
+  `optional_permissions` rather than `optional_host_permissions`. The build now declares the same
+  optional origins under that key, so the `site` and `all-sites` scopes are available on Firefox
+  too. (Before, they silently fell back to current-tab there.) Firefox runtime behaviour has not
+  been verified by the maintainer — see "Known unverified behaviour" below.
 - **Restricted pages are never scanned.** Browser-internal and privileged schemes
   (`chrome://`, `edge://`, `about:`, `moz-extension:`, `chrome-extension:`, `devtools:`,
   `view-source:`, `file:`, …) are skipped with a friendly message.
@@ -184,3 +187,42 @@ it is **best-effort**:
   script re-wraps them, the wrapper stays a harmless pass-through.
 - **Scope still applies.** SPA refresh runs only when monitoring is active, and closed shadow DOM /
   cross-origin iframes remain out of scope.
+
+## What the checks get wrong, on purpose
+
+Every automated accessibility check trades false positives against false negatives. These are the
+calls this tool makes, so you can judge its results rather than trust them.
+
+- **Click handlers on containers.** A `<div onclick>` that wraps a real button — click delegation —
+  is reported as an element that cannot be reached by keyboard. Ruling it out would mean guessing
+  whether a focusable descendant handles the interaction, and guessing wrong in the other direction
+  hides a control that genuinely is unreachable. The tool prefers the noisy error here.
+- **Interaction it cannot see.** Detection is based only on what is observable in the DOM. A control
+  wired up with `addEventListener` rather than an `onclick` attribute is invisible to the
+  clickable-not-focusable check, and no automated check can tell whether a key handler actually
+  works.
+- **Focus visibility is not scored.** `missing-visible-focus` is catalogued but never evaluated. The
+  focus helper draws _its own_ indicator so you can see where focus is; it does not judge whether
+  the site's own focus styling is sufficient. That judgement needs a human.
+- **Names are computed with a subset of the ARIA algorithm.** It covers `aria-labelledby`,
+  `aria-label`, native label association, name-from-content (skipping `aria-hidden` subtrees and
+  honouring a descendant's own `aria-label` or `alt`), and `title` as a weak fallback. It does not
+  implement the full specification, so an unusual construction may be named differently by a real
+  screen reader.
+- **A clean result is not a pass.** Roughly speaking, automated checks can only reach the criteria
+  that are decidable from markup. Keyboard traps, focus order that is technically valid but
+  confusing, whether an error message is understandable, and whether a control's name describes what
+  it does are all outside what any scanner can determine.
+
+## Known unverified behaviour
+
+Honest about the testing, too:
+
+- **Firefox and Edge runtime.** Both targets build, and both manifests are asserted by
+  `scripts/check-manifest.mjs`, but neither browser's runtime behaviour has been exercised by the
+  maintainer. Chromium is the verified target.
+- **The Firefox build is Manifest V2.** The product describes itself as Manifest V3, which is true of
+  the Chromium and Edge package. Moving Firefox to MV3 changes the background worker's lifetime and
+  needs real Firefox testing first.
+- **Browser zoom.** The popup has been measured at the clamped 800x600 size that high zoom produces,
+  but not driven through the browser's own zoom setting at 125 / 150 / 200%.

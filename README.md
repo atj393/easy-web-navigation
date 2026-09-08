@@ -14,7 +14,7 @@ A privacy-first browser extension for checking keyboard navigation, focus, and v
 [![Chrome Web Store](https://img.shields.io/badge/Chrome_Web_Store-Live-4285F4?logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/easy-web-navigation-keybo/jaffeipdpljhnfonacndcpjdkclgjiln)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Chrome MV3](https://img.shields.io/badge/Chrome-Manifest%20V3-4285F4?logo=googlechrome&logoColor=white)](https://developer.chrome.com/docs/extensions/mv3/)
-[![Tests](https://img.shields.io/badge/tests-142-blue)](#testing)
+[![Tests](https://img.shields.io/badge/tests-276-blue)](#testing)
 [![No tracking](https://img.shields.io/badge/tracking-none-lightgrey)](#privacy)
 
 https://github.com/user-attachments/assets/1ef84180-ccef-45e1-b4ed-cd6fd4c37a85
@@ -52,7 +52,8 @@ with developers or testers. It runs locally and never changes the website.
 - **Source:** open source under **MIT**, version `1.0.1`.
 - **Chrome Web Store:** [live](https://chromewebstore.google.com/detail/easy-web-navigation-keybo/jaffeipdpljhnfonacndcpjdkclgjiln). Edge and Firefox are built and validated on every release but not submitted.
 - **Stack:** a pnpm monorepo of six framework-free analysis packages plus a WXT and React Manifest V3 extension.
-- **CI:** every push and pull request runs typecheck, lint, 142 unit tests, and both the Chromium and Firefox builds.
+- **CI:** every push and pull request runs typecheck, lint, formatting, 276 unit tests, both the
+  Chromium and Firefox builds, and a guard that asserts the built manifests' permission surface.
 
 ## Quick start
 
@@ -142,7 +143,8 @@ policy.
 - **Google Chrome** (Manifest V3), published on the Chrome Web Store.
 - **Microsoft Edge** (Manifest V3, byte-identical package to Chrome), builds and packages cleanly but
   is not submitted to Edge Add-ons.
-- **Mozilla Firefox**, builds via `pnpm build:firefox`, not submitted to addons.mozilla.org.
+- **Mozilla Firefox**, builds via `pnpm build:firefox` (Manifest V2), not submitted to
+  addons.mozilla.org and not verified at runtime.
 
 Only the Chrome listing is published today. The other two are packaging targets that are built and
 validated on every release, not store listings.
@@ -251,23 +253,38 @@ packages are tested in Node, so most of the suite never needs a browser at all.
 
 ## Testing
 
-**142 unit tests across 9 files**, all passing, run on every push by
+**276 unit tests across 16 files**, all passing, run on every push by
 [CI](https://github.com/atj393/easy-web-navigation/actions/workflows/ci.yml).
 
-| Package / area         | What the tests pin down                                                                      |
-| ---------------------- | -------------------------------------------------------------------------------------------- |
-| `dom-scanner` (44)     | Read-only inspection, and each rule's positive and negative cases                            |
-| `monitoring` (33)      | Automatic-checking state machine, scope handling, teardown                                   |
-| `keyboard-engine` (16) | Tab-order computation, visibility filtering, the 100-item cap and its "100 of 342" reporting |
-| `focus-overlay` (16)   | Shadow-DOM container lifecycle, marker rendering, cleanup                                    |
-| `spa-monitoring` (14)  | URL-signal route-change detection                                                            |
-| `report-generator` (6) | Markdown and JSON output shape                                                               |
-| `clipboard` (5)        | Copy and download paths                                                                      |
-| `wcag-rules` (4)       | Criteria metadata invariants                                                                 |
-| `shared-types` (4)     | Message-envelope invariants                                                                  |
+| Package / area                 | What the tests pin down                                                                                                                             |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dom-scanner` (44)             | Read-only inspection, and each rule's positive and negative cases                                                                                   |
+| `dom-scanner` correctness (27) | Patterns that are built correctly and must **not** be reported: roving tabindex, disabled and `inert` controls, icon buttons, hidden shadow content |
+| `monitoring` (33)              | Automatic-checking state machine, scope handling, teardown                                                                                          |
+| `popup` state (27)             | Startup determinism, the scan lifecycle, and validation of anything read back from storage                                                          |
+| `popup` messages (22)          | Error classification, and a guard against claiming a page is accessible                                                                             |
+| `popup` components (21)        | Findings, empty and restricted states, and ARIA semantics, rendered into a real DOM                                                                 |
+| `keyboard-engine` (16)         | Tab-order computation, visibility filtering, the 100-item cap and its "100 of 342" reporting                                                        |
+| `focus-overlay` (16)           | Shadow-DOM container lifecycle, marker rendering, cleanup                                                                                           |
+| `focus-overlay` contract (11)  | That inspected nodes are left byte-identical, and that markers are measured before any is drawn                                                     |
+| `spa-monitoring` (14)          | URL-signal route-change detection                                                                                                                   |
+| `site-rules` (11)              | Which sites the per-site opt-out covers, and which it must not                                                                                      |
+| `popup` stylesheet (11)        | The popup sizing contract, so the resize bug cannot come back                                                                                       |
+| `report-generator` (10)        | Markdown and JSON output shape, and what a report must never contain                                                                                |
+| `clipboard` (5)                | Copy and download paths                                                                                                                             |
+| `wcag-rules` (4)               | Criteria metadata invariants                                                                                                                        |
+| `shared-types` (4)             | Message-envelope invariants                                                                                                                         |
 
 Because the analysis packages take a DOM and return plain data, they are tested directly in Node,
-with no browser automation and no fixtures of a live page.
+with no browser automation and no fixtures of a live page. The popup's components render into jsdom
+with `react-dom` alone, so testing the UI needed no extra dependency.
+
+Two checks run against a real packaged browser rather than in Node:
+
+| Script                | What it proves                                                                                                                                                                                                  |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm check:manifest` | The built manifests for both browsers request exactly the promised permissions, no host access at install time, and no remote or eval'd code. Runs in CI.                                                       |
+| `pnpm check:popup`    | The popup settles at one size from every plausible starting size, and its content width does not depend on the popup width. Needs `playwright-core` and a Chromium binary; skips cleanly when either is absent. |
 
 Not covered: real end-to-end runs in a packaged browser (the demo pages in `apps/demo-sites/` exist
 for that, checked by hand), and store-review behaviour.

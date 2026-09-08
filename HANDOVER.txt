@@ -13,6 +13,102 @@ PROJECT NAME
   overlay, NOT an auto-fixer, NOT a legal compliance certifier.
 
 CURRENT PHASE
+  Overnight product hardening. Popup stability (RB-001), accessibility-rule
+  correctness, options-page honesty, cross-browser permissions, performance,
+  and the extension's own accessibility. Source and behaviour DID change this
+  phase, unlike the previous two documentation-only phases.
+
+  Branch:   claude/easy-web-nav-overnight-hardening-edx86j
+  Base SHA: 54171ce5792492ec7f86c82b81eef741ad96d175 (main)
+  Commits:  6, pushed. Draft PR opened into main. NOT merged.
+
+  THE RELEASE BLOCKER (RB-001)
+    The popup resized itself ~30 times over ~0.75s every time it opened.
+    Cause: `.popup { width: min(420px, calc(100vw - 32px)); padding: 20px }`
+    with no box-sizing and no width on html/body. An extension popup is
+    auto-sized by the browser, so `100vw` IS the popup's width -- content width
+    depended on popup width and vice versa. Padding outside the declared width
+    made each round-trip grow by exactly 8px until min() clamped, which is why
+    it settled at 460 rather than the intended 420.
+    Fixed by an explicit sizing contract, written at the top of
+    apps/extension/entrypoints/popup/style.css. Do not reintroduce viewport
+    units in that file; style.test.ts will fail if anyone does.
+    Measured in packaged Chromium: 31/6/16 resizes before, 2/2/2 after, and one
+    rendered shell width (420) instead of thirty.
+
+  MAIN CHANGES
+    - Popup rebuilt as a fixed 420x580 shell: pinned header + primary action,
+      Results / Guides / Automatic tabs, scrolling body, pinned report actions.
+      Startup is now one reducer with an explicit boot phase (state.ts).
+    - Rule corrections. False positives: disabled/aria-disabled controls, inert
+      subtrees, roving-tabindex widgets, icon buttons labelled on the icon,
+      invalid tabindex, <details>, hidden markup in positive-tabindex.
+      False negatives: unlabeled <select>/<textarea> named by their own
+      contents, decorative aria-hidden glyphs counted as names, controls inside
+      a hidden shadow host.
+    - Options page: all four settings were dead. "Disabled domains" claimed the
+      extension stayed inactive on those sites and was never read -- now
+      enforced in popup, background and content script. "Show WCAG references"
+      now drives the popup and reports. The other two were removed.
+    - Firefox: MV2 has no optional_host_permissions, so the site/all-sites
+      scopes could never be granted there. Same optional access now declared
+      under optional_permissions. REQUIRED PERMISSIONS UNCHANGED.
+    - Performance: keyboard path with 500 markers 582ms -> 124ms on a page with
+      1801 focusable elements. Overlay drawing is read-then-write with one
+      batched append; scans memoise style lookups per pass.
+    - Popup a11y: aria-controls dangled on 2 of 3 tabs (only the selected panel
+      was rendered); heading levels skipped H1 -> H3. Both fixed.
+
+  FILES CHANGED (summary; see the PR for the full diff)
+    apps/extension/entrypoints/popup/   rebuilt: App.tsx + state.ts +
+                                        messages.ts + page-actions.ts +
+                                        components/ + style.css + 4 test files
+    apps/extension/entrypoints/options/App.tsx   settings that do something
+    apps/extension/entrypoints/{background,content}.ts   honour disabled sites
+    apps/extension/lib/site-rules.ts     new: per-site opt-out matching
+    apps/extension/lib/monitoring.ts     + reportFileName
+    apps/extension/wxt.config.ts         MV2 optional permissions
+    packages/dom-scanner/src/index.ts    accname, visibility, focusability
+    packages/wcag-rules/src/index.ts     disabled / inert / roving tabindex
+    packages/focus-overlay/src/index.ts  batching, leak, SPA remount
+    packages/report-generator/src/       tool version, WCAG toggle, privacy note
+    packages/shared-types/src/index.ts   dead settings removed
+    scripts/check-manifest.mjs           new: permission-surface guard
+    scripts/check-popup-stability.mjs    new: RB-001 browser check
+    apps/demo-sites/                     3 new fixtures + index
+    docs/OVERNIGHT_AUDIT.md, docs/OVERNIGHT_RESULT.md   new
+    docs/assets/overnight/               before/after screenshots
+    CHANGELOG.md, README.md, docs/limitations.md, .github/workflows/ci.yml
+
+  TEST RESULTS (all PASS)
+    typecheck / lint / format:check / build / build:firefox / run ci
+    vitest: 276 tests, 16 files  (was 142 across 9)
+    node scripts/check-manifest.mjs        PASS both browsers
+    node scripts/check-popup-stability.mjs PASS (fails on the origin/main build)
+    NOTE: format:check was FAILING on main before this phase (README.md) and was
+    in no CI job. It is now in CI and in `pnpm run ci`.
+
+  REMAINING WORK / MANUAL TASKS (cannot be done from a session)
+    1. Run the manual matrix in Chrome with an unpacked build. The one that
+       matters: open and close the popup repeatedly and watch it not move.
+    2. Firefox runtime is UNVERIFIED. The optional-permission fix is asserted by
+       the manifest guard but has not been exercised in Firefox. Test the
+       "This website" and "All websites" scopes there before claiming support.
+    3. Edge runtime is unverified (same Chromium package as Chrome).
+    4. Browser zoom at 125/150/200% has not been watched through the browser's
+       own zoom setting.
+    5. Store screenshots show the OLD popup layout. Reshoot before the next
+       submission.
+
+  RELEASE IMPLICATIONS
+    Recommended next version: 1.0.2 (patch). No version bump was made.
+    Store metadata does NOT need to change: permissions, privacy disclosure and
+    permission justifications are all still accurate because none of them
+    changed. Only the screenshots are stale.
+    NO release was published, NO tag was created, NO store listing was touched,
+    and v1.0.1 / release/v1.0.1 were not modified.
+
+PREVIOUS PHASE
   Recruiter-facing documentation pass (docs only, no source/behavior changes).
   The Chrome Web Store listing is LIVE, so the README's "not in the stores yet /
   Coming soon" text was factually wrong and contradicted the live store link on
@@ -32,7 +128,7 @@ CURRENT PHASE
   Test results: pnpm run ci -> typecheck, lint, 142/142 vitest tests, build all
                 pass locally.
 
-PREVIOUS PHASE
+PHASE BEFORE THAT
   Release archive and GitHub protection.
   Created a permanent archive of the submitted Chrome Web Store v1.0.1 package
   (release branch + annotated tag + GitHub Release + SHA-256 checksums) and
@@ -123,10 +219,11 @@ VALIDATION (this phase, all PASS)
   built chrome manifest matches submitted ZIP manifest exactly.
 
 DATE/TIME OF UPDATE
-  2026-06-23 (Release archive and GitHub protection).
+  2026-09-08 (Overnight product hardening; see CURRENT PHASE).
 
-NO PRODUCT / PERMISSION / UI / BEHAVIOR CHANGES
-  This phase made NO changes to extension code, manifest, permissions,
+NO PRODUCT / PERMISSION / UI / BEHAVIOR CHANGES (applies to the RELEASE ARCHIVE
+phase, not to the CURRENT PHASE above, which did change product code)
+  That phase made NO changes to extension code, manifest, permissions,
   dependencies, package versions, UI, or store ZIP contents. The only tracked
   change is this HANDOVER.txt documentation commit on main. No git reset/
   checkout--/clean/force-push/amend were used.
@@ -139,7 +236,8 @@ IMPORTANT CAVEAT
   This is a strong PRACTICAL archive. A repository owner can still change GitHub
   rules or delete repository data later, so it is not an irreversible legal vault.
 
-NEXT RECOMMENDED PHASE
+NEXT RECOMMENDED PHASE (superseded -- see CURRENT PHASE at the top; kept for the
+store-status and manual-task notes, which are still accurate)
   Chrome Web Store: LIVE. README + docs now say so.
     https://chromewebstore.google.com/detail/easy-web-navigation-keybo/jaffeipdpljhnfonacndcpjdkclgjiln
   Edge Add-ons / Firefox: still NOT submitted. The README now states this plainly

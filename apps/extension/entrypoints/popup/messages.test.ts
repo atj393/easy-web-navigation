@@ -17,6 +17,8 @@ import {
   PERMISSION_DENIED_MSG,
   REPORT_PRIVACY_NOTE,
   RESTRICTED_PAGE_BODY,
+  RESULTS_COPIED,
+  RESULTS_SAVED,
   TAGLINE,
 } from "./messages";
 
@@ -76,8 +78,11 @@ describe("claim accuracy", () => {
     expect(DISCLAIMER).toContain("cannot confirm a page is accessible");
   });
 
-  it("warns that saved results can carry page information", () => {
-    expect(REPORT_PRIVACY_NOTE).toMatch(/page address|selector/i);
+  it("warns that shared results carry page information, at the moment of sharing", () => {
+    expect(REPORT_PRIVACY_NOTE).toMatch(/page address/i);
+    expect(RESULTS_COPIED).toContain("Results copied.");
+    expect(RESULTS_COPIED).toContain(REPORT_PRIVACY_NOTE);
+    expect(RESULTS_SAVED).toContain(REPORT_PRIVACY_NOTE);
   });
 });
 

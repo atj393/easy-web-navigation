@@ -21,7 +21,8 @@ import {
   DISCLAIMER,
   humanizeError,
   PERMISSION_DENIED_MSG,
-  REPORT_PRIVACY_NOTE,
+  RESULTS_COPIED,
+  RESULTS_SAVED,
   TAGLINE,
 } from "./messages";
 import { ensureInjected, getActiveTab, requestOrigins, send } from "./page-actions";
@@ -381,7 +382,7 @@ export function App() {
       // Firefox only follows a click on an anchor that is in the document.
       document.body.appendChild(anchor);
       anchor.click();
-      dispatch({ type: "NOTICE", message: "Results saved to your downloads." });
+      dispatch({ type: "NOTICE", message: RESULTS_SAVED });
     } catch {
       dispatch({ type: "NOTICE", message: "The results could not be saved. Try copying instead." });
     } finally {
@@ -399,9 +400,7 @@ export function App() {
       if (!alive.current) return;
       dispatch({
         type: "NOTICE",
-        message: ok
-          ? "Results copied to the clipboard."
-          : "Copying is blocked here. You can download the results instead.",
+        message: ok ? RESULTS_COPIED : "Copying is blocked here. You can save the results instead.",
       });
     } catch {
       if (alive.current) {
@@ -563,7 +562,7 @@ export function App() {
             Save results
           </button>
         </div>
-        <p className="footer__note">{canReport(state) ? REPORT_PRIVACY_NOTE : DISCLAIMER}</p>
+        <p className="footer__note">{DISCLAIMER}</p>
       </footer>
     </div>
   );

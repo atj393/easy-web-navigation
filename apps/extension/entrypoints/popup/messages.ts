@@ -45,9 +45,16 @@ export const RESTRICTED_PAGE_BODY =
   "Browsers do not let extensions read their own internal pages, the extensions gallery, or " +
   `local files. Open a normal http:// or https:// page and ${PRODUCT_NAME} can check it.`;
 
+/**
+ * Shown the moment results leave the popup, not as a permanent footnote. A
+ * standing warning in the corner is read once and then stops registering; this
+ * one arrives exactly when the user is about to share a file.
+ */
 export const REPORT_PRIVACY_NOTE =
-  "Results include the page address, element selectors, and nearby text. Check the file before " +
-  "sharing it.";
+  "They include the page address and page text, so check before sharing.";
+
+export const RESULTS_COPIED = `Results copied. ${REPORT_PRIVACY_NOTE}`;
+export const RESULTS_SAVED = `Results saved to your downloads. ${REPORT_PRIVACY_NOTE}`;
 
 /* --------------------------------------------------------------- errors -- */
 

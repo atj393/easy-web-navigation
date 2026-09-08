@@ -30,7 +30,7 @@
 
   /* Popup shell dimensions. Fixed by design — see the sizing contract above. */
   --popup-width: 420px;
-  --popup-height: 560px;
+  --popup-height: 580px;
 
   /* Spacing scale */
   --sp-1: 4px;
@@ -189,11 +189,11 @@ body {
 /* --------------------------------------------------------------- header -- */
 
 .header {
-  padding: var(--sp-4) var(--sp-4) var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
   border-bottom: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  gap: var(--sp-3);
+  gap: var(--sp-2);
 }
 
 .brand {
@@ -276,7 +276,7 @@ body {
 .tabs {
   display: flex;
   gap: var(--sp-1);
-  padding: var(--sp-2) var(--sp-4) 0;
+  padding: var(--sp-1) var(--sp-4) 0;
   border-bottom: 1px solid var(--border);
 }
 
@@ -319,11 +319,11 @@ body {
 /* --------------------------------------------------------------- footer -- */
 
 .footer {
-  padding: var(--sp-3) var(--sp-4);
+  padding: var(--sp-2) var(--sp-4) var(--sp-3);
   border-top: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  gap: var(--sp-2);
+  gap: var(--sp-1);
   background: var(--bg);
 }
 
