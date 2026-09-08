@@ -120,11 +120,17 @@ export type PopupAction =
   | { type: "SCAN_STARTED" }
   | { type: "SCAN_SUCCEEDED"; result: ScanResult }
   | { type: "SCAN_FAILED"; message: string }
+  /**
+   * Report whichever guide state the page actually told us about. Every field
+   * is optional on purpose: a caller that toggled only the focus helper must
+   * not also write back the keyboard-path state it read at render time, or two
+   * quick toggles let the second response revert the first.
+   */
   | {
       type: "GUIDES_APPLIED";
-      focusHelper: boolean;
-      tabPath: boolean;
-      summary: TabPathSummary | null;
+      focusHelper?: boolean;
+      tabPath?: boolean;
+      summary?: TabPathSummary | null;
     }
   | { type: "GUIDES_FAILED"; message: string }
   | { type: "MAX_ITEMS_CHANGED"; maxItems: TabPathMaxItems }
@@ -195,9 +201,9 @@ export function popupReducer(state: PopupState, action: PopupAction): PopupState
         ...state,
         guides: {
           ...state.guides,
-          focusHelper: action.focusHelper,
-          tabPath: action.tabPath,
-          summary: action.summary,
+          ...(action.focusHelper !== undefined && { focusHelper: action.focusHelper }),
+          ...(action.tabPath !== undefined && { tabPath: action.tabPath }),
+          ...(action.summary !== undefined && { summary: action.summary }),
           message: null,
         },
       };

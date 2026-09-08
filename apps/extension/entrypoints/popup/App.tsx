@@ -172,9 +172,11 @@ export function App() {
         if (focus?.type === "FOCUS_HELPER_STATE" || path?.type === "TAB_PATH_RESULT") {
           dispatch({
             type: "GUIDES_APPLIED",
-            focusHelper: focus?.type === "FOCUS_HELPER_STATE" ? focus.payload.enabled : false,
-            tabPath: path?.type === "TAB_PATH_RESULT" ? path.payload.enabled : false,
-            summary: path?.type === "TAB_PATH_RESULT" ? path.payload.summary : null,
+            ...(focus?.type === "FOCUS_HELPER_STATE" && { focusHelper: focus.payload.enabled }),
+            ...(path?.type === "TAB_PATH_RESULT" && {
+              tabPath: path.payload.enabled,
+              summary: path.payload.summary,
+            }),
           });
         }
       } catch {
@@ -205,12 +207,7 @@ export function App() {
         });
         if (!alive.current) return;
         if (response?.type === "FOCUS_HELPER_STATE") {
-          dispatch({
-            type: "GUIDES_APPLIED",
-            focusHelper: response.payload.enabled,
-            tabPath: state.guides.tabPath,
-            summary: state.guides.summary,
-          });
+          dispatch({ type: "GUIDES_APPLIED", focusHelper: response.payload.enabled });
           await saveMonitoring({ focusHelperEnabled: response.payload.enabled });
         }
         return;
@@ -224,7 +221,6 @@ export function App() {
       if (response?.type === "TAB_PATH_RESULT") {
         dispatch({
           type: "GUIDES_APPLIED",
-          focusHelper: state.guides.focusHelper,
           tabPath: response.payload.enabled,
           summary: response.payload.summary,
         });
@@ -260,7 +256,6 @@ export function App() {
       if (response?.type === "TAB_PATH_RESULT") {
         dispatch({
           type: "GUIDES_APPLIED",
-          focusHelper: state.guides.focusHelper,
           tabPath: response.payload.enabled,
           summary: response.payload.summary,
         });

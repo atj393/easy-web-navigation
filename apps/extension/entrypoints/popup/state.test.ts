@@ -235,6 +235,62 @@ describe("scan lifecycle", () => {
   });
 });
 
+describe("visual guides", () => {
+  const booted = popupReducer(INITIAL_STATE, {
+    type: "BOOTED",
+    payload: { url: "https://example.com/", blocked: null, settings },
+  });
+
+  it("updates only the guide the page reported on", () => {
+    // Two quick toggles: the focus-helper response must not carry the
+    // keyboard-path state the caller happened to read at render time, or the
+    // second response reverts the first.
+    const both = run(
+      [
+        {
+          type: "GUIDES_APPLIED",
+          tabPath: true,
+          summary: { shown: 5, totalDetected: 5, capped: false },
+        },
+        { type: "GUIDES_APPLIED", focusHelper: true },
+      ],
+      booted,
+    );
+    expect(both.guides.focusHelper).toBe(true);
+    expect(both.guides.tabPath).toBe(true);
+    expect(both.guides.summary).toEqual({ shown: 5, totalDetected: 5, capped: false });
+  });
+
+  it("clears the keyboard-path summary when the path is turned off", () => {
+    const on = popupReducer(booted, {
+      type: "GUIDES_APPLIED",
+      tabPath: true,
+      summary: { shown: 3, totalDetected: 9, capped: true },
+    });
+    const off = popupReducer(on, { type: "GUIDES_APPLIED", tabPath: false, summary: null });
+    expect(off.guides.tabPath).toBe(false);
+    expect(off.guides.summary).toBeNull();
+    // Turning the path off says nothing about the focus helper.
+    expect(off.guides.focusHelper).toBe(booted.guides.focusHelper);
+  });
+
+  it("clears a guide failure message once a guide reports success", () => {
+    const failed = popupReducer(booted, { type: "GUIDES_FAILED", message: "Reload the page." });
+    expect(failed.guides.message).toBe("Reload the page.");
+    expect(
+      popupReducer(failed, { type: "GUIDES_APPLIED", focusHelper: true }).guides.message,
+    ).toBeNull();
+  });
+
+  it("keeps the marker limit independent of whether the path is showing", () => {
+    const changed = popupReducer(booted, { type: "MAX_ITEMS_CHANGED", maxItems: 500 });
+    expect(changed.guides.maxItems).toBe(500);
+    expect(changed.guides.tabPath).toBe(false);
+    const drawn = popupReducer(changed, { type: "GUIDES_APPLIED", tabPath: true, summary: null });
+    expect(drawn.guides.maxItems).toBe(500);
+  });
+});
+
 describe("status wording never overclaims", () => {
   const booted = popupReducer(INITIAL_STATE, {
     type: "BOOTED",
